@@ -1,0 +1,17 @@
+# Render Blueprint — sitio estático de un solo archivo.
+# Render lo detecta al conectar el repo y crea el servicio solo.
+services:
+  - type: web
+    name: food-cost-ohjala
+    runtime: static
+    staticPublishPath: .
+    buildCommand: ""
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
