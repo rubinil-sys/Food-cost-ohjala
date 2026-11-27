@@ -422,10 +422,12 @@ body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:40
  <button class="tb" data-t="can">Canales</button>
  <button class="tb" data-t="pron">Pronóstico</button>
  <button class="tb" data-t="vta">Consumo</button>
+ <button class="tb" data-t="ale">Alertas <span class="cnt" id="cAle">0</span></button>
  <button class="tb" data-t="esc">Escenarios <span class="cnt" id="cEsc">0</span></button>
  <button class="tb" id="tabUsr" data-t="usr" style="display:none">Usuarios</button>
  <span class="src">Datos de demostración</span>
 </div></nav>
+<div id="franja" style="display:none;background:var(--babg);border-bottom:1px solid var(--babd);color:var(--ba);padding:9px 22px;font-size:13.5px"></div>
 <main class="wrap">
  <section id="p-res" class="pane on"></section>
  <section id="p-prod" class="pane"></section>
@@ -436,6 +438,7 @@ body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:40
  <section id="p-can" class="pane"></section>
  <section id="p-pron" class="pane"></section>
  <section id="p-vta" class="pane"></section>
+ <section id="p-ale" class="pane"></section>
  <section id="p-esc" class="pane"></section>
  <section id="p-usr" class="pane"></section>
 </main>
@@ -1205,6 +1208,157 @@ function vPron(){
   $("#pMes").onchange=e=>{ST.mes=e.target.value;vPron();};
   $("#bPr").onclick=()=>{PR={crec:0,precio:0,insumos:0,rappi:0};vPron();};
   $$("#p-pron .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+}
+
+/* ---------------- ALERTAS ---------------- */
+let UMB={ub_min:42, fc_max:35, util_max:95, canal_min:25, mo_max:15, insumo_max:20};
+function calcAlertas(){
+  const A=[], ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)}));
+  const MZ=D.matriz_mo[ST.anio]||{}, cap=D.capacidad;
+  const V=ps.reduce((s,p)=>s+p.neto*p.u,0);
+  const add=(sev,tipo,titulo,detalle,accion,ir)=>A.push({sev,tipo,titulo,detalle,accion,ir});
+
+  // 1. margen por debajo del objetivo
+  ps.filter(p=>p.u>0).forEach(p=>{
+    if(p.ub_pct<0) add("alta","margen",`${p.nombre} pierde plata`,
+      `Su utilidad bruta es ${P(p.ub_pct,1)}: el costo total (${S(p.cuf)}) supera al precio neto (${S(p.neto)}).`,
+      `Subir precio a ${S(p.cuf/(1-UMB.ub_min/100))} o sacarlo de la carta.`, "prod");
+    else if(p.ub_pct<UMB.ub_min) add("media","margen",`${p.nombre} bajo el objetivo`,
+      `Utilidad bruta de ${P(p.ub_pct,1)}, contra el objetivo de ${P(UMB.ub_min,0)}. Deja ${S(p.ub)} por unidad.`,
+      `Para llegar al objetivo: precio de ${S(p.cuf/(1-UMB.ub_min/100))} (+${P(100*(p.cuf/(1-UMB.ub_min/100)/p.neto-1),1)}).`, "prod");
+  });
+
+  // 2. food cost alto
+  ps.filter(p=>p.u>0 && !p.es_reventa && p.fc_pct>UMB.fc_max).forEach(p=>
+    add("media","costo",`${p.nombre} con food cost alto`,
+      `${P(p.fc_pct,1)} de materia prima sobre el precio neto, contra el techo de ${P(UMB.fc_max,0)}.`,
+      `Revisar gramajes o negociar el insumo que más pesa en su receta.`, "prod"));
+
+  // 3. mano de obra desproporcionada
+  const totMin=ps.reduce((s,p)=>s+Object.values(MZ[p.id]||{}).reduce((a,x)=>a+x.min,0),0);
+  ps.filter(p=>p.u>0).forEach(p=>{
+    const m=Object.values(MZ[p.id]||{}).reduce((a,x)=>a+x.min,0);
+    const pctMin=totMin?100*m/totMin:0, pctVta=V?100*p.neto*p.u/V:0;
+    if(pctMin>UMB.mo_max && pctMin>pctVta*1.4) add("media","trabajo",
+      `${p.nombre} consume más trabajo del que aporta`,
+      `Se lleva ${P(pctMin,1)} de la mano de obra y aporta ${P(pctVta,1)} de la venta. Son ${N(p.min_hombre,2)} minutos por unidad.`,
+      `Revisar el paso más largo de su proceso, o subir el precio para que el tiempo se pague.`, "mo");
+  });
+
+  // 4. estaciones saturadas
+  cap.forEach(c=>{
+    const dem=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/12;
+    const u=c.min_practica?100*dem/c.min_practica:0;
+    if(u>100) add("alta","capacidad",`${c.nombre} sin capacidad`,
+      `Pide ${N(dem)} minutos al mes y solo hay ${N(c.min_practica)}. Faltan ${N(dem-c.min_practica)}.`,
+      `Contratar, redistribuir carga o bajar volumen de los productos más pesados de esa estación.`, "mo");
+    else if(u>UMB.util_max) add("media","capacidad",`${c.nombre} al límite`,
+      `Utilización de ${P(u,1)}, sobre el umbral de ${P(UMB.util_max,0)}. Holgura: ${N(c.min_practica-dem)} minutos.`,
+      `Sin margen para un feriado o una máquina parada. Vigilar antes de aceptar pedidos grandes.`, "mo");
+  });
+
+  // 5. viernes: el día que revienta
+  const perV=(D.perfil_dia||{}).viernes||0;
+  cap.forEach(c=>{
+    const demSem=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/52;
+    const capDia=c.min_practica/4.345/6, demV=demSem*perV;
+    if(capDia && demV/capDia>1.1) add("alta","capacidad",`El viernes satura ${c.nombre}`,
+      `Ese día pide ${N(demV)} minutos y la capacidad diaria es ${N(capDia)}: ${P(100*demV/capDia,0)} de uso.`,
+      `El pan de Shabat no se adelanta. Hay que sumar gente el viernes o adelantar lo que aguante frío.`, "pron");
+  });
+
+  // 6. canales
+  D.canales.forEach(c=>{
+    const e=econCanal(c,ST.anio);
+    if(e.venta>0 && e.mc_pct<UMB.canal_min) add("media","canal",`${c.nombre} deja poco margen`,
+      `Margen del canal: ${P(e.mc_pct,1)}. Comisión ${S0(e.com)}, POS ${S0(e.pos)}, costo financiero ${S0(e.fin)} por ${CAN[c.id].dias} días de cobro.`,
+      `Subir precio del canal o renegociar la comisión. Vender más por acá baja la utilidad total.`, "can");
+    if(CAN[c.id].dias>=20) add("baja","canal",`${c.nombre} tarda en pagar`,
+      `${CAN[c.id].dias} días de cobro inmovilizan ${S0(e.fin)} al año en costo financiero.`,
+      `Negociar liquidación más frecuente.`, "can");
+  });
+
+  // 7. concentración de insumos
+  const gasto={};
+  ps.forEach(p=>p.receta.forEach(r=>{gasto[r.nombre]=(gasto[r.nombre]||0)+r.costo_por_unidad*p.u;}));
+  const TG=Object.values(gasto).reduce((a,b)=>a+b,0);
+  Object.entries(gasto).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([n,g])=>{
+    if(100*g/TG>UMB.insumo_max) add("baja","insumo",`${n} concentra el gasto`,
+      `Es ${P(100*g/TG,1)} de toda la materia prima: ${S0(g)} al año.`,
+      `Un alza de 10% en ese insumo cuesta ${S0(g*0.1)}. Conviene tener un segundo proveedor.`, "ins");
+  });
+
+  // 8. concentración de ventas
+  const orden=[...ps].sort((a,b)=>b.neto*b.u-a.neto*a.u);
+  if(orden.length && V){
+    const top=100*orden[0].neto*orden[0].u/V;
+    if(top>30) add("baja","venta",`La venta depende de ${orden[0].nombre}`,
+      `Un solo producto es ${P(top,1)} de la facturación.`,
+      `Si ese producto falla una semana, el impacto es directo. Vale desarrollar el segundo.`, "tab");
+  }
+  const sev={alta:0,media:1,baja:2};
+  return A.sort((a,b)=>sev[a.sev]-sev[b.sev]);
+}
+function vAlertas(){
+  const A=calcAlertas();
+  const n=s=>A.filter(x=>x.sev===s).length;
+  const ICO={margen:"📉",costo:"🧾",trabajo:"⏱",capacidad:"🏭",canal:"🛵",insumo:"📦",venta:"🎯"};
+  const COL={alta:"ba",media:"wa",baja:"nt"};
+  const TXT={alta:"Crítica",media:"Atención",baja:"Para mirar"};
+  const sl=(k,lb,min,max,suf)=>`<div class="fg"><label>${lb}: <span style="font-family:var(--fm);color:var(--c600)">${UMB[k]}${suf}</span></label>
+    <input class="sl" type="range" min="${min}" max="${max}" value="${UMB[k]}" data-u="${k}"/></div>`;
+  $("#p-ale").innerHTML=`
+  <div class="note">La app revisa sola los números y avisa. Los umbrales los pones tú: lo que para una panadería es grave,
+   para otra es normal.</div>
+  <div class="kpis">
+   <div class="kpi ${n('alta')?'ba':'ok'}"><span class="kl">Críticas</span><div class="kv">${n('alta')}</div>
+     <div class="kf"><span>piden acción</span></div></div>
+   <div class="kpi ${n('media')?'wa':'ok'}"><span class="kl">Atención</span><div class="kv">${n('media')}</div></div>
+   <div class="kpi"><span class="kl">Para mirar</span><div class="kv">${n('baja')}</div></div>
+   <div class="kpi ok"><span class="kl">Revisiones</span><div class="kv">8</div>
+     <div class="kf"><span>corren en cada cambio</span></div></div>
+   <div class="kpi c"><span class="kl">Total</span><div class="kv">${A.length}</div></div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Umbrales</h2>
+    <p class="cs">Mueve el listón y mira cómo cambian las alertas.</p></div></div>
+   <div class="simg">
+    ${sl("ub_min","Utilidad bruta mínima por producto",25,60,"%")}
+    ${sl("fc_max","Food cost máximo",20,50,"%")}
+    ${sl("util_max","Utilización máxima de estación",70,100,"%")}
+    ${sl("canal_min","Margen mínimo por canal",10,50,"%")}
+   </div></div>
+  ${A.length?A.map(a=>`
+   <div class="card" style="border-left:4px solid var(--${a.sev==='alta'?'babar':a.sev==='media'?'wabar':'lineS'});padding:15px 17px;margin-bottom:11px">
+    <div style="display:flex;gap:13px;align-items:flex-start">
+     <span style="font-size:23px;line-height:1">${ICO[a.tipo]||"•"}</span>
+     <div style="flex:1;min-width:0">
+      <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:3px">
+       <b style="font-size:15px">${esc(a.titulo)}</b><span class="bd ${COL[a.sev]}">${TXT[a.sev]}</span></div>
+      <div style="font-size:13.3px;color:var(--ink7);line-height:1.5">${esc(a.detalle)}</div>
+      <div style="font-size:12.8px;color:var(--g900);margin-top:6px;padding:7px 10px;background:var(--g50);border-radius:7px">
+       <b>Qué hacer:</b> ${esc(a.accion)}</div>
+     </div>
+     <button class="btn sm" data-ir="${a.ir}">Ver →</button>
+    </div></div>`).join("")
+  :`<div class="card" style="text-align:center;padding:40px">
+     <div style="font-size:46px">✅</div>
+     <h2 class="ct" style="margin-top:9px">Sin alertas</h2>
+     <p class="cs" style="margin:5px auto 0">Con los umbrales actuales no hay nada fuera de rango.</p></div>`}`;
+  $$("#p-ale input[data-u]").forEach(el=>el.oninput=e=>{UMB[e.target.dataset.u]=+e.target.value;vAlertas();pintarBadge();});
+  $$("#p-ale [data-ir]").forEach(b=>b.onclick=()=>document.querySelector(`.tb[data-t="${b.dataset.ir}"]`)?.click());
+}
+function pintarBadge(){
+  const A=calcAlertas(), alta=A.filter(x=>x.sev==='alta').length, med=A.filter(x=>x.sev==='media').length;
+  const b=$("#cAle"); if(!b) return;
+  b.textContent=A.length;
+  b.style.background = alta?"var(--babg)":med?"var(--wabg)":"var(--s100)";
+  b.style.color = alta?"var(--ba)":med?"var(--wa)":"var(--ink7)";
+  const f=$("#franja");
+  if(f){ if(alta){ f.style.display="block";
+      f.innerHTML=`<b>${alta} ${alta===1?"alerta crítica":"alertas críticas"}</b> · ${esc(A.find(x=>x.sev==='alta').titulo)}
+        <button class="btn sm" style="margin-left:10px" id="fIr">Ver alertas</button>`;
+      $("#fIr").onclick=()=>document.querySelector('.tb[data-t="ale"]').click();
+    } else f.style.display="none"; }
 }
 
 /* ---------------- ESCENARIOS ---------------- */
