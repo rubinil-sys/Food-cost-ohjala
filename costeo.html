@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Costeo · oh-jalá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+ --g950:#102e24; --g900:#174133; --g800:#1e5442; --g700:#276953; --g100:#e3f1ec; --g50:#f2f8f5;
+ --c600:#c96b2c; --c500:#e8803a; --c100:#fcecd9; --s200:#e5dfd0; --s100:#f5f1e7;
+ --bg:#faf7f0; --sf:#fff; --sf2:#fcfaf5;
+ --ink:#1c2421; --ink7:#3b4742; --ink5:#66736d; --line:#e4dfd3; --lineS:#cfc7b6;
+ --ok:#166534; --okbg:#dcfce7; --okbar:#1f8f52; --okbd:#86efac;
+ --wa:#92400e; --wabg:#fef3c7; --wabar:#d97706; --wabd:#fcd34d;
+ --ba:#991b1b; --babg:#fee2e2; --babar:#dc2626; --babd:#fca5a5;
+ --teal:#3f9099;
+ --fs:"Plus Jakarta Sans",system-ui,sans-serif; --fd:"Fraunces",Georgia,serif; --fm:"JetBrains Mono",monospace;
+ --r:14px; --rm:10px; --sh:0 2px 8px rgba(28,36,33,.06); --shm:0 8px 24px rgba(28,36,33,.09);
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{font-family:var(--fs);background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.5}
+button,input,select{font:inherit;color:inherit} button{cursor:pointer}
+.hd{background:linear-gradient(135deg,var(--g950),var(--g900) 55%,var(--g800));color:#fff;border-top:4px solid var(--c500);box-shadow:0 4px 18px rgba(16,46,36,.22);position:sticky;top:0;z-index:40}
+.hdi{max-width:1440px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px;min-width:0}
+.logo{width:48px;height:48px;border-radius:13px;background:linear-gradient(145deg,#f7efe2,#eadbc3);border:2px solid rgba(232,128,58,.65);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.bt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.bn{font-family:var(--fd);font-size:21px;font-weight:700;color:#ffeed6;letter-spacing:-.01em}
+.bs{font-size:12.5px;color:rgba(255,255,255,.72)}
+.pill{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:rgba(232,128,58,.22);color:#ffd5b5;border:1px solid rgba(232,128,58,.45);margin-left:9px}
+.hc{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cfg{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:10px}
+.cfg label{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.92);white-space:nowrap}
+.cfg select,.cfg input{background:#fff;color:var(--ink);border:1px solid rgba(0,0,0,.12);border-radius:7px;padding:4px 8px;font-size:13px;font-weight:600;outline:none}
+.cfg input{width:62px;text-align:right;font-family:var(--fm)}
+.hbtn{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.09);color:#fff;padding:7px 12px;border-radius:9px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.hbtn:hover{background:rgba(255,255,255,.18)} .hbtn.ac{background:var(--c500);border-color:var(--c500)} .hbtn.ac:hover{background:var(--c600)}
+.tabs{background:var(--sf);border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(28,36,33,.03);position:sticky;top:74px;z-index:30}
+.ti{max-width:1440px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:4px;overflow-x:auto}
+.tb{border:none;background:transparent;padding:13px 16px 11px;font-size:14px;font-weight:600;color:var(--ink5);border-bottom:3px solid transparent;white-space:nowrap}
+.tb:hover{color:var(--g900);background:var(--sf2)} .tb.on{color:var(--g900);border-bottom-color:var(--c500);font-weight:700}
+.cnt{font-family:var(--fm);font-size:11px;font-weight:700;padding:2px 6px;border-radius:999px;background:var(--s100);color:var(--ink7);margin-left:6px}
+.tb.on .cnt{background:var(--c100);color:var(--c600)}
+.src{margin-left:auto;font-size:11.5px;color:var(--ink5);white-space:nowrap;padding-left:12px;font-family:var(--fm)}
+.wrap{max-width:1440px;margin:0 auto;padding:20px 22px 60px}
+.pane{display:none} .pane.on{display:block;animation:fi .16s ease-out}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:var(--r);padding:19px;margin-bottom:17px;box-shadow:var(--sh)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:15px}
+.ct{margin:0;font-family:var(--fd);font-size:19px;font-weight:700;color:var(--g950);letter-spacing:-.01em}
+.cs{margin:3px 0 0;font-size:13px;color:var(--ink5);max-width:72ch}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px;margin-bottom:17px}
+@media(max-width:1120px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:680px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--sf);border:1px solid var(--line);border-top:4px solid var(--g800);border-radius:var(--rm);padding:14px 15px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:5px}
+.kpi.c{border-top-color:var(--c500)} .kpi.ok{border-top-color:var(--okbar)} .kpi.wa{border-top-color:var(--wabar)} .kpi.ba{border-top-color:var(--babar)}
+.kl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink5)}
+.kv{font-family:var(--fm);font-size:23px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.kf{font-size:12px;color:var(--ink5);display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.bd{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+.bd.ok{background:var(--okbg);color:var(--ok);border-color:var(--okbd)}
+.bd.wa{background:var(--wabg);color:var(--wa);border-color:var(--wabd)}
+.bd.ba{background:var(--babg);color:var(--ba);border-color:var(--babd)}
+.bd.nt{background:var(--s100);color:var(--ink7);border-color:var(--line)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--rm);background:var(--sf)}
+table{width:100%;border-collapse:collapse;font-size:13.6px}
+thead th{background:var(--s100);color:var(--ink7);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 11px;text-align:left;border-bottom:1px solid var(--lineS);white-space:nowrap}
+tbody td{padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none} tbody tr:hover td{background:var(--sf2)}
+tfoot td{background:var(--s100);font-weight:700;padding:10px 11px;border-top:2px solid var(--lineS)}
+.n{text-align:right;font-family:var(--fm);font-variant-numeric:tabular-nums;white-space:nowrap} thead th.n{text-align:right}
+/* Pareto */
+.pb{display:flex;flex-direction:column;gap:11px;margin-top:6px}
+.pr{display:grid;grid-template-columns:30px 230px 1fr 120px;align-items:center;gap:12px}
+@media(max-width:760px){.pr{grid-template-columns:28px 1fr;gap:5px}}
+.pn{width:24px;height:24px;border-radius:50%;background:var(--g800);color:#fff;font-family:var(--fm);font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.pnm{font-weight:700;display:flex;flex-direction:column}
+.psb{font-size:11.5px;font-weight:500;color:var(--ink5)}
+.ptr{position:relative;height:26px;background:var(--s100);border-radius:7px;border:1px solid var(--line);overflow:hidden}
+.pfl{height:100%;background:linear-gradient(90deg,var(--c500),var(--c600));border-radius:6px;transition:width .3s}
+.pac{position:absolute;top:0;bottom:0;border-left:2px dashed var(--g950);opacity:.45}
+.pmt{display:flex;align-items:center;justify-content:flex-end;gap:7px;font-family:var(--fm);font-size:13px;font-weight:700}
+/* cascada */
+.casc{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.cr{display:grid;grid-template-columns:250px 1fr 108px 74px;align-items:center;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line)}
+@media(max-width:860px){.cr{grid-template-columns:1fr 100px;gap:4px}.cr .cbar{display:none}}
+.clb{font-weight:600;display:flex;flex-direction:column}
+.cnt2{font-size:11.5px;color:var(--ink5);font-weight:400;max-width:46ch}
+.cbar{height:22px;background:var(--s100);border-radius:5px;overflow:hidden;display:flex}
+.cseg{height:100%}
+.cseg.costo{background:linear-gradient(90deg,#f0a868,var(--c600))}
+.cseg.gap{background:repeating-linear-gradient(45deg,var(--babar),var(--babar) 6px,#e46a6a 6px,#e46a6a 12px)}
+.cseg.gasto{background:linear-gradient(90deg,#7fa8a0,#4a7f73)}
+.cseg.rest{background:var(--g100)}
+/* productos */
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:15px}
+.pc{background:var(--sf);border:1px solid var(--line);border-radius:var(--r);padding:0;box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column}
+.pci{height:104px;background:linear-gradient(160deg,var(--s100),#efe7d4);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
+.pci svg{width:118px;height:78px}
+.pcb{padding:14px 15px 15px;display:flex;flex-direction:column;gap:9px;flex:1}
+.pcn{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--g950);line-height:1.25}
+.stk{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--s200)}
+.stk i{display:block;height:100%}
+.lg{display:flex;gap:11px;flex-wrap:wrap;font-size:11px;color:var(--ink7)}
+.lg i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+.mrow{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0}
+.mrow b{font-family:var(--fm)}
+.note{font-size:12.5px;color:var(--ink7);background:var(--s100);border:1px dashed var(--lineS);border-radius:9px;padding:10px 13px;margin-bottom:14px}
+.note.warn{background:#fffaf0;border-color:var(--wabd);color:var(--wa)}
+.note.bad{background:#fff5f5;border-color:var(--babd);color:var(--ba)}
+.btn{border:1px solid var(--lineS);background:var(--sf);color:var(--ink);padding:7px 13px;border-radius:9px;font-size:13.2px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--s100);border-color:var(--ink5)}
+.btn.pri{background:var(--g800);border-color:var(--g800);color:#fff} .btn.pri:hover{background:var(--g900)}
+.btn.cr{background:var(--c500);border-color:var(--c500);color:#fff} .btn.cr:hover{background:var(--c600)}
+.btn.sm{padding:4px 9px;font-size:12.2px;border-radius:7px}
+.sl{width:100%;accent-color:var(--c500)}
+.simg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:15px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink7)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:48px}
+.spark i{flex:1;background:linear-gradient(180deg,var(--g700),var(--g900));border-radius:2px 2px 0 0;min-height:2px;display:block}
+.spark i.hl{background:linear-gradient(180deg,var(--c500),var(--c600))}
+.mlab{display:flex;gap:3px;font-size:9.5px;color:var(--ink5);font-family:var(--fm);margin-top:3px}
+.mlab span{flex:1;text-align:center}
+
+.clic{cursor:pointer}
+tr.clic:hover td{background:var(--g50)!important}
+.pci.clic:hover{background:linear-gradient(160deg,#efe7d4,#e6dcc6)}
+.modal{position:fixed;inset:0;background:rgba(16,46,36,.55);z-index:90;display:none;overflow-y:auto;padding:26px 16px}
+.modal.on{display:block}
+.mbox{max-width:1040px;margin:0 auto;background:var(--bg);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+.mtop{position:sticky;top:0;background:var(--g900);color:#fff;padding:11px 18px;display:flex;justify-content:space-between;align-items:center;z-index:5}
+.mtop b{font-family:var(--fd);font-size:15px}
+.mclose{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;width:30px;height:30px;border-radius:8px;font-size:17px;line-height:1}
+.mclose:hover{background:rgba(255,255,255,.3)}
+.mbody{padding:18px}
+.dhead{display:flex;gap:18px;align-items:center;background:var(--sf);border:1px solid var(--line);border-radius:var(--r);padding:17px;margin-bottom:16px;box-shadow:var(--sh);flex-wrap:wrap}
+.dill{width:150px;height:96px;background:linear-gradient(160deg,var(--s100),#efe7d4);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dill svg{width:124px;height:80px}
+.dhead>div:nth-child(2){flex:1;min-width:230px}
+.dkpi{text-align:center;padding:11px 17px;background:var(--g50);border:1px solid #b7dfd0;border-radius:11px}
+.dkpi .kv{font-size:27px}
+
+#gate{display:none;position:fixed;inset:0;z-index:200;background:linear-gradient(140deg,var(--g950),var(--g800) 60%,#2b6b55);
+ align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+#gate.on{display:flex}
+.gbox{background:var(--bg);border-radius:18px;padding:34px 30px;max-width:390px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.35);text-align:center}
+.glogo{width:62px;height:62px;margin:0 auto 12px;border-radius:16px;background:linear-gradient(145deg,#f7efe2,#eadbc3);
+ border:2px solid rgba(232,128,58,.6);display:flex;align-items:center;justify-content:center}
+.gtit{font-family:var(--fd);font-size:30px;margin:0;color:var(--g950);letter-spacing:-.02em}
+.gsub{margin:2px 0 20px;color:var(--ink5);font-size:13.5px}
+.gcampo{text-align:left;margin-bottom:12px}
+.gcampo label{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink7);margin-bottom:4px}
+.gcampo input{width:100%;padding:10px 12px;border:1px solid var(--lineS);border-radius:9px;background:#fff;font-size:14.5px;outline:none}
+.gcampo input:focus{border-color:var(--g700);box-shadow:0 0 0 3px rgba(39,105,83,.15)}
+.gbtn{width:100%;padding:11px;border-radius:10px;border:none;background:var(--g800);color:#fff;font-weight:700;font-size:14.5px;margin-top:8px}
+.gbtn:hover{background:var(--g900)} .gbtn:disabled{opacity:.6}
+.gbtn.sec{background:transparent;color:var(--g800);border:1px solid var(--lineS)} .gbtn.sec:hover{background:var(--s100)}
+.gerr{background:var(--babg);color:var(--ba);border:1px solid var(--babd);border-radius:9px;padding:9px 12px;font-size:13px;margin:4px 0 2px;text-align:left}
+.gok{background:var(--okbg);color:var(--ok);border:1px solid var(--okbd);border-radius:9px;padding:9px 12px;font-size:13px;margin:4px 0 2px;text-align:left}
+.gpie{margin-top:16px;font-size:12px;color:var(--ink5);border-top:1px solid var(--line);padding-top:12px}
+.gestado{font-size:42px;margin:6px 0 10px}
+.gtxt{font-size:14px;color:var(--ink7);line-height:1.55;margin:0 0 14px}
+.usr{display:flex;align-items:center;gap:9px}
+.uav{width:33px;height:33px;border-radius:50%;background:var(--c500);color:#fff;display:flex;align-items:center;
+ justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.uinfo{display:flex;flex-direction:column;line-height:1.2;margin-right:4px}
+.uinfo b{font-size:13px;color:#fff} .uinfo span{font-size:11px;color:rgba(255,255,255,.7)}
+.cell-sel{width:100%;border:1px solid var(--lineS);border-radius:7px;padding:5px 8px;font-size:13px;background:#fff}
+body.solo-lectura .sl,body.solo-lectura #bReset,body.solo-lectura #bSave{pointer-events:none;opacity:.45}
+body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:400}
+</style>
+</head>
+<body>
+<svg class="prod-ill"><use href="#ill-trenzada"/>  <!-- Café americano -->
+  <symbol id="ill-cafe" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="86" rx="30" ry="4.5" fill="#000" opacity="0.07"/>
+    <path d="M26 34 h40 v26 a20 20 0 0 1 -40 0 z" fill="#f3efe6" stroke="#c9bfa8" stroke-width="1.3"/>
+    <path d="M66 40 h7 a9 9 0 0 1 0 18 h-7" fill="none" stroke="#c9bfa8" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M28 36 h36 v16 a18 18 0 0 1 -36 0 z" fill="url(#gChoc)" opacity="0.92"/>
+    <ellipse cx="46" cy="36" rx="18" ry="3.6" fill="#8a5a33"/>
+    <g stroke="#cbb79a" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.8">
+      <path d="M38 26 q3 -5 0 -9"/><path d="M46 24 q3 -5 0 -9"/><path d="M54 26 q3 -5 0 -9"/>
+    </g>
+    <rect x="24" y="62" width="44" height="5" rx="2.5" fill="#e0d6c2"/>
+  </symbol>
+
+  <!-- Gaseosa en botella (reventa) -->
+  <symbol id="ill-gaseosa" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="88" rx="20" ry="4" fill="#000" opacity="0.07"/>
+    <path d="M41 12 h14 v7 q0 4 3 7 l2 3 q4 5 4 12 v36 a8 8 0 0 1 -8 8 h-16 a8 8 0 0 1 -8 -8 v-36 q0 -7 4 -12 l2 -3 q3 -3 3 -7 z"
+          fill="#d8572f" stroke="#a63d1c" stroke-width="1.2" opacity="0.93"/>
+    <rect x="40" y="8" width="16" height="6" rx="2" fill="#7a4a1c"/>
+    <rect x="33" y="44" width="30" height="20" rx="3" fill="#f7efe2" opacity="0.95"/>
+    <g fill="#a63d1c"><rect x="37" y="49" width="22" height="2.6" rx="1.3"/><rect x="37" y="54" width="15" height="2.2" rx="1.1"/></g>
+    <path d="M37 24 q-3 6 -3 13 v30" fill="none" stroke="#fff" stroke-width="2.4" opacity="0.3" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- Jalá pretzel: lazo con sal -->
+  <symbol id="ill-pretzel" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="44" ry="5.5" fill="#000" opacity="0.07"/>
+    <path d="M60 54 C34 54 24 40 32 28 C38 19 50 20 56 30 L60 38 L64 30 C70 20 82 19 88 28 C96 40 86 54 60 54 Z"
+          fill="url(#gCortezaOscura)" stroke="#6b3d12" stroke-width="1.3"/>
+    <path d="M44 26 q6 10 16 12 q10 -2 16 -12" fill="none" stroke="#fff" stroke-width="1.6" opacity="0.2"/>
+    <g fill="#fdfaf4"><circle cx="42" cy="34" r="1.6"/><circle cx="58" cy="44" r="1.7"/><circle cx="76" cy="33" r="1.6"/>
+      <circle cx="50" cy="42" r="1.3"/><circle cx="68" cy="41" r="1.4"/><circle cx="60" cy="30" r="1.3"/></g>
+  </symbol>
+
+  <!-- Jalá parmesano: trenza con queso gratinado -->
+  <symbol id="ill-parmesano" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="50" ry="6" fill="#000" opacity="0.07"/>
+    <g stroke="#8a5420" stroke-width="1.1">
+      <path d="M14 44 Q24 25 38 41 Q50 54 62 38" fill="url(#gCorteza)"/>
+      <path d="M34 46 Q46 27 60 43 Q72 56 84 40" fill="url(#gCorteza)"/>
+      <path d="M54 45 Q66 26 80 42 Q92 55 106 39" fill="url(#gCorteza)"/>
+    </g>
+    <g fill="#f7dc8e" opacity="0.95">
+      <path d="M30 32 l5 -2 l2 4 l-5 2 z"/><path d="M50 36 l5 -2 l2 4 l-5 2 z"/>
+      <path d="M70 33 l5 -2 l2 4 l-5 2 z"/><path d="M88 37 l5 -2 l2 4 l-5 2 z"/>
+      <path d="M40 44 l4 -2 l2 3 l-4 2 z"/><path d="M78 45 l4 -2 l2 3 l-4 2 z"/>
+    </g>
+    <g stroke="#6f8f4a" stroke-width="1" fill="none" opacity="0.8">
+      <path d="M22 40 q3 -3 6 -1"/><path d="M62 47 q3 -3 6 -1"/><path d="M96 42 q3 -3 6 -1"/></g>
+  </symbol>
+
+</svg> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gCorteza" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8a65a"/><stop offset="55%" stop-color="#c97f33"/><stop offset="100%" stop-color="#a65f22"/>
+    </linearGradient>
+    <linearGradient id="gCortezaOscura" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c98b4e"/><stop offset="55%" stop-color="#9c6329"/><stop offset="100%" stop-color="#7a4a1c"/>
+    </linearGradient>
+    <linearGradient id="gMiga" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7e6c4"/><stop offset="100%" stop-color="#e8cfa0"/>
+    </linearGradient>
+    <linearGradient id="gChoc" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b4226"/><stop offset="100%" stop-color="#3d2415"/>
+    </linearGradient>
+    <linearGradient id="gCanela" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b5712f"/><stop offset="100%" stop-color="#8a4f1c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Jalá trenzada clásica: seis cabos en diagonal -->
+  <symbol id="ill-trenzada" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="52" ry="6" fill="#000" opacity="0.07"/>
+    <g stroke="#8a5420" stroke-width="1.1">
+      <path d="M12 44 Q22 24 36 40 Q48 54 60 38" fill="url(#gCorteza)"/>
+      <path d="M28 46 Q40 26 54 42 Q66 56 78 40" fill="url(#gCorteza)"/>
+      <path d="M44 47 Q56 27 70 43 Q82 57 94 41" fill="url(#gCorteza)"/>
+      <path d="M58 45 Q70 25 84 41 Q96 55 108 39" fill="url(#gCorteza)"/>
+    </g>
+    <g fill="#fff" opacity="0.5">
+      <circle cx="33" cy="33" r="1.1"/><circle cx="52" cy="37" r="1.1"/>
+      <circle cx="68" cy="34" r="1.1"/><circle cx="87" cy="36" r="1.1"/>
+      <circle cx="44" cy="44" r="1"/><circle cx="76" cy="45" r="1"/>
+    </g>
+  </symbol>
+
+  <!-- Jalá redonda (agulá): espiral de Rosh Hashaná -->
+  <symbol id="ill-redonda" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="86" rx="38" ry="5" fill="#000" opacity="0.07"/>
+    <circle cx="48" cy="48" r="38" fill="url(#gCorteza)" stroke="#8a5420" stroke-width="1.2"/>
+    <g fill="none" stroke="#8a5420" stroke-width="1.6" opacity="0.75">
+      <circle cx="48" cy="48" r="29"/><circle cx="48" cy="48" r="19"/><circle cx="48" cy="48" r="9"/>
+    </g>
+    <path d="M48 10 A38 38 0 0 1 86 48" fill="none" stroke="#fff" stroke-width="2.6" opacity="0.28" stroke-linecap="round"/>
+    <g fill="#fff" opacity="0.45">
+      <circle cx="38" cy="30" r="1.2"/><circle cx="62" cy="36" r="1.2"/><circle cx="34" cy="60" r="1.2"/><circle cx="64" cy="62" r="1.2"/>
+    </g>
+  </symbol>
+
+  <!-- Jalá de canela: corte que muestra el espiral -->
+  <symbol id="ill-canela" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="50" ry="6" fill="#000" opacity="0.07"/>
+    <rect x="14" y="22" width="92" height="36" rx="17" fill="url(#gCorteza)" stroke="#8a5420" stroke-width="1.2"/>
+    <g opacity="0.85">
+      <path d="M30 28 Q38 40 30 52" fill="none" stroke="url(#gCanela)" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M50 26 Q58 40 50 54" fill="none" stroke="url(#gCanela)" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M70 26 Q78 40 70 54" fill="none" stroke="url(#gCanela)" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M90 28 Q97 40 90 52" fill="none" stroke="url(#gCanela)" stroke-width="3.4" stroke-linecap="round"/>
+    </g>
+    <ellipse cx="60" cy="24" rx="40" ry="4" fill="#fff" opacity="0.2"/>
+  </symbol>
+
+  <!-- Jalá rellena: corte transversal con el relleno visible -->
+  <symbol id="ill-rellena" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="86" rx="36" ry="5" fill="#000" opacity="0.07"/>
+    <circle cx="48" cy="48" r="36" fill="url(#gCortezaOscura)" stroke="#6b3d12" stroke-width="1.2"/>
+    <circle cx="48" cy="48" r="27" fill="url(#gMiga)"/>
+    <path d="M48 28 Q62 38 58 48 Q54 60 48 68 Q42 60 38 48 Q34 38 48 28 Z" fill="url(#gChoc)" opacity="0.92"/>
+    <g fill="#fff" opacity="0.4"><circle cx="36" cy="40" r="1.3"/><circle cx="60" cy="42" r="1.3"/><circle cx="40" cy="58" r="1.1"/></g>
+  </symbol>
+
+  <!-- Mini jalá: versión pequeña de la trenzada -->
+  <symbol id="ill-mini" viewBox="0 0 80 60">
+    <ellipse cx="40" cy="52" rx="30" ry="4.5" fill="#000" opacity="0.07"/>
+    <g stroke="#8a5420" stroke-width="1">
+      <path d="M12 36 Q20 22 30 34 Q38 44 46 32" fill="url(#gCorteza)"/>
+      <path d="M26 38 Q34 24 44 36 Q52 46 60 34" fill="url(#gCorteza)"/>
+      <path d="M38 37 Q46 23 56 35 Q64 45 70 34" fill="url(#gCorteza)"/>
+    </g>
+    <g fill="#fff" opacity="0.5"><circle cx="30" cy="29" r="0.9"/><circle cx="50" cy="31" r="0.9"/></g>
+  </symbol>
+
+  <!-- Jalá integral: más oscura, con semillas -->
+  <symbol id="ill-integral" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="50" ry="6" fill="#000" opacity="0.07"/>
+    <g stroke="#5e3a12" stroke-width="1.1">
+      <path d="M14 44 Q24 25 38 41 Q50 54 62 38" fill="url(#gCortezaOscura)"/>
+      <path d="M34 46 Q46 27 60 43 Q72 56 84 40" fill="url(#gCortezaOscura)"/>
+      <path d="M54 45 Q66 26 80 42 Q92 55 106 39" fill="url(#gCortezaOscura)"/>
+    </g>
+    <g fill="#f3e2b8" opacity="0.9">
+      <ellipse cx="32" cy="34" rx="2" ry="1" transform="rotate(-24 32 34)"/>
+      <ellipse cx="52" cy="38" rx="2" ry="1" transform="rotate(16 52 38)"/>
+      <ellipse cx="72" cy="35" rx="2" ry="1" transform="rotate(-18 72 35)"/>
+      <ellipse cx="90" cy="39" rx="2" ry="1" transform="rotate(22 90 39)"/>
+      <ellipse cx="44" cy="46" rx="1.8" ry="0.9"/><ellipse cx="82" cy="47" rx="1.8" ry="0.9"/>
+    </g>
+  </symbol>
+
+  <!-- Jalá de aceituna y hierbas -->
+  <symbol id="ill-salada" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="50" ry="6" fill="#000" opacity="0.07"/>
+    <g stroke="#8a5420" stroke-width="1.1">
+      <path d="M14 44 Q24 25 38 41 Q50 54 62 38" fill="url(#gCorteza)"/>
+      <path d="M34 46 Q46 27 60 43 Q72 56 84 40" fill="url(#gCorteza)"/>
+      <path d="M54 45 Q66 26 80 42 Q92 55 106 39" fill="url(#gCorteza)"/>
+    </g>
+    <g><ellipse cx="38" cy="36" rx="3.4" ry="2.6" fill="#4a5d32"/><ellipse cx="66" cy="39" rx="3.4" ry="2.6" fill="#3f5129"/><ellipse cx="90" cy="37" rx="3" ry="2.3" fill="#4a5d32"/></g>
+    <g stroke="#5f7a3c" stroke-width="1.1" fill="none" opacity="0.85">
+      <path d="M48 44 q4 -4 8 -1"/><path d="M76 45 q4 -4 8 -1"/><path d="M26 42 q4 -4 8 -1"/>
+    </g>
+  </symbol>
+
+  <!-- Babka / trenza alta con veta de chocolate -->
+  <symbol id="ill-babka" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="86" rx="34" ry="5" fill="#000" opacity="0.07"/>
+    <rect x="18" y="24" width="60" height="56" rx="8" fill="url(#gCorteza)" stroke="#8a5420" stroke-width="1.2"/>
+    <path d="M28 34 Q48 46 68 34 Q48 54 28 46 Q48 62 68 50 Q48 72 28 62" fill="none" stroke="url(#gChoc)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+    <rect x="18" y="24" width="60" height="9" rx="4" fill="#fff" opacity="0.16"/>
+  </symbol>
+  <!-- Café americano -->
+  <symbol id="ill-cafe" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="86" rx="30" ry="4.5" fill="#000" opacity="0.07"/>
+    <path d="M26 34 h40 v26 a20 20 0 0 1 -40 0 z" fill="#f3efe6" stroke="#c9bfa8" stroke-width="1.3"/>
+    <path d="M66 40 h7 a9 9 0 0 1 0 18 h-7" fill="none" stroke="#c9bfa8" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M28 36 h36 v16 a18 18 0 0 1 -36 0 z" fill="url(#gChoc)" opacity="0.92"/>
+    <ellipse cx="46" cy="36" rx="18" ry="3.6" fill="#8a5a33"/>
+    <g stroke="#cbb79a" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.8">
+      <path d="M38 26 q3 -5 0 -9"/><path d="M46 24 q3 -5 0 -9"/><path d="M54 26 q3 -5 0 -9"/>
+    </g>
+    <rect x="24" y="62" width="44" height="5" rx="2.5" fill="#e0d6c2"/>
+  </symbol>
+
+  <!-- Gaseosa en botella (reventa) -->
+  <symbol id="ill-gaseosa" viewBox="0 0 96 96">
+    <ellipse cx="48" cy="88" rx="20" ry="4" fill="#000" opacity="0.07"/>
+    <path d="M41 12 h14 v7 q0 4 3 7 l2 3 q4 5 4 12 v36 a8 8 0 0 1 -8 8 h-16 a8 8 0 0 1 -8 -8 v-36 q0 -7 4 -12 l2 -3 q3 -3 3 -7 z"
+          fill="#d8572f" stroke="#a63d1c" stroke-width="1.2" opacity="0.93"/>
+    <rect x="40" y="8" width="16" height="6" rx="2" fill="#7a4a1c"/>
+    <rect x="33" y="44" width="30" height="20" rx="3" fill="#f7efe2" opacity="0.95"/>
+    <g fill="#a63d1c"><rect x="37" y="49" width="22" height="2.6" rx="1.3"/><rect x="37" y="54" width="15" height="2.2" rx="1.1"/></g>
+    <path d="M37 24 q-3 6 -3 13 v30" fill="none" stroke="#fff" stroke-width="2.4" opacity="0.3" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- Jalá pretzel: lazo con sal -->
+  <symbol id="ill-pretzel" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="44" ry="5.5" fill="#000" opacity="0.07"/>
+    <path d="M60 54 C34 54 24 40 32 28 C38 19 50 20 56 30 L60 38 L64 30 C70 20 82 19 88 28 C96 40 86 54 60 54 Z"
+          fill="url(#gCortezaOscura)" stroke="#6b3d12" stroke-width="1.3"/>
+    <path d="M44 26 q6 10 16 12 q10 -2 16 -12" fill="none" stroke="#fff" stroke-width="1.6" opacity="0.2"/>
+    <g fill="#fdfaf4"><circle cx="42" cy="34" r="1.6"/><circle cx="58" cy="44" r="1.7"/><circle cx="76" cy="33" r="1.6"/>
+      <circle cx="50" cy="42" r="1.3"/><circle cx="68" cy="41" r="1.4"/><circle cx="60" cy="30" r="1.3"/></g>
+  </symbol>
+
+  <!-- Jalá parmesano: trenza con queso gratinado -->
+  <symbol id="ill-parmesano" viewBox="0 0 120 72">
+    <ellipse cx="60" cy="63" rx="50" ry="6" fill="#000" opacity="0.07"/>
+    <g stroke="#8a5420" stroke-width="1.1">
+      <path d="M14 44 Q24 25 38 41 Q50 54 62 38" fill="url(#gCorteza)"/>
+      <path d="M34 46 Q46 27 60 43 Q72 56 84 40" fill="url(#gCorteza)"/>
+      <path d="M54 45 Q66 26 80 42 Q92 55 106 39" fill="url(#gCorteza)"/>
+    </g>
+    <g fill="#f7dc8e" opacity="0.95">
+      <path d="M30 32 l5 -2 l2 4 l-5 2 z"/><path d="M50 36 l5 -2 l2 4 l-5 2 z"/>
+      <path d="M70 33 l5 -2 l2 4 l-5 2 z"/><path d="M88 37 l5 -2 l2 4 l-5 2 z"/>
+      <path d="M40 44 l4 -2 l2 3 l-4 2 z"/><path d="M78 45 l4 -2 l2 3 l-4 2 z"/>
+    </g>
+    <g stroke="#6f8f4a" stroke-width="1" fill="none" opacity="0.8">
+      <path d="M22 40 q3 -3 6 -1"/><path d="M62 47 q3 -3 6 -1"/><path d="M96 42 q3 -3 6 -1"/></g>
+  </symbol>
+
+</svg>
+
+<div id="gate"></div>
+<div id="app" style="display:none">
+<header class="hd"><div class="hdi">
+ <div class="brand">
+  <div class="logo"><svg width="30" height="30" viewBox="0 0 36 36" fill="none"><path d="M7 22C7 14.5 12 10 18 10C24 10 29 14.5 29 22C29 25.3 26.5 27 23 27H13C9.5 27 7 25.3 7 22Z" fill="#C96B2C"/><path d="M11 21C13 15.5 16.5 13 18 13C19.5 13 23 15.5 25 21" stroke="#FFEED6" stroke-width="2.2" stroke-linecap="round"/><path d="M14.5 14.5L18 24.5L21.5 14.5" stroke="#FFEED6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="7" r="2" fill="#E8803A"/></svg></div>
+  <div class="bt"><div><span class="bn">oh-jalá</span><span class="pill">Costeo · S/</span></div>
+   <div class="bs">Panadería diferente · San Isidro, Lima</div></div></div>
+ <div class="hc">
+  <div class="cfg"><label for="selAnio">Año</label><select id="selAnio"><option value="2026">2026</option><option value="2025">2025</option></select></div>
+  <div class="cfg"><label for="inIgv">IGV %</label><input type="number" id="inIgv" step="0.5" min="0" max="25"/></div>
+  <span id="usrBox"></span>
+ </div></div></header>
+<nav class="tabs"><div class="ti">
+ <button class="tb on" data-t="res">Resumen</button>
+ <button class="tb" data-t="prod">Productos <span class="cnt" id="cProd">10</span></button>
+ <button class="tb" data-t="ins">Insumos y recetas</button>
+ <button class="tb" data-t="mo">Mano de obra</button>
+ <button class="tb" data-t="util">Utilidad bruta</button>
+ <button class="tb" data-t="tab">Tablero</button>
+ <button class="tb" data-t="can">Canales</button>
+ <button class="tb" data-t="pron">Pronóstico</button>
+ <button class="tb" data-t="vta">Consumo</button>
+ <button class="tb" data-t="esc">Escenarios <span class="cnt" id="cEsc">0</span></button>
+ <button class="tb" id="tabUsr" data-t="usr" style="display:none">Usuarios</button>
+ <span class="src">Datos de demostración</span>
+</div></nav>
+<main class="wrap">
+ <section id="p-res" class="pane on"></section>
+ <section id="p-prod" class="pane"></section>
+ <section id="p-ins" class="pane"></section>
+ <section id="p-mo" class="pane"></section>
+ <section id="p-util" class="pane"></section>
+ <section id="p-tab" class="pane"></section>
+ <section id="p-can" class="pane"></section>
+ <section id="p-pron" class="pane"></section>
+ <section id="p-vta" class="pane"></section>
+ <section id="p-esc" class="pane"></section>
+ <section id="p-usr" class="pane"></section>
+</main>
+</div>
+<div class="modal" id="modal"><div class="mbox">
+ <div class="mtop"><b>Ficha de producto</b><button class="mclose" id="mClose">&times;</button></div>
+ <div class="mbody" id="modalBody"></div></div></div>
+<script>
+const D = {"meta":{"marca":"oh-jalá","sub":"Panadería diferente · San Isidro, Lima","igv":18,"aviso":"Datos de demostración construidos para el curso. No son las cifras reales de la panadería."},"productos":[{"id":"jala_canela_clasica","nombre":"Jala Canela Clasica","categoria":"jala","desc":"Trenza dulce de miga esponjosa con espiral de canela y azucar rubia; la mas pedida de la vitrina.","precio":23.5,"neto":19.9153,"peso":650,"ill":"ill-canela","es_reventa":false,"mp":5.7752,"mod":2.6485,"min_hombre":6.417,"min_maquina":11.333,"min_horno":1.417,"unidades_lote":24,"lotes_semana":8,"harina_lote":7.0,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":7000.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":29.6969,"costo_por_unidad":1.2374,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":490.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":4.361,"costo_por_unidad":0.1817,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":1960.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":1.764,"costo_por_unidad":0.0735,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":980.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":4.41,"costo_por_unidad":0.1837,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1260.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":11.5043,"costo_por_unidad":0.4793,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":140.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":3.36,"costo_por_unidad":0.14,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":1120.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":5.376,"costo_por_unidad":0.224,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":175.0,"unidad":"g","costo_unit_ins":0.012,"costo_lote":2.1,"costo_por_unidad":0.0875,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":350.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":11.4286,"costo_por_unidad":0.4762,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":35.0,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.77,"costo_por_unidad":0.0321,"merma":0.0},{"tipo":"masa","nombre":"Miel de abeja","familia":"endulzantes","cant_lote":140.0,"unidad":"g","costo_unit_ins":0.028,"costo_lote":3.92,"costo_por_unidad":0.1633,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":126.0,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.3528,"costo_por_unidad":0.0147,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":384.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":3.5061,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"relleno","nombre":"Relleno de canela y azucar rubia","familia":"relleno","cant_lote":118,"unidad":"g","costo_unit_ins":0.014115,"costo_lote":null,"costo_por_unidad":1.6656,"merma":0},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.5,"costo_unid":0.21381,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.33333,"costo_unid":0.14254,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.08333,"costo_unid":0.02555,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":1.08333,"costo_unid":0.44234,"tarifa":0.408316},{"orden":5,"nombre":"Relleno y laminado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se lamina la masa, se pincela mantequilla y se espolvorea el relleno de canela antes de enrollar.","minh_lote":28.0,"minm_lote":0.0,"minh_unid":1.16667,"costo_unid":0.47637,"tarifa":0.408316},{"orden":6,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":40.0,"minm_lote":0.0,"minh_unid":1.66667,"costo_unid":0.68053,"tarifa":0.408316},{"orden":7,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.08333,"costo_unid":0.02555,"tarifa":0.306602},{"orden":8,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.75,"costo_unid":0.42359,"tarifa":0.564793},{"orden":9,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.75,"costo_unid":0.21818,"tarifa":0.290913}],"cif":1.8217,"cuf":10.2454,"ub":9.6699,"ub_pct":48.56,"fc_pct":29.0,"mod_pct":13.3,"cif_pct":9.15},{"id":"jala_plain_clasica","nombre":"Jala Plain Clasica","categoria":"jala","desc":"La receta base de la casa: trenza de tres cabos, miga tierna y corteza dorada con huevo.","precio":21.0,"neto":17.7966,"peso":650,"ill":"ill-trenzada","es_reventa":false,"mp":4.8624,"mod":2.2401,"min_hombre":5.417,"min_maquina":11.333,"min_horno":1.417,"unidades_lote":24,"lotes_semana":6,"harina_lote":8.6,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":8600.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":36.4848,"costo_por_unidad":1.5202,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":602.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":5.3578,"costo_por_unidad":0.2232,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":2408.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":2.1672,"costo_por_unidad":0.0903,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":1204.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":5.418,"costo_por_unidad":0.2257,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1548.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":14.1339,"costo_por_unidad":0.5889,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":172.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":4.128,"costo_por_unidad":0.172,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":1376.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":6.6048,"costo_por_unidad":0.2752,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":215.0,"unidad":"g","costo_unit_ins":0.012,"costo_lote":2.58,"costo_por_unidad":0.1075,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":430.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":14.0408,"costo_por_unidad":0.585,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":43.0,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.946,"costo_por_unidad":0.0394,"merma":0.0},{"tipo":"masa","nombre":"Miel de abeja","familia":"endulzantes","cant_lote":172.0,"unidad":"g","costo_unit_ins":0.028,"costo_lote":4.816,"costo_por_unidad":0.2007,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":154.8,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.4334,"costo_por_unidad":0.0181,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":384.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":3.5061,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.5,"costo_unid":0.21381,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.33333,"costo_unid":0.14254,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.08333,"costo_unid":0.02555,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":1.08333,"costo_unid":0.44234,"tarifa":0.408316},{"orden":5,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":44.0,"minm_lote":0.0,"minh_unid":1.83333,"costo_unid":0.74858,"tarifa":0.408316},{"orden":6,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.08333,"costo_unid":0.02555,"tarifa":0.306602},{"orden":7,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.75,"costo_unid":0.42359,"tarifa":0.564793},{"orden":8,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.75,"costo_unid":0.21818,"tarifa":0.290913}],"cif":1.8217,"cuf":8.9242,"ub":8.8724,"ub_pct":49.85,"fc_pct":27.32,"mod_pct":12.59,"cif_pct":10.24},{"id":"jala_plain_mediana","nombre":"Jala Plain Mediana","categoria":"jala","desc":"Misma masa de la Plain Clasica en formato chico, pensada para dos personas.","precio":13.5,"neto":11.4407,"peso":380,"ill":"ill-mini","es_reventa":false,"mp":3.182,"mod":1.3384,"min_hombre":3.238,"min_maquina":6.476,"min_horno":0.81,"unidades_lote":42,"lotes_semana":4,"harina_lote":8.8,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":8800.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":37.3333,"costo_por_unidad":0.8889,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":616.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":5.4824,"costo_por_unidad":0.1305,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":2464.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":2.2176,"costo_por_unidad":0.0528,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":1232.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":5.544,"costo_por_unidad":0.132,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1584.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":14.4626,"costo_por_unidad":0.3443,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":176.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":4.224,"costo_por_unidad":0.1006,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":1408.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":6.7584,"costo_por_unidad":0.1609,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":220.0,"unidad":"g","costo_unit_ins":0.012,"costo_lote":2.64,"costo_por_unidad":0.0629,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":440.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":14.3673,"costo_por_unidad":0.3421,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":44.0,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.968,"costo_por_unidad":0.023,"merma":0.0},{"tipo":"masa","nombre":"Miel de abeja","familia":"endulzantes","cant_lote":176.0,"unidad":"g","costo_unit_ins":0.028,"costo_lote":4.928,"costo_por_unidad":0.1173,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":158.4,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.4435,"costo_por_unidad":0.0106,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":672.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":6.1356,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.28571,"costo_unid":0.12218,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.19048,"costo_unid":0.08145,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.04762,"costo_unid":0.0146,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":0.61905,"costo_unid":0.25277,"tarifa":0.408316},{"orden":5,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":50.0,"minm_lote":0.0,"minh_unid":1.19048,"costo_unid":0.48609,"tarifa":0.408316},{"orden":6,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.04762,"costo_unid":0.0146,"tarifa":0.306602},{"orden":7,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.42857,"costo_unid":0.24205,"tarifa":0.564793},{"orden":8,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.42857,"costo_unid":0.12468,"tarifa":0.290913}],"cif":1.0413,"cuf":5.5617,"ub":5.879,"ub_pct":51.39,"fc_pct":27.81,"mod_pct":11.7,"cif_pct":9.1},{"id":"jala_shabat_clasica","nombre":"Jala Shabat Clasica","categoria":"jala","desc":"Trenzada a mano en seis cabos y cubierta de ajonjoli; la pieza de mesa del viernes.","precio":25.0,"neto":21.1864,"peso":700,"ill":"ill-redonda","es_reventa":false,"mp":5.3804,"mod":5.0738,"min_hombre":12.333,"min_maquina":15.111,"min_horno":1.889,"unidades_lote":18,"lotes_semana":5,"harina_lote":6.9,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":6900.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":29.2727,"costo_por_unidad":1.6263,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":483.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":4.2987,"costo_por_unidad":0.2388,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":1932.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":1.7388,"costo_por_unidad":0.0966,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":966.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":4.347,"costo_por_unidad":0.2415,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1242.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":11.34,"costo_por_unidad":0.63,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":138.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":3.312,"costo_por_unidad":0.184,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":1104.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":5.2992,"costo_por_unidad":0.2944,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":172.5,"unidad":"g","costo_unit_ins":0.012,"costo_lote":2.07,"costo_por_unidad":0.115,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":345.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":11.2653,"costo_por_unidad":0.6259,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":34.5,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.759,"costo_por_unidad":0.0422,"merma":0.0},{"tipo":"masa","nombre":"Miel de abeja","familia":"endulzantes","cant_lote":138.0,"unidad":"g","costo_unit_ins":0.028,"costo_lote":3.864,"costo_por_unidad":0.2147,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":124.2,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.3478,"costo_por_unidad":0.0193,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":288.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":2.6296,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"masa","nombre":"Ajonjoli (sesamo) crudo","familia":"semillas","cant_lote":252.0,"unidad":"g","costo_unit_ins":0.016837,"costo_lote":4.2429,"costo_por_unidad":0.2357,"merma":0.02},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.66667,"costo_unid":0.28509,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.44444,"costo_unid":0.19006,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.11111,"costo_unid":0.03407,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":1.44444,"costo_unid":0.58979,"tarifa":0.408316},{"orden":5,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":136.0,"minm_lote":0.0,"minh_unid":7.55556,"costo_unid":3.08505,"tarifa":0.408316},{"orden":6,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.11111,"costo_unid":0.03407,"tarifa":0.306602},{"orden":7,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":1.0,"costo_unid":0.56479,"tarifa":0.564793},{"orden":8,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":1.0,"costo_unid":0.29091,"tarifa":0.290913}],"cif":2.4285,"cuf":12.8827,"ub":8.3037,"ub_pct":39.19,"fc_pct":25.4,"mod_pct":23.95,"cif_pct":11.46},{"id":"jala_nutella_clasica","nombre":"Jala Nutella Clasica","categoria":"jala","desc":"Rellena de crema de avellana con cacao y nuez pecana, laminada en espiral.","precio":28.5,"neto":24.1525,"peso":680,"ill":"ill-rellena","es_reventa":false,"mp":8.4721,"mod":3.219,"min_hombre":7.8,"min_maquina":13.6,"min_horno":1.7,"unidades_lote":20,"lotes_semana":5,"harina_lote":6.1,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":6100.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":25.8788,"costo_por_unidad":1.2939,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":427.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":3.8003,"costo_por_unidad":0.19,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":1708.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":1.5372,"costo_por_unidad":0.0769,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":854.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":3.843,"costo_por_unidad":0.1921,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1098.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":10.0252,"costo_por_unidad":0.5013,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":122.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":2.928,"costo_por_unidad":0.1464,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":976.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":4.6848,"costo_por_unidad":0.2342,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":152.5,"unidad":"g","costo_unit_ins":0.012,"costo_lote":1.83,"costo_por_unidad":0.0915,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":305.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":9.9592,"costo_por_unidad":0.498,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":30.5,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.671,"costo_por_unidad":0.0335,"merma":0.0},{"tipo":"masa","nombre":"Miel de abeja","familia":"endulzantes","cant_lote":122.0,"unidad":"g","costo_unit_ins":0.028,"costo_lote":3.416,"costo_por_unidad":0.1708,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":109.8,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.3074,"costo_por_unidad":0.0154,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":320.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":2.9217,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"relleno","nombre":"Relleno de avellana y cacao","familia":"relleno","cant_lote":132,"unidad":"g","costo_unit_ins":0.031909,"costo_lote":null,"costo_por_unidad":4.212,"merma":0},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.6,"costo_unid":0.25658,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.4,"costo_unid":0.17105,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.1,"costo_unid":0.03066,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":1.3,"costo_unid":0.53081,"tarifa":0.408316},{"orden":5,"nombre":"Relleno y laminado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se dosifica la crema de avellana, se reparte nuez pecana y se forma el espiral relleno.","minh_lote":30.0,"minm_lote":0.0,"minh_unid":1.5,"costo_unid":0.61247,"tarifa":0.408316},{"orden":6,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":40.0,"minm_lote":0.0,"minh_unid":2.0,"costo_unid":0.81663,"tarifa":0.408316},{"orden":7,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.1,"costo_unid":0.03066,"tarifa":0.306602},{"orden":8,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.9,"costo_unid":0.50831,"tarifa":0.564793},{"orden":9,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.9,"costo_unid":0.26182,"tarifa":0.290913}],"cif":2.1855,"cuf":13.8766,"ub":10.2759,"ub_pct":42.55,"fc_pct":35.08,"mod_pct":13.33,"cif_pct":9.05},{"id":"jala_parmesano_clasica","nombre":"Jala Parmesano Clasica","categoria":"jala","desc":"Version salada con parmesano, edam y ajo; sale del horno oliendo a mantequilla.","precio":32.0,"neto":27.1186,"peso":640,"ill":"ill-parmesano","es_reventa":false,"mp":8.9069,"mod":2.8336,"min_hombre":6.864,"min_maquina":12.364,"min_horno":1.545,"unidades_lote":22,"lotes_semana":4,"harina_lote":6.6,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":6600.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":28.0,"costo_por_unidad":1.2727,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":462.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":4.1118,"costo_por_unidad":0.1869,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":1848.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":1.6632,"costo_por_unidad":0.0756,"merma":0.0},{"tipo":"masa","nombre":"Ajo molido en pasta","familia":"especias","cant_lote":39.6,"unidad":"g","costo_unit_ins":0.018,"costo_lote":0.7128,"costo_por_unidad":0.0324,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":264.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":1.188,"costo_por_unidad":0.054,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1188.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":10.847,"costo_por_unidad":0.493,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":132.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":3.168,"costo_por_unidad":0.144,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":1056.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":5.0688,"costo_por_unidad":0.2304,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":165.0,"unidad":"g","costo_unit_ins":0.012,"costo_lote":1.98,"costo_por_unidad":0.09,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":462.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":15.0857,"costo_por_unidad":0.6857,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":33.0,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.726,"costo_por_unidad":0.033,"merma":0.0},{"tipo":"masa","nombre":"Queso edam en bloque","familia":"quesos","cant_lote":528.0,"unidad":"g","costo_unit_ins":0.035052,"costo_lote":18.5072,"costo_por_unidad":0.8412,"merma":0.03},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":132.0,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.3696,"costo_por_unidad":0.0168,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":352.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":3.2139,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"relleno","nombre":"Relleno salado de parmesano, edam y ajo","familia":"relleno","cant_lote":96,"unidad":"g","costo_unit_ins":0.040989,"costo_lote":null,"costo_por_unidad":3.935,"merma":0},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.54545,"costo_unid":0.23325,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.36364,"costo_unid":0.1555,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.09091,"costo_unid":0.02787,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":1.18182,"costo_unid":0.48256,"tarifa":0.408316},{"orden":5,"nombre":"Relleno y laminado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se distribuye la pasta de parmesano, edam y ajo y se pliega la masa en capas.","minh_lote":25.0,"minm_lote":0.0,"minh_unid":1.13636,"costo_unid":0.464,"tarifa":0.408316},{"orden":6,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":40.0,"minm_lote":0.0,"minh_unid":1.81818,"costo_unid":0.74239,"tarifa":0.408316},{"orden":7,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.09091,"costo_unid":0.02787,"tarifa":0.306602},{"orden":8,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.81818,"costo_unid":0.4621,"tarifa":0.564793},{"orden":9,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.81818,"costo_unid":0.23802,"tarifa":0.290913}],"cif":1.9862,"cuf":13.7267,"ub":13.3919,"ub_pct":49.38,"fc_pct":32.84,"mod_pct":10.45,"cif_pct":7.32},{"id":"jala_pretzel_clasica","nombre":"Jala Pretzel Clasica","categoria":"jala","desc":"Trenza con bano alcalino y sal gruesa: corteza brillante, color caoba y miga salada.","precio":15.5,"neto":13.1356,"peso":520,"ill":"ill-pretzel","es_reventa":false,"mp":3.4566,"mod":2.0951,"min_hombre":5.071,"min_maquina":9.714,"min_horno":1.214,"unidades_lote":28,"lotes_semana":3,"harina_lote":8.0,"receta":[{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":8000.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":33.9394,"costo_por_unidad":1.2121,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":400.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":3.56,"costo_por_unidad":0.1271,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":2880.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":2.592,"costo_por_unidad":0.0926,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":480.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":2.16,"costo_por_unidad":0.0771,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":800.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":7.3043,"costo_por_unidad":0.2609,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":80.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":1.92,"costo_por_unidad":0.0686,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":800.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":3.84,"costo_por_unidad":0.1371,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":200.0,"unidad":"g","costo_unit_ins":0.012,"costo_lote":2.4,"costo_por_unidad":0.0857,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":320.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":10.449,"costo_por_unidad":0.3732,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":40.0,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.88,"costo_por_unidad":0.0314,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":144.0,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.4032,"costo_por_unidad":0.0144,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":448.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":4.0904,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"masa","nombre":"Sal gruesa en escamas (pretzel)","familia":"aditivos","cant_lote":168.0,"unidad":"g","costo_unit_ins":0.0046,"costo_lote":0.7728,"costo_por_unidad":0.0276,"merma":0.0},{"tipo":"relleno","nombre":"Bano alcalino para pretzel","familia":"relleno","cant_lote":85,"unidad":"g","costo_unit_ins":0.00156,"costo_lote":null,"costo_por_unidad":0.1326,"merma":0},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.42857,"costo_unid":0.18327,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.28571,"costo_unid":0.12218,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.07143,"costo_unid":0.0219,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":0.92857,"costo_unid":0.37915,"tarifa":0.408316},{"orden":5,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":38.0,"minm_lote":0.0,"minh_unid":1.35714,"costo_unid":0.55414,"tarifa":0.408316},{"orden":6,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.07143,"costo_unid":0.0219,"tarifa":0.306602},{"orden":7,"nombre":"Bano alcalino","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Cada pieza pasa por el bano alcalino caliente, se escurre y se sala con sal gruesa.","minh_lote":18.0,"minm_lote":0.0,"minh_unid":0.64286,"costo_unid":0.26249,"tarifa":0.408316},{"orden":8,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.64286,"costo_unid":0.36308,"tarifa":0.564793},{"orden":9,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.64286,"costo_unid":0.18702,"tarifa":0.290913}],"cif":1.5607,"cuf":7.1124,"ub":6.0232,"ub_pct":45.85,"fc_pct":26.31,"mod_pct":15.95,"cif_pct":11.88},{"id":"jala_integral_clasica","nombre":"Jala Integral Clasica","categoria":"jala","desc":"Harina integral, miel y una mezcla de cuatro semillas por dentro y por fuera.","precio":21.0,"neto":17.7966,"peso":640,"ill":"ill-integral","es_reventa":false,"mp":5.6362,"mod":2.8515,"min_hombre":6.9,"min_maquina":13.6,"min_horno":1.7,"unidades_lote":20,"lotes_semana":4,"harina_lote":6.6,"receta":[{"tipo":"masa","nombre":"Harina integral de trigo","familia":"harinas","cant_lote":3960.0,"unidad":"g","costo_unit_ins":0.005657,"costo_lote":22.4,"costo_por_unidad":1.12,"merma":0.01},{"tipo":"masa","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","cant_lote":2640.0,"unidad":"g","costo_unit_ins":0.004242,"costo_lote":11.2,"costo_por_unidad":0.56,"merma":0.01},{"tipo":"masa","nombre":"Aceite vegetal de girasol","familia":"grasas","cant_lote":528.0,"unidad":"ml","costo_unit_ins":0.0089,"costo_lote":4.6992,"costo_por_unidad":0.235,"merma":0.0},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":1848.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":1.6632,"costo_por_unidad":0.0832,"merma":0.0},{"tipo":"masa","nombre":"Azucar blanca refinada","familia":"endulzantes","cant_lote":528.0,"unidad":"g","costo_unit_ins":0.0045,"costo_lote":2.376,"costo_por_unidad":0.1188,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":1188.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":10.847,"costo_por_unidad":0.5423,"merma":0.08},{"tipo":"masa","nombre":"Leche entera en polvo","familia":"lacteos","cant_lote":132.0,"unidad":"g","costo_unit_ins":0.024,"costo_lote":3.168,"costo_por_unidad":0.1584,"merma":0.0},{"tipo":"masa","nombre":"Leche entera fresca","familia":"lacteos","cant_lote":1056.0,"unidad":"ml","costo_unit_ins":0.0048,"costo_lote":5.0688,"costo_por_unidad":0.2534,"merma":0.0},{"tipo":"masa","nombre":"Levadura fresca prensada","familia":"aditivos","cant_lote":165.0,"unidad":"g","costo_unit_ins":0.012,"costo_lote":1.98,"costo_por_unidad":0.099,"merma":0.0},{"tipo":"masa","nombre":"Mantequilla sin sal","familia":"lacteos","cant_lote":330.0,"unidad":"g","costo_unit_ins":0.032653,"costo_lote":10.7755,"costo_por_unidad":0.5388,"merma":0.02},{"tipo":"masa","nombre":"Mejorador panario","familia":"aditivos","cant_lote":33.0,"unidad":"g","costo_unit_ins":0.022,"costo_lote":0.726,"costo_por_unidad":0.0363,"merma":0.0},{"tipo":"masa","nombre":"Miel de abeja","familia":"endulzantes","cant_lote":264.0,"unidad":"g","costo_unit_ins":0.028,"costo_lote":7.392,"costo_por_unidad":0.3696,"merma":0.0},{"tipo":"masa","nombre":"Sal marina fina yodada","familia":"aditivos","cant_lote":118.8,"unidad":"g","costo_unit_ins":0.0028,"costo_lote":0.3326,"costo_por_unidad":0.0166,"merma":0.0},{"tipo":"masa","nombre":"Huevo de gallina (granel)","familia":"huevos","cant_lote":320.0,"unidad":"g","costo_unit_ins":0.00913,"costo_lote":2.9217,"costo_por_unidad":0.1461,"merma":0.08},{"tipo":"relleno","nombre":"Mezcla de semillas para integral","familia":"relleno","cant_lote":46,"unidad":"g","costo_unit_ins":0.014972,"costo_lote":null,"costo_por_unidad":0.6887,"merma":0},{"tipo":"empaque","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.55,"costo_lote":null,"costo_por_unidad":0.55,"merma":0.0},{"tipo":"empaque","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.12,"costo_lote":null,"costo_por_unidad":0.12,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Pesado y mezclado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Se pesan harinas, liquidos y aditivos del lote y se premezclan en seco.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.6,"costo_unid":0.25658,"tarifa":0.427629},{"orden":2,"nombre":"Amasado","estacion":"amasado","est_nombre":"Amasado y pesado","desc":"Amasadora espiral: 4 min en primera y 16 min en segunda hasta punto de gluten.","minh_lote":8.0,"minm_lote":20.0,"minh_unid":0.4,"costo_unid":0.17105,"tarifa":0.427629},{"orden":3,"nombre":"Primera fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"La masa reposa en bloque en camara a 26 C hasta duplicar volumen.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.1,"costo_unid":0.03066,"tarifa":0.306602},{"orden":4,"nombre":"Division y boleado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se divide en piezas al peso objetivo y se bolea para dar tension.","minh_lote":26.0,"minm_lote":0.0,"minh_unid":1.3,"costo_unid":0.53081,"tarifa":0.408316},{"orden":5,"nombre":"Relleno y laminado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se incorpora la mezcla de semillas al interior y se reboza la pieza por fuera.","minh_lote":12.0,"minm_lote":0.0,"minh_unid":0.6,"costo_unid":0.24499,"tarifa":0.408316},{"orden":6,"nombre":"Trenzado o formado","estacion":"mesa_formado","est_nombre":"Mesa de formado y trenzado","desc":"Se estiran los cabos y se trenza o forma cada pieza a mano.","minh_lote":40.0,"minm_lote":0.0,"minh_unid":2.0,"costo_unid":0.81663,"tarifa":0.408316},{"orden":7,"nombre":"Segunda fermentacion","estacion":"camara","est_nombre":"Camara de fermentacion","desc":"Las piezas formadas leudan en latas dentro de camara hasta punto de horno.","minh_lote":2.0,"minm_lote":90.0,"minh_unid":0.1,"costo_unid":0.03066,"tarifa":0.306602},{"orden":8,"nombre":"Pintado y horneado","estacion":"horno","est_nombre":"Horno rotativo","desc":"Se pinta dos veces con huevo batido y se hornea a 170 C con vapor inicial en horno rotativo.","minh_lote":18.0,"minm_lote":34.0,"minh_unid":0.9,"costo_unid":0.50831,"tarifa":0.564793},{"orden":9,"nombre":"Enfriado y empaque","estacion":"empaque","est_nombre":"Enfriado y empaque","desc":"Las piezas enfrian en rejilla, se embolsan, etiquetan y pasan a vitrina o a las cajas de delivery.","minh_lote":18.0,"minm_lote":38.0,"minh_unid":0.9,"costo_unid":0.26182,"tarifa":0.290913}],"cif":2.1855,"cuf":10.6732,"ub":7.1234,"ub_pct":40.03,"fc_pct":31.67,"mod_pct":16.02,"cif_pct":12.28},{"id":"cafe_americano","nombre":"Cafe Americano","categoria":"cafeteria","desc":"Doble espresso de cafe de especialidad de Villa Rica diluido en agua a 93 C, en vaso de 12 oz.","precio":8.0,"neto":6.7797,"peso":355,"ill":"ill-cafe","es_reventa":false,"mp":2.0784,"mod":0.6253,"min_hombre":2.5,"min_maquina":2.5,"min_horno":0.0,"unidades_lote":1,"lotes_semana":300,"harina_lote":0.0,"receta":[{"tipo":"masa","nombre":"Cafe tostado y molido de especialidad (Villa Rica)","familia":"bebidas","cant_lote":18.0,"unidad":"g","costo_unit_ins":0.073469,"costo_lote":1.3224,"costo_por_unidad":1.3224,"merma":0.02},{"tipo":"masa","nombre":"Agua filtrada y osmotizada","familia":"bebidas","cant_lote":240.0,"unidad":"ml","costo_unit_ins":0.0009,"costo_lote":0.216,"costo_por_unidad":0.216,"merma":0.0},{"tipo":"empaque","nombre":"Vaso de carton 12 oz doble pared","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.38,"costo_lote":null,"costo_por_unidad":0.38,"merma":0.0},{"tipo":"empaque","nombre":"Tapa plastica para vaso 12 oz","familia":"empaque","cant_lote":1,"unidad":"und","costo_unit_ins":0.16,"costo_lote":null,"costo_por_unidad":0.16,"merma":0.0}],"pasos":[{"orden":1,"nombre":"Alistado de barra","estacion":"barra_cafe","est_nombre":"Barra de cafe","desc":"Se purga la maquina, se calibra la molienda y se alista la estacion.","minh_lote":0.4,"minm_lote":0.0,"minh_unid":0.4,"costo_unid":0.10005,"tarifa":0.250122},{"orden":2,"nombre":"Calentado de agua","estacion":"barra_cafe","est_nombre":"Barra de cafe","desc":"La caldera lleva el agua filtrada a 93 C para la dilucion.","minh_lote":0.2,"minm_lote":1.1,"minh_unid":0.2,"costo_unid":0.05002,"tarifa":0.250122},{"orden":3,"nombre":"Molienda y dosificado","estacion":"barra_cafe","est_nombre":"Barra de cafe","desc":"Se muelen y dosifican 18 g de cafe de especialidad por taza.","minh_lote":0.5,"minm_lote":0.4,"minh_unid":0.5,"costo_unid":0.12506,"tarifa":0.250122},{"orden":4,"nombre":"Extraccion","estacion":"barra_cafe","est_nombre":"Barra de cafe","desc":"Doble extraccion de espresso de 36 ml sobre agua caliente.","minh_lote":0.7,"minm_lote":1.0,"minh_unid":0.7,"costo_unid":0.17509,"tarifa":0.250122},{"orden":5,"nombre":"Servido","estacion":"barra_cafe","est_nombre":"Barra de cafe","desc":"Se sirve en vaso de 12 oz y se controla temperatura final.","minh_lote":0.4,"minm_lote":0.0,"minh_unid":0.4,"costo_unid":0.10005,"tarifa":0.250122},{"orden":6,"nombre":"Tapado y empaque","estacion":"barra_cafe","est_nombre":"Barra de cafe","desc":"Se tapa el vaso, se coloca faja de marca y se entrega en barra.","minh_lote":0.3,"minm_lote":0.0,"minh_unid":0.3,"costo_unid":0.07504,"tarifa":0.250122}],"cif":0.0129,"cuf":2.7166,"ub":4.0631,"ub_pct":59.93,"fc_pct":30.66,"mod_pct":9.22,"cif_pct":0.19},{"id":"gaseosa_500ml","nombre":"Gaseosa 500ml","categoria":"reventa","desc":"Botella de gaseosa de 500 ml bien fria, para acompanar la vitrina.","precio":6.0,"neto":5.0847,"peso":500,"ill":"ill-gaseosa","es_reventa":true,"mp":3.2,"mod":0,"min_hombre":0,"min_maquina":0,"min_horno":0,"unidades_lote":null,"lotes_semana":null,"harina_lote":null,"receta":[{"tipo":"compra","nombre":"Costo de compra al proveedor","familia":"reventa","cant_lote":1,"unidad":"und","costo_unit_ins":3.2,"costo_lote":null,"costo_por_unidad":3.2,"merma":0}],"pasos":[],"cif":0.0,"cuf":3.2,"ub":1.8847,"ub_pct":37.07,"fc_pct":62.93,"mod_pct":0.0,"cif_pct":0.0}],"insumos":[{"id":"harina_panadera","nombre":"Harina de trigo panadera (fuerza)","familia":"harinas","unidad_compra":"kg","costo_compra":4.2,"merma_pct":0.01,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.00424242,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Molinos del Rimac S.A.C."},{"id":"harina_integral","nombre":"Harina integral de trigo","familia":"harinas","unidad_compra":"kg","costo_compra":5.6,"merma_pct":0.01,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.00565657,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Molinos del Rimac S.A.C."},{"id":"leche_en_polvo","nombre":"Leche entera en polvo","familia":"lacteos","unidad_compra":"kg","costo_compra":24.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.024,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Distribuidora Andina de Lacteos"},{"id":"mantequilla_sin_sal","nombre":"Mantequilla sin sal","familia":"lacteos","unidad_compra":"kg","costo_compra":32.0,"merma_pct":0.02,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.03265306,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Distribuidora Andina de Lacteos"},{"id":"leche_entera","nombre":"Leche entera fresca","familia":"lacteos","unidad_compra":"L","costo_compra":4.8,"merma_pct":0.0,"unidad_receta":"ml","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0048,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Distribuidora Andina de Lacteos"},{"id":"huevo_gallina","nombre":"Huevo de gallina (granel)","familia":"huevos","unidad_compra":"kg","costo_compra":8.4,"merma_pct":0.08,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.00913043,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Avicola San Fernandino E.I.R.L."},{"id":"azucar_blanca","nombre":"Azucar blanca refinada","familia":"endulzantes","unidad_compra":"kg","costo_compra":4.5,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0045,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Abarrotes Mayorista Union"},{"id":"azucar_rubia","nombre":"Azucar rubia","familia":"endulzantes","unidad_compra":"kg","costo_compra":4.2,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0042,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Abarrotes Mayorista Union"},{"id":"miel_de_abeja","nombre":"Miel de abeja","familia":"endulzantes","unidad_compra":"kg","costo_compra":28.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.028,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Apicola Valle Verde"},{"id":"aceite_vegetal","nombre":"Aceite vegetal de girasol","familia":"grasas","unidad_compra":"L","costo_compra":8.9,"merma_pct":0.0,"unidad_receta":"ml","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0089,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Abarrotes Mayorista Union"},{"id":"manteca_vegetal","nombre":"Manteca vegetal panadera","familia":"grasas","unidad_compra":"kg","costo_compra":9.8,"merma_pct":0.01,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.00989899,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Abarrotes Mayorista Union"},{"id":"ajonjoli","nombre":"Ajonjoli (sesamo) crudo","familia":"semillas","unidad_compra":"kg","costo_compra":16.5,"merma_pct":0.02,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.01683673,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Granos y Semillas El Olivo"},{"id":"linaza","nombre":"Linaza marron","familia":"semillas","unidad_compra":"kg","costo_compra":9.8,"merma_pct":0.02,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.01,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Granos y Semillas El Olivo"},{"id":"chia","nombre":"Semilla de chia","familia":"semillas","unidad_compra":"kg","costo_compra":22.0,"merma_pct":0.02,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.02244898,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Granos y Semillas El Olivo"},{"id":"semilla_girasol","nombre":"Semilla de girasol pelada","familia":"semillas","unidad_compra":"kg","costo_compra":14.0,"merma_pct":0.02,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.01428571,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Granos y Semillas El Olivo"},{"id":"nuez_pecana","nombre":"Nuez pecana en mitades","familia":"semillas","unidad_compra":"kg","costo_compra":58.0,"merma_pct":0.05,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.06105263,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Frutos Secos Arequipa S.A.C."},{"id":"crema_avellana_cacao","nombre":"Crema de avellana con cacao (balde 3 kg)","familia":"chocolates","unidad_compra":"kg","costo_compra":26.5,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0265,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Importadora Dulce Norte"},{"id":"cacao_en_polvo","nombre":"Cacao en polvo alcalinizado","familia":"chocolates","unidad_compra":"kg","costo_compra":34.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.034,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Importadora Dulce Norte"},{"id":"queso_parmesano_rallado","nombre":"Queso parmesano rallado","familia":"quesos","unidad_compra":"kg","costo_compra":62.0,"merma_pct":0.03,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.06391753,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Quesos del Mantaro S.A.C."},{"id":"queso_edam","nombre":"Queso edam en bloque","familia":"quesos","unidad_compra":"kg","costo_compra":34.0,"merma_pct":0.03,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.03505155,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Quesos del Mantaro S.A.C."},{"id":"levadura_fresca","nombre":"Levadura fresca prensada","familia":"aditivos","unidad_compra":"kg","costo_compra":12.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.012,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Insumos Panaderos Lima Norte"},{"id":"mejorador_panario","nombre":"Mejorador panario","familia":"aditivos","unidad_compra":"kg","costo_compra":22.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.022,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Insumos Panaderos Lima Norte"},{"id":"bicarbonato_sodio","nombre":"Bicarbonato de sodio grado alimentario","familia":"aditivos","unidad_compra":"kg","costo_compra":9.5,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0095,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Insumos Panaderos Lima Norte"},{"id":"sal_marina_fina","nombre":"Sal marina fina yodada","familia":"aditivos","unidad_compra":"kg","costo_compra":2.8,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0028,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Insumos Panaderos Lima Norte"},{"id":"sal_gruesa","nombre":"Sal gruesa en escamas (pretzel)","familia":"aditivos","unidad_compra":"kg","costo_compra":4.6,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0046,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Insumos Panaderos Lima Norte"},{"id":"canela_molida","nombre":"Canela molida Ceylan","familia":"especias","unidad_compra":"kg","costo_compra":38.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.038,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Especias y Condimentos Surquillo"},{"id":"ajo_molido","nombre":"Ajo molido en pasta","familia":"especias","unidad_compra":"kg","costo_compra":18.0,"merma_pct":0.0,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.018,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Especias y Condimentos Surquillo"},{"id":"bolsa_papel_kraft","nombre":"Bolsa de papel kraft con ventana","familia":"empaque","unidad_compra":"und","costo_compra":0.55,"merma_pct":0.0,"unidad_receta":"und","factor_conversion_compra_receta":1.0,"costo_efectivo":0.55,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Empaques Kraft Peru S.A.C."},{"id":"etiqueta_adhesiva","nombre":"Etiqueta adhesiva impresa de marca","familia":"empaque","unidad_compra":"und","costo_compra":0.12,"merma_pct":0.0,"unidad_receta":"und","factor_conversion_compra_receta":1.0,"costo_efectivo":0.12,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Grafica Adhesiva Lince"},{"id":"vaso_12oz","nombre":"Vaso de carton 12 oz doble pared","familia":"empaque","unidad_compra":"und","costo_compra":0.38,"merma_pct":0.0,"unidad_receta":"und","factor_conversion_compra_receta":1.0,"costo_efectivo":0.38,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Empaques Kraft Peru S.A.C."},{"id":"tapa_vaso","nombre":"Tapa plastica para vaso 12 oz","familia":"empaque","unidad_compra":"und","costo_compra":0.16,"merma_pct":0.0,"unidad_receta":"und","factor_conversion_compra_receta":1.0,"costo_efectivo":0.16,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Empaques Kraft Peru S.A.C."},{"id":"cafe_molido_especialidad","nombre":"Cafe tostado y molido de especialidad (Villa Rica)","familia":"bebidas","unidad_compra":"kg","costo_compra":72.0,"merma_pct":0.02,"unidad_receta":"g","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.07346939,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Tostaduria Villa Rica Coffee"},{"id":"gaseosa_500ml","nombre":"Gaseosa 500 ml botella (caja x 15)","familia":"bebidas","unidad_compra":"und","costo_compra":3.2,"merma_pct":0.0,"unidad_receta":"und","factor_conversion_compra_receta":1.0,"costo_efectivo":3.2,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Distribuidora de Bebidas Lima Sur"},{"id":"agua_filtrada","nombre":"Agua filtrada y osmotizada","familia":"bebidas","unidad_compra":"L","costo_compra":0.9,"merma_pct":0.0,"unidad_receta":"ml","factor_conversion_compra_receta":1000.0,"costo_efectivo":0.0009,"formula_costo_efectivo":"costo_compra / (1 - merma_pct) / factor_conversion_compra_receta","proveedor":"Aguas Tratadas San Isidro"}],"rellenos":[{"id":"relleno_canela","nombre":"Relleno de canela y azucar rubia","insumos":[{"insumo_id":"azucar_rubia","gramos":900,"costo":3.78},{"insumo_id":"mantequilla_sin_sal","gramos":620,"costo":20.2449},{"insumo_id":"canela_molida","gramos":150,"costo":5.7},{"insumo_id":"harina_panadera","gramos":180,"costo":0.7636},{"insumo_id":"miel_de_abeja","gramos":120,"costo":3.36},{"insumo_id":"sal_marina_fina","gramos":10,"costo":0.028}],"rinde_g":2400,"min_mano_obra":18,"estacion":"mesa_formado","costo_tanda":33.8765,"costo_por_g":0.01411522,"nota":"Los minutos de preparacion de la tanda estan incluidos en el paso 'Relleno y laminado' (o 'Bano alcalino') del producto; aqui solo se costea materia prima."},{"id":"relleno_avellana_cacao","nombre":"Relleno de avellana y cacao","insumos":[{"insumo_id":"crema_avellana_cacao","gramos":1450,"costo":38.425},{"insumo_id":"cacao_en_polvo","gramos":120,"costo":4.08},{"insumo_id":"leche_en_polvo","gramos":150,"costo":3.6},{"insumo_id":"mantequilla_sin_sal","gramos":180,"costo":5.8776},{"insumo_id":"nuez_pecana","gramos":220,"costo":13.4316}],"rinde_g":2050,"min_mano_obra":14,"estacion":"mesa_formado","costo_tanda":65.4141,"costo_por_g":0.03190933,"nota":"Los minutos de preparacion de la tanda estan incluidos en el paso 'Relleno y laminado' (o 'Bano alcalino') del producto; aqui solo se costea materia prima."},{"id":"relleno_parmesano_ajo","nombre":"Relleno salado de parmesano, edam y ajo","insumos":[{"insumo_id":"queso_parmesano_rallado","gramos":620,"costo":39.6289},{"insumo_id":"queso_edam","gramos":520,"costo":18.2268},{"insumo_id":"mantequilla_sin_sal","gramos":420,"costo":13.7143},{"insumo_id":"ajo_molido","gramos":120,"costo":2.16},{"insumo_id":"sal_marina_fina","gramos":18,"costo":0.0504}],"rinde_g":1800,"min_mano_obra":16,"estacion":"mesa_formado","costo_tanda":73.7804,"costo_por_g":0.04098909,"nota":"Los minutos de preparacion de la tanda estan incluidos en el paso 'Relleno y laminado' (o 'Bano alcalino') del producto; aqui solo se costea materia prima."},{"id":"mezcla_semillas_integral","nombre":"Mezcla de semillas para integral","insumos":[{"insumo_id":"linaza","gramos":500,"costo":5.0},{"insumo_id":"ajonjoli","gramos":350,"costo":5.8929},{"insumo_id":"chia","gramos":220,"costo":4.9388},{"insumo_id":"semilla_girasol","gramos":380,"costo":5.4286}],"rinde_g":1420,"min_mano_obra":9,"estacion":"mesa_formado","costo_tanda":21.2602,"costo_por_g":0.01497197,"nota":"Los minutos de preparacion de la tanda estan incluidos en el paso 'Relleno y laminado' (o 'Bano alcalino') del producto; aqui solo se costea materia prima."},{"id":"bano_alcalino_pretzel","nombre":"Bano alcalino para pretzel","insumos":[{"insumo_id":"agua_filtrada","gramos":2800,"costo":2.52},{"insumo_id":"bicarbonato_sodio","gramos":190,"costo":1.805},{"insumo_id":"sal_gruesa","gramos":60,"costo":0.276}],"rinde_g":2950,"min_mano_obra":11,"estacion":"mesa_formado","costo_tanda":4.601,"costo_por_g":0.00155966,"nota":"Los minutos de preparacion de la tanda estan incluidos en el paso 'Relleno y laminado' (o 'Bano alcalino') del producto; aqui solo se costea materia prima."}],"estaciones":[{"id":"amasado","nombre":"Amasado y pesado","dotacion_fte":{"panadero_oficial":0.4},"pool_mensual_soles":1537.0,"minutos_hombre_disponibles_mes":3594.2,"costo_minuto_hombre":0.427629,"costo_minuto_maquina":0.09,"calculo_costo_minuto_hombre":"pool_mensual_soles / minutos_hombre_disponibles_mes = 1537.00 / 3594.2 = 0.427629","minutos_hombre_demandados_mes":3380.0,"minutos_maquina_demandados_mes":3380.0,"utilizacion_pct":0.9404},{"id":"mesa_formado","nombre":"Mesa de formado y trenzado","dotacion_fte":{"ayudante_panaderia_1":0.55,"ayudante_panaderia_2":0.28,"maestro_panadero":0.55,"panadero_oficial":0.5},"pool_mensual_soles":6897.65,"minutos_hombre_disponibles_mes":16892.9,"costo_minuto_hombre":0.408316,"costo_minuto_maquina":0.0,"calculo_costo_minuto_hombre":"pool_mensual_soles / minutos_hombre_disponibles_mes = 6897.65 / 16892.9 = 0.408316","minutos_hombre_demandados_mes":15981.3,"minutos_maquina_demandados_mes":0.0,"utilizacion_pct":0.946},{"id":"camara","nombre":"Camara de fermentacion","dotacion_fte":{"ayudante_panaderia_1":0.08},"pool_mensual_soles":220.4,"minutos_hombre_disponibles_mes":718.8,"costo_minuto_hombre":0.306602,"costo_minuto_maquina":0.012,"calculo_costo_minuto_hombre":"pool_mensual_soles / minutos_hombre_disponibles_mes = 220.40 / 718.8 = 0.306602","minutos_hombre_demandados_mes":676.0,"minutos_maquina_demandados_mes":30420.0,"utilizacion_pct":0.9405},{"id":"horno","nombre":"Horno rotativo","dotacion_fte":{"maestro_panadero":0.36},"pool_mensual_soles":1827.0,"minutos_hombre_disponibles_mes":3234.8,"costo_minuto_hombre":0.564793,"costo_minuto_maquina":0.195,"calculo_costo_minuto_hombre":"pool_mensual_soles / minutos_hombre_disponibles_mes = 1827.00 / 3234.8 = 0.564793","minutos_hombre_demandados_mes":3042.0,"minutos_maquina_demandados_mes":5746.0,"utilizacion_pct":0.9404},{"id":"empaque","nombre":"Enfriado y empaque","dotacion_fte":{"ayudante_panaderia_1":0.22,"ayudante_panaderia_2":0.14},"pool_mensual_soles":941.05,"minutos_hombre_disponibles_mes":3234.8,"costo_minuto_hombre":0.290913,"costo_minuto_maquina":0.006,"calculo_costo_minuto_hombre":"pool_mensual_soles / minutos_hombre_disponibles_mes = 941.05 / 3234.8 = 0.290913","minutos_hombre_demandados_mes":3042.0,"minutos_maquina_demandados_mes":6422.0,"utilizacion_pct":0.9404},{"id":"barra_cafe","nombre":"Barra de cafe","dotacion_fte":{"barista_barra":0.4},"pool_mensual_soles":899.0,"minutos_hombre_disponibles_mes":3594.2,"costo_minuto_hombre":0.250122,"costo_minuto_maquina":0.052,"calculo_costo_minuto_hombre":"pool_mensual_soles / minutos_hombre_disponibles_mes = 899.00 / 3594.2 = 0.250122","minutos_hombre_demandados_mes":3250.0,"minutos_maquina_demandados_mes":3250.0,"utilizacion_pct":0.9042}],"cif":[{"id":"cif_energia_electrica","concepto":"Energia electrica de produccion (horno, camara, amasadora)","monto_mensual":2010.0,"driver":"min_horno","area":"produccion","tasa_driver":0.772711,"base_driver_mensual":5746.0},{"id":"cif_gas_glp","concepto":"Gas GLP del horno rotativo","monto_mensual":1330.0,"driver":"min_horno","area":"produccion","tasa_driver":0.772711,"base_driver_mensual":5746.0},{"id":"cif_depreciacion_equipos","concepto":"Depreciacion de equipos de produccion","monto_mensual":1100.0,"driver":"min_horno","area":"produccion","tasa_driver":0.772711,"base_driver_mensual":5746.0},{"id":"cif_alquiler_area_produccion","concepto":"Alquiler imputado al area de produccion (62 m2)","monto_mensual":1460.0,"driver":"m2","area":"produccion","tasa_driver":0.028375,"base_driver_mensual":78589.3},{"id":"cif_mantenimiento_sanitizacion","concepto":"Mantenimiento, sanitizacion y control de plagas","monto_mensual":770.0,"driver":"m2","area":"produccion","tasa_driver":0.028375,"base_driver_mensual":78589.3},{"id":"cif_supervision_mermas","concepto":"Supervision de produccion y mermas de proceso","monto_mensual":740.0,"driver":"min_hombre","area":"produccion","tasa_driver":0.025195,"base_driver_mensual":29371.3}],"gastos":[{"id":"go_alquiler_tienda","concepto":"Alquiler de tienda y vitrina (area de venta)","monto_mensual":7740.0},{"id":"go_servicios","concepto":"Servicios de tienda: luz, agua, internet, POS","monto_mensual":2220.0},{"id":"go_marketing","concepto":"Marketing, redes y fotografia de producto","monto_mensual":2950.0},{"id":"go_comisiones_delivery","concepto":"Comisiones de delivery (Rappi, 28% de la venta bruta del canal)","monto_mensual":5700.0},{"id":"go_administracion","concepto":"Administracion y ventas (planilla indirecta y varios)","monto_mensual":11650.0},{"id":"go_contabilidad","concepto":"Contabilidad y asesoria externa","monto_mensual":1070.0}],"planilla":{"factor_carga_social":1.45,"horas_mes":192,"factor_capacidad_practica":0.78,"minutos_disponibles_por_persona_mes":8985.6,"nota_calculo":"costo_minuto_hombre de cada estacion = pool mensual de la estacion (sueldo_bruto x factor_carga_social x fte_asignado) / minutos disponibles (horas_mes x 60 x factor_capacidad_practica x fte).","puestos":[{"id":"maestro_panadero","puesto":"Maestro panadero","sueldo_bruto":3500.0,"costo_cargado_mes":5075.0,"es_directo":true,"fte_asignado_produccion":0.91},{"id":"panadero_oficial","puesto":"Panadero oficial","sueldo_bruto":2650.0,"costo_cargado_mes":3842.5,"es_directo":true,"fte_asignado_produccion":0.9},{"id":"ayudante_panaderia_1","puesto":"Ayudante de panaderia 1","sueldo_bruto":1900.0,"costo_cargado_mes":2755.0,"es_directo":true,"fte_asignado_produccion":0.85},{"id":"ayudante_panaderia_2","puesto":"Ayudante de panaderia 2 (medio tiempo)","sueldo_bruto":1650.0,"costo_cargado_mes":2392.5,"es_directo":true,"fte_asignado_produccion":0.42},{"id":"barista_barra","puesto":"Barista de barra","sueldo_bruto":1550.0,"costo_cargado_mes":2247.5,"es_directo":true,"fte_asignado_produccion":0.4},{"id":"administradora_tienda","puesto":"Administradora de tienda","sueldo_bruto":2900.0,"costo_cargado_mes":4205.0,"es_directo":false,"fte_asignado_produccion":0.0},{"id":"vendedora_mostrador_1","puesto":"Vendedora de mostrador 1","sueldo_bruto":1500.0,"costo_cargado_mes":2175.0,"es_directo":false,"fte_asignado_produccion":0.0},{"id":"vendedora_mostrador_2","puesto":"Vendedora de mostrador 2","sueldo_bruto":1500.0,"costo_cargado_mes":2175.0,"es_directo":false,"fte_asignado_produccion":0.0}],"pool_directo_mensual":12322.1,"fte_directo_asignado":3.48,"pool_indirecto_mensual":9903.5},"ventas":{"jala_canela_clasica":{"2025":{"1":{"pedidos":113,"tienda":400,"rappi":161},"2":{"pedidos":105,"tienda":374,"rappi":150},"3":{"pedidos":117,"tienda":416,"rappi":168},"4":{"pedidos":126,"tienda":449,"rappi":181},"5":{"pedidos":123,"tienda":438,"rappi":177},"6":{"pedidos":114,"tienda":406,"rappi":163},"7":{"pedidos":130,"tienda":459,"rappi":185},"8":{"pedidos":119,"tienda":421,"rappi":170},"9":{"pedidos":125,"tienda":443,"rappi":179},"10":{"pedidos":128,"tienda":454,"rappi":183},"11":{"pedidos":139,"tienda":491,"rappi":198},"12":{"pedidos":166,"tienda":587,"rappi":237}},"2026":{"1":{"pedidos":125,"tienda":444,"rappi":179},"2":{"pedidos":117,"tienda":414,"rappi":167},"3":{"pedidos":130,"tienda":462,"rappi":186},"4":{"pedidos":140,"tienda":498,"rappi":201},"5":{"pedidos":137,"tienda":486,"rappi":196},"6":{"pedidos":127,"tienda":450,"rappi":181},"7":{"pedidos":144,"tienda":509,"rappi":206},"8":{"pedidos":132,"tienda":468,"rappi":189},"9":{"pedidos":139,"tienda":492,"rappi":198},"10":{"pedidos":142,"tienda":504,"rappi":203},"11":{"pedidos":154,"tienda":545,"rappi":220},"12":{"pedidos":184,"tienda":652,"rappi":263}}},"jala_plain_clasica":{"2025":{"1":{"pedidos":91,"tienda":321,"rappi":103},"2":{"pedidos":84,"tienda":300,"rappi":96},"3":{"pedidos":94,"tienda":334,"rappi":107},"4":{"pedidos":102,"tienda":361,"rappi":115},"5":{"pedidos":99,"tienda":352,"rappi":112},"6":{"pedidos":92,"tienda":326,"rappi":104},"7":{"pedidos":104,"tienda":369,"rappi":118},"8":{"pedidos":95,"tienda":339,"rappi":108},"9":{"pedidos":101,"tienda":356,"rappi":114},"10":{"pedidos":103,"tienda":365,"rappi":116},"11":{"pedidos":112,"tienda":395,"rappi":126},"12":{"pedidos":133,"tienda":472,"rappi":151}},"2026":{"1":{"pedidos":99,"tienda":350,"rappi":112},"2":{"pedidos":92,"tienda":328,"rappi":104},"3":{"pedidos":103,"tienda":365,"rappi":116},"4":{"pedidos":111,"tienda":393,"rappi":125},"5":{"pedidos":108,"tienda":384,"rappi":122},"6":{"pedidos":100,"tienda":356,"rappi":113},"7":{"pedidos":114,"tienda":402,"rappi":128},"8":{"pedidos":104,"tienda":369,"rappi":118},"9":{"pedidos":110,"tienda":388,"rappi":124},"10":{"pedidos":112,"tienda":398,"rappi":127},"11":{"pedidos":121,"tienda":431,"rappi":137},"12":{"pedidos":145,"tienda":515,"rappi":164}}},"jala_plain_mediana":{"2025":{"1":{"pedidos":95,"tienda":338,"rappi":152},"2":{"pedidos":89,"tienda":316,"rappi":141},"3":{"pedidos":99,"tienda":351,"rappi":158},"4":{"pedidos":107,"tienda":378,"rappi":170},"5":{"pedidos":104,"tienda":369,"rappi":166},"6":{"pedidos":97,"tienda":342,"rappi":153},"7":{"pedidos":109,"tienda":388,"rappi":174},"8":{"pedidos":100,"tienda":356,"rappi":160},"9":{"pedidos":105,"tienda":374,"rappi":168},"10":{"pedidos":108,"tienda":384,"rappi":172},"11":{"pedidos":117,"tienda":415,"rappi":186},"12":{"pedidos":140,"tienda":496,"rappi":223}},"2026":{"1":{"pedidos":107,"tienda":378,"rappi":170},"2":{"pedidos":100,"tienda":353,"rappi":158},"3":{"pedidos":111,"tienda":393,"rappi":177},"4":{"pedidos":120,"tienda":424,"rappi":190},"5":{"pedidos":117,"tienda":413,"rappi":186},"6":{"pedidos":108,"tienda":383,"rappi":172},"7":{"pedidos":123,"tienda":434,"rappi":195},"8":{"pedidos":112,"tienda":399,"rappi":179},"9":{"pedidos":118,"tienda":420,"rappi":188},"10":{"pedidos":121,"tienda":429,"rappi":193},"11":{"pedidos":131,"tienda":464,"rappi":209},"12":{"pedidos":157,"tienda":555,"rappi":249}}},"jala_shabat_clasica":{"2025":{"1":{"pedidos":61,"tienda":215,"rappi":48},"2":{"pedidos":57,"tienda":201,"rappi":45},"3":{"pedidos":63,"tienda":224,"rappi":50},"4":{"pedidos":68,"tienda":242,"rappi":54},"5":{"pedidos":67,"tienda":236,"rappi":53},"6":{"pedidos":62,"tienda":218,"rappi":49},"7":{"pedidos":70,"tienda":248,"rappi":55},"8":{"pedidos":64,"tienda":227,"rappi":51},"9":{"pedidos":67,"tienda":239,"rappi":54},"10":{"pedidos":69,"tienda":245,"rappi":55},"11":{"pedidos":75,"tienda":265,"rappi":59},"12":{"pedidos":89,"tienda":317,"rappi":71}},"2026":{"1":{"pedidos":66,"tienda":233,"rappi":52},"2":{"pedidos":61,"tienda":217,"rappi":49},"3":{"pedidos":68,"tienda":243,"rappi":54},"4":{"pedidos":74,"tienda":261,"rappi":59},"5":{"pedidos":72,"tienda":254,"rappi":57},"6":{"pedidos":66,"tienda":236,"rappi":53},"7":{"pedidos":75,"tienda":268,"rappi":60},"8":{"pedidos":69,"tienda":245,"rappi":55},"9":{"pedidos":73,"tienda":258,"rappi":58},"10":{"pedidos":75,"tienda":264,"rappi":59},"11":{"pedidos":81,"tienda":286,"rappi":64},"12":{"pedidos":96,"tienda":342,"rappi":77}}},"jala_nutella_clasica":{"2025":{"1":{"pedidos":55,"tienda":196,"rappi":97},"2":{"pedidos":51,"tienda":183,"rappi":91},"3":{"pedidos":57,"tienda":204,"rappi":101},"4":{"pedidos":62,"tienda":220,"rappi":109},"5":{"pedidos":60,"tienda":214,"rappi":106},"6":{"pedidos":56,"tienda":198,"rappi":98},"7":{"pedidos":63,"tienda":225,"rappi":112},"8":{"pedidos":58,"tienda":206,"rappi":102},"9":{"pedidos":61,"tienda":217,"rappi":107},"10":{"pedidos":63,"tienda":222,"rappi":110},"11":{"pedidos":68,"tienda":241,"rappi":119},"12":{"pedidos":81,"tienda":287,"rappi":143}},"2026":{"1":{"pedidos":62,"tienda":219,"rappi":109},"2":{"pedidos":58,"tienda":205,"rappi":101},"3":{"pedidos":64,"tienda":228,"rappi":113},"4":{"pedidos":69,"tienda":245,"rappi":122},"5":{"pedidos":68,"tienda":239,"rappi":119},"6":{"pedidos":63,"tienda":222,"rappi":110},"7":{"pedidos":71,"tienda":252,"rappi":125},"8":{"pedidos":65,"tienda":231,"rappi":114},"9":{"pedidos":68,"tienda":243,"rappi":120},"10":{"pedidos":70,"tienda":249,"rappi":124},"11":{"pedidos":76,"tienda":269,"rappi":134},"12":{"pedidos":91,"tienda":322,"rappi":160}}},"jala_parmesano_clasica":{"2025":{"1":{"pedidos":54,"tienda":190,"rappi":68},"2":{"pedidos":50,"tienda":177,"rappi":64},"3":{"pedidos":56,"tienda":197,"rappi":71},"4":{"pedidos":60,"tienda":213,"rappi":77},"5":{"pedidos":59,"tienda":207,"rappi":75},"6":{"pedidos":54,"tienda":193,"rappi":69},"7":{"pedidos":62,"tienda":218,"rappi":78},"8":{"pedidos":56,"tienda":200,"rappi":72},"9":{"pedidos":59,"tienda":211,"rappi":75},"10":{"pedidos":61,"tienda":216,"rappi":77},"11":{"pedidos":66,"tienda":233,"rappi":84},"12":{"pedidos":79,"tienda":279,"rappi":100}},"2026":{"1":{"pedidos":59,"tienda":209,"rappi":75},"2":{"pedidos":55,"tienda":195,"rappi":70},"3":{"pedidos":61,"tienda":217,"rappi":78},"4":{"pedidos":66,"tienda":235,"rappi":84},"5":{"pedidos":65,"tienda":229,"rappi":82},"6":{"pedidos":60,"tienda":211,"rappi":76},"7":{"pedidos":68,"tienda":240,"rappi":86},"8":{"pedidos":62,"tienda":220,"rappi":79},"9":{"pedidos":65,"tienda":232,"rappi":83},"10":{"pedidos":67,"tienda":237,"rappi":85},"11":{"pedidos":72,"tienda":257,"rappi":92},"12":{"pedidos":87,"tienda":307,"rappi":110}}},"jala_pretzel_clasica":{"2025":{"1":{"pedidos":53,"tienda":190,"rappi":57},"2":{"pedidos":50,"tienda":177,"rappi":53},"3":{"pedidos":56,"tienda":197,"rappi":59},"4":{"pedidos":60,"tienda":213,"rappi":64},"5":{"pedidos":59,"tienda":208,"rappi":62},"6":{"pedidos":54,"tienda":193,"rappi":57},"7":{"pedidos":62,"tienda":218,"rappi":65},"8":{"pedidos":56,"tienda":200,"rappi":60},"9":{"pedidos":59,"tienda":211,"rappi":63},"10":{"pedidos":61,"tienda":216,"rappi":64},"11":{"pedidos":66,"tienda":233,"rappi":70},"12":{"pedidos":79,"tienda":279,"rappi":83}},"2026":{"1":{"pedidos":58,"tienda":207,"rappi":62},"2":{"pedidos":55,"tienda":193,"rappi":57},"3":{"pedidos":61,"tienda":215,"rappi":64},"4":{"pedidos":66,"tienda":232,"rappi":69},"5":{"pedidos":64,"tienda":227,"rappi":68},"6":{"pedidos":59,"tienda":210,"rappi":62},"7":{"pedidos":67,"tienda":238,"rappi":71},"8":{"pedidos":62,"tienda":218,"rappi":65},"9":{"pedidos":65,"tienda":230,"rappi":68},"10":{"pedidos":66,"tienda":236,"rappi":70},"11":{"pedidos":72,"tienda":254,"rappi":76},"12":{"pedidos":86,"tienda":304,"rappi":91}}},"jala_integral_clasica":{"2025":{"1":{"pedidos":49,"tienda":173,"rappi":59},"2":{"pedidos":46,"tienda":161,"rappi":55},"3":{"pedidos":51,"tienda":180,"rappi":61},"4":{"pedidos":55,"tienda":194,"rappi":66},"5":{"pedidos":53,"tienda":190,"rappi":64},"6":{"pedidos":50,"tienda":175,"rappi":59},"7":{"pedidos":56,"tienda":200,"rappi":67},"8":{"pedidos":51,"tienda":183,"rappi":62},"9":{"pedidos":54,"tienda":192,"rappi":65},"10":{"pedidos":56,"tienda":197,"rappi":66},"11":{"pedidos":60,"tienda":213,"rappi":72},"12":{"pedidos":72,"tienda":255,"rappi":86}},"2026":{"1":{"pedidos":54,"tienda":193,"rappi":65},"2":{"pedidos":51,"tienda":179,"rappi":61},"3":{"pedidos":56,"tienda":200,"rappi":68},"4":{"pedidos":61,"tienda":216,"rappi":73},"5":{"pedidos":59,"tienda":211,"rappi":71},"6":{"pedidos":55,"tienda":195,"rappi":66},"7":{"pedidos":62,"tienda":221,"rappi":75},"8":{"pedidos":57,"tienda":203,"rappi":68},"9":{"pedidos":60,"tienda":213,"rappi":72},"10":{"pedidos":62,"tienda":218,"rappi":74},"11":{"pedidos":67,"tienda":236,"rappi":80},"12":{"pedidos":80,"tienda":282,"rappi":96}}},"cafe_americano":{"2025":{"1":{"pedidos":64,"tienda":999},"2":{"pedidos":60,"tienda":932},"3":{"pedidos":66,"tienda":1040},"4":{"pedidos":72,"tienda":1120},"5":{"pedidos":70,"tienda":1092},"6":{"pedidos":65,"tienda":1012},"7":{"pedidos":73,"tienda":1147},"8":{"pedidos":67,"tienda":1053},"9":{"pedidos":71,"tienda":1107},"10":{"pedidos":72,"tienda":1134},"11":{"pedidos":78,"tienda":1227},"12":{"pedidos":94,"tienda":1467}},"2026":{"1":{"pedidos":70,"tienda":1100},"2":{"pedidos":66,"tienda":1026},"3":{"pedidos":73,"tienda":1143},"4":{"pedidos":79,"tienda":1231},"5":{"pedidos":77,"tienda":1202},"6":{"pedidos":71,"tienda":1114},"7":{"pedidos":81,"tienda":1261},"8":{"pedidos":74,"tienda":1158},"9":{"pedidos":78,"tienda":1216},"10":{"pedidos":80,"tienda":1247},"11":{"pedidos":86,"tienda":1350},"12":{"pedidos":103,"tienda":1614}}},"gaseosa_500ml":{"2025":{"1":{"pedidos":18,"tienda":289,"rappi":54},"2":{"pedidos":17,"tienda":270,"rappi":50},"3":{"pedidos":20,"tienda":299,"rappi":56},"4":{"pedidos":21,"tienda":324,"rappi":60},"5":{"pedidos":20,"tienda":315,"rappi":59},"6":{"pedidos":18,"tienda":293,"rappi":54},"7":{"pedidos":21,"tienda":332,"rappi":62},"8":{"pedidos":20,"tienda":303,"rappi":57},"9":{"pedidos":20,"tienda":320,"rappi":60},"10":{"pedidos":21,"tienda":328,"rappi":61},"11":{"pedidos":23,"tienda":354,"rappi":66},"12":{"pedidos":27,"tienda":424,"rappi":79}},"2026":{"1":{"pedidos":20,"tienda":312,"rappi":58},"2":{"pedidos":18,"tienda":292,"rappi":54},"3":{"pedidos":21,"tienda":324,"rappi":60},"4":{"pedidos":23,"tienda":348,"rappi":65},"5":{"pedidos":21,"tienda":342,"rappi":63},"6":{"pedidos":20,"tienda":316,"rappi":59},"7":{"pedidos":23,"tienda":358,"rappi":67},"8":{"pedidos":21,"tienda":328,"rappi":61},"9":{"pedidos":22,"tienda":345,"rappi":64},"10":{"pedidos":23,"tienda":354,"rappi":66},"11":{"pedidos":24,"tienda":384,"rappi":71},"12":{"pedidos":30,"tienda":458,"rappi":85}}}},"perfil":{"lunes":0.04,"martes":0.05,"miercoles":0.09,"jueves":0.14,"viernes":0.34,"sabado":0.27,"domingo":0.07},"pnl":{"anio":2026,"base":"Venta neta sin IGV; costos absorbidos (MOD = minutos aplicados x costo_minuto_hombre).","venta_bruta_con_igv_mes":102708.67,"venta_neta_mes":87041.24,"materia_prima_mes":26622.39,"mano_obra_directa_mes":11594.03,"cif_mes":7410.0,"utilidad_bruta_mes":41414.82,"gastos_operativos_mes":31330.0,"utilidad_operativa_mes":10084.82,"pct_materia_prima":0.3059,"pct_mano_obra_directa":0.1332,"pct_cif":0.0851,"pct_utilidad_bruta":0.4758,"pct_gastos_operativos":0.3599,"pct_utilidad_operativa":0.1159,"minutos_hombre_aplicados_mes":29371.3,"minutos_horno_mes":5746.0,"cif_pools_mensuales":7410.0},"capacidad":[{"id":"amasado","nombre":"Amasado y pesado","pool":1537.0,"min_teorica":4608.0,"min_practica":3594.0,"factor":0.78,"tarifa":0.427629,"tarifa_maq":0.09,"calculo":"pool_mensual_soles / minutos_hombre_disponibles_mes = 1537.00 / 3594.2 = 0.427629"},{"id":"mesa_formado","nombre":"Mesa de formado y trenzado","pool":6897.65,"min_teorica":21658.0,"min_practica":16893.0,"factor":0.78,"tarifa":0.408316,"tarifa_maq":0.0,"calculo":"pool_mensual_soles / minutos_hombre_disponibles_mes = 6897.65 / 16892.9 = 0.408316"},{"id":"camara","nombre":"Camara de fermentacion","pool":220.4,"min_teorica":922.0,"min_practica":719.0,"factor":0.78,"tarifa":0.306602,"tarifa_maq":0.012,"calculo":"pool_mensual_soles / minutos_hombre_disponibles_mes = 220.40 / 718.8 = 0.306602"},{"id":"horno","nombre":"Horno rotativo","pool":1827.0,"min_teorica":4147.0,"min_practica":3235.0,"factor":0.78,"tarifa":0.564793,"tarifa_maq":0.195,"calculo":"pool_mensual_soles / minutos_hombre_disponibles_mes = 1827.00 / 3234.8 = 0.564793"},{"id":"empaque","nombre":"Enfriado y empaque","pool":941.05,"min_teorica":4147.0,"min_practica":3235.0,"factor":0.78,"tarifa":0.290913,"tarifa_maq":0.006,"calculo":"pool_mensual_soles / minutos_hombre_disponibles_mes = 941.05 / 3234.8 = 0.290913"},{"id":"barra_cafe","nombre":"Barra de cafe","pool":899.0,"min_teorica":4608.0,"min_practica":3594.0,"factor":0.78,"tarifa":0.250122,"tarifa_maq":0.052,"calculo":"pool_mensual_soles / minutos_hombre_disponibles_mes = 899.00 / 3594.2 = 0.250122"}],"matriz_mo":{"2025":{"jala_canela_clasica":{"amasado":{"min":7495.8,"costo":3205.37},"camara":{"min":1499.1,"costo":459.64},"mesa_formado":{"min":35230.4,"costo":14385.16},"horno":{"min":6746.2,"costo":3810.19},"empaque":{"min":6746.2,"costo":1962.53}},"jala_plain_clasica":{"amasado":{"min":5725.0,"costo":2448.12},"camara":{"min":1145.0,"costo":351.06},"mesa_formado":{"min":20037.5,"costo":8181.62},"horno":{"min":5152.5,"costo":2910.06},"empaque":{"min":5152.5,"costo":1498.9}},"jala_plain_mediana":{"amasado":{"min":3714.3,"costo":1588.31},"camara":{"min":742.9,"costo":227.76},"mesa_formado":{"min":14114.3,"costo":5763.11},"horno":{"min":3342.8,"costo":1887.99},"empaque":{"min":3342.8,"costo":972.5}},"jala_shabat_clasica":{"amasado":{"min":4814.4,"costo":2058.82},"camara":{"min":962.9,"costo":295.25},"mesa_formado":{"min":38997.0,"costo":15923.08},"horno":{"min":4333.0,"costo":2447.24},"empaque":{"min":4333.0,"costo":1260.51}},"jala_nutella_clasica":{"amasado":{"min":4643.0,"costo":1985.49},"camara":{"min":928.6,"costo":284.71},"mesa_formado":{"min":22286.4,"costo":9099.86},"horno":{"min":4178.7,"costo":2360.08},"empaque":{"min":4178.7,"costo":1215.63}},"jala_parmesano_clasica":{"amasado":{"min":3781.8,"costo":1617.2},"camara":{"min":756.4,"costo":231.88},"mesa_formado":{"min":17207.3,"costo":7026.03},"horno":{"min":3403.6,"costo":1922.34},"empaque":{"min":3403.6,"costo":990.16}},"jala_pretzel_clasica":{"amasado":{"min":2862.1,"costo":1223.94},"camara":{"min":572.4,"costo":175.51},"mesa_formado":{"min":11734.8,"costo":4791.49},"horno":{"min":2575.9,"costo":1454.86},"empaque":{"min":2575.9,"costo":749.39}},"jala_integral_clasica":{"amasado":{"min":3748.0,"costo":1602.76},"camara":{"min":749.6,"costo":229.83},"mesa_formado":{"min":14617.2,"costo":5968.43},"horno":{"min":3373.2,"costo":1905.15},"empaque":{"min":3373.2,"costo":981.3}},"cafe_americano":{"barra_cafe":{"min":35455.0,"costo":8868.15}}},"2026":{"jala_canela_clasica":{"amasado":{"min":8320.0,"costo":3557.8},"camara":{"min":1663.9,"costo":510.18},"mesa_formado":{"min":39104.0,"costo":15966.81},"horno":{"min":7488.0,"costo":4229.12},"empaque":{"min":7488.0,"costo":2178.31}},"jala_plain_clasica":{"amasado":{"min":6240.0,"costo":2668.35},"camara":{"min":1248.0,"costo":382.64},"mesa_formado":{"min":21840.0,"costo":8917.61},"horno":{"min":5616.0,"costo":3171.84},"empaque":{"min":5616.0,"costo":1633.73}},"jala_plain_mediana":{"amasado":{"min":4160.0,"costo":1778.91},"camara":{"min":832.0,"costo":255.09},"mesa_formado":{"min":15808.1,"costo":6454.68},"horno":{"min":3744.0,"costo":2114.55},"empaque":{"min":3744.0,"costo":1089.2}},"jala_shabat_clasica":{"amasado":{"min":5200.0,"costo":2223.7},"camara":{"min":1040.0,"costo":318.9},"mesa_formado":{"min":42120.0,"costo":17198.25},"horno":{"min":4680.0,"costo":2643.22},"empaque":{"min":4680.0,"costo":1361.46}},"jala_nutella_clasica":{"amasado":{"min":5200.0,"costo":2223.68},"camara":{"min":1040.0,"costo":318.86},"mesa_formado":{"min":24960.0,"costo":10191.53},"horno":{"min":4680.0,"costo":2643.21},"empaque":{"min":4680.0,"costo":1361.46}},"jala_parmesano_clasica":{"amasado":{"min":4160.0,"costo":1778.92},"camara":{"min":832.0,"costo":255.07},"mesa_formado":{"min":18928.0,"costo":7728.64},"horno":{"min":3744.0,"costo":2114.57},"empaque":{"min":3744.0,"costo":1089.18}},"jala_pretzel_clasica":{"amasado":{"min":3120.0,"costo":1334.21},"camara":{"min":624.0,"costo":191.32},"mesa_formado":{"min":12792.0,"costo":5223.17},"horno":{"min":2808.0,"costo":1585.93},"empaque":{"min":2808.0,"costo":816.9}},"jala_integral_clasica":{"amasado":{"min":4160.0,"costo":1778.94},"camara":{"min":832.0,"costo":255.09},"mesa_formado":{"min":16224.0,"costo":6624.51},"horno":{"min":3744.0,"costo":2114.57},"empaque":{"min":3744.0,"costo":1089.17}},"cafe_americano":{"barra_cafe":{"min":39000.0,"costo":9754.84}}}},"factor_seguridad":0.78,"canales":[{"id":"tienda","nombre":"Tienda","icono":"🏪","comision_pct":0.0,"costo_empaque_extra":0.0,"desc":"Venta en vitrina y consumo en local. No paga comisión, pero sostiene el alquiler y los servicios del local.","gastos_asignados":["go_alquiler_tienda","go_servicios"]},{"id":"pedidos","nombre":"Pedidos","icono":"📋","comision_pct":0.0,"costo_empaque_extra":0.45,"desc":"Encargos anticipados por WhatsApp y teléfono. Ticket más alto y producción planificada; solo carga empaque de transporte.","gastos_asignados":[]},{"id":"rappi","nombre":"Rappi","icono":"🛵","comision_pct":28.0,"costo_empaque_extra":0.95,"desc":"Delivery por plataforma. Paga 28% de comisión sobre la venta más empaque reforzado: el canal que más factura por unidad y menos deja.","gastos_asignados":["go_comisiones_delivery"]}],"rentabilidad_canal":{"2025":{"tienda":{"u":44188,"venta":611417.67,"mp":188043.36,"mod":80210.65,"cif":49146.4,"comision":0.0,"empaque":0.0,"ub":294017.26,"mc":294017.26,"ub_pct":48.09,"mc_pct":48.09,"ticket":13.84},"pedidos":{"u":8714,"venta":148448.74,"mp":44299.44,"mod":20803.81,"cif":13822.79,"comision":0.0,"empaque":3921.3,"ub":69522.69,"mc":65601.39,"ub_pct":46.83,"mc_pct":44.19,"ticket":17.04},"rappi":{"u":10651,"venta":187494.46,"mp":57390.29,"mod":25306.66,"cif":17614.71,"comision":52498.45,"empaque":10118.45,"ub":87182.81,"mc":24565.91,"ub_pct":46.5,"mc_pct":13.1,"ticket":17.6}},"2026":{"tienda":{"u":48622,"venta":673600.76,"mp":207158.18,"mod":88281.74,"cif":54157.2,"comision":0.0,"empaque":0.0,"ub":324003.64,"mc":324003.64,"ub_pct":48.1,"mc_pct":48.1,"ticket":13.85},"pedidos":{"u":9612,"venta":163738.15,"mp":48891.61,"mod":22905.21,"cif":15237.59,"comision":0.0,"empaque":4325.4,"ub":76703.74,"mc":72378.34,"ub_pct":46.85,"mc_pct":44.2,"ticket":17.03},"rappi":{"u":11758,"venta":207156.33,"mp":63418.64,"mod":27940.86,"cif":19459.64,"comision":58003.77,"empaque":11170.1,"ub":96337.19,"mc":27163.32,"ub_pct":46.5,"mc_pct":13.11,"ticket":17.62}}}}
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const S=n=>"S/ "+(Number(n)||0).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const S0=n=>"S/ "+(Number(n)||0).toLocaleString("es-PE",{maximumFractionDigits:0});
+const S3=n=>"S/ "+(Number(n)||0).toLocaleString("es-PE",{minimumFractionDigits:3,maximumFractionDigits:3});
+const P=(n,d=1)=>(Number(n)||0).toFixed(d)+"%";
+const N=(n,d=0)=>(Number(n)||0).toLocaleString("es-PE",{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const MES=["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Set","Oct","Nov","Dic"];
+const INS={}; D.insumos.forEach(i=>INS[i.id]=i);
+
+let ST={anio:"2026", mes:"12", igv:D.meta.igv, aj:{}, esc:[], abierto:null};
+D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0});
+try{const g=localStorage.getItem("ohjala_v2");if(g){const o=JSON.parse(g);
+  if(o.esc)ST.esc=o.esc; if(o.aj)Object.assign(ST.aj,o.aj); if(o.igv)ST.igv=o.igv;}}catch(e){}
+const save=()=>{try{localStorage.setItem("ohjala_v2",JSON.stringify({esc:ST.esc,aj:ST.aj,igv:ST.igv}))}catch(e){}};
+
+function calc(p){
+  const a=ST.aj[p.id]||{precio:0,mp:0,mod:0};
+  const neto=p.neto*(1+a.precio/100), mp=p.mp*(1+a.mp/100), mod=p.mod*(1+a.mod/100), cif=p.cif;
+  const cuf=mp+mod+cif;
+  return {...p, neto, mp, mod, cif, cuf, ub:neto-cuf,
+    ub_pct:neto?100*(neto-cuf)/neto:0, fc_pct:neto?100*mp/neto:0,
+    mod_pct:neto?100*mod/neto:0, cif_pct:neto?100*cif/neto:0,
+    precio:neto*(1+ST.igv/100)};
+}
+const TODOS=()=>D.productos.map(calc);
+function und(pid,anio,mes){
+  const v=D.ventas[pid]?.[anio]; if(!v) return 0;
+  if(mes) return Object.values(v[mes]||{}).reduce((s,x)=>s+x,0);
+  return Object.values(v).reduce((s,m)=>s+Object.values(m).reduce((a,b)=>a+b,0),0);
+}
+function canales(pid,anio,mes){
+  const v=D.ventas[pid]?.[anio]?.[mes]||{}; return v;
+}
+
+/* ---------------- RESUMEN ---------------- */
+function vRes(){
+  const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)})).sort((a,b)=>b.u*b.neto-a.u*a.neto);
+  const V=ps.reduce((s,p)=>s+p.neto*p.u,0), MP=ps.reduce((s,p)=>s+p.mp*p.u,0);
+  const MO=ps.reduce((s,p)=>s+p.mod*p.u,0), CI=ps.reduce((s,p)=>s+p.cif*p.u,0);
+  const UB=V-MP-MO-CI, G=D.gastos.reduce((s,g)=>s+g.monto_mensual,0)*12, UO=UB-G;
+  let ac=0;
+  $("#p-res").innerHTML=`
+  <div class="note">${esc(D.meta.aviso)} Año <b>${ST.anio}</b>, 12 meses.</div>
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Venta neta del año</span><div class="kv">${S0(V)}</div>
+     <div class="kf"><span>${N(ps.reduce((s,p)=>s+p.u,0))} unidades</span></div></div>
+   <div class="kpi c"><span class="kl">Food cost</span><div class="kv">${P(100*MP/V,1)}</div>
+     <div class="kf"><span>${S0(MP)}</span></div></div>
+   <div class="kpi"><span class="kl">Mano de obra</span><div class="kv">${P(100*MO/V,1)}</div>
+     <div class="kf"><span>${S0(MO)}</span></div></div>
+   <div class="kpi ok"><span class="kl">Utilidad bruta</span><div class="kv">${P(100*UB/V,1)}</div>
+     <div class="kf"><span>${S0(UB)}</span></div></div>
+   <div class="kpi wa"><span class="kl">Utilidad operativa</span><div class="kv">${P(100*UO/V,1)}</div>
+     <div class="kf"><span>${S0(UO)}</span><span>tras gastos</span></div></div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Los 10 productos</h2>
+    <p class="cs">Ordenados por venta. La barra muestra cuánto aporta cada uno y la línea punteada marca el 80% acumulado.</p></div></div>
+   <div class="pb">${ps.map((p,i)=>{const pv=p.neto*p.u, pct=100*pv/V; ac+=pct;
+     return `<div class="pr"><span class="pn">${i+1}</span>
+      <div class="pnm"><span>${esc(p.nombre)} ${p.es_reventa?'<span class="bd nt">reventa</span>':p.categoria==='cafeteria'?'<span class="bd nt">cafetería</span>':''}</span>
+       <span class="psb">${N(p.u)} u · ${S(p.neto)} neto · FC ${P(p.fc_pct,1)} · UB ${P(p.ub_pct,1)}</span></div>
+      <div class="ptr"><div class="pfl" style="width:${(pct*100/(100*ps[0].neto*ps[0].u/V)).toFixed(1)}%"></div>
+        <div class="pac" style="left:${Math.min(99,ac).toFixed(1)}%"></div></div>
+      <div class="pmt"><span>${P(pct,1)}</span><span class="bd ${ac<=80?'ok':'nt'}">${P(ac,0)}</span></div></div>`}).join("")}</div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Tabla de costos</h2>
+    <p class="cs">Clic en cualquier fila para ver su receta y sus pasos.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Producto</th><th class="n">Unid.</th><th class="n">Precio</th>
+    <th class="n">Neto</th><th class="n">Materia prima</th><th class="n">Mano obra</th><th class="n">CIF</th>
+    <th class="n">Costo total</th><th class="n">Utilidad bruta</th><th class="n">UB %</th></tr></thead>
+    <tbody>${ps.map(p=>`<tr class="clic" data-p="${p.id}">
+      <td style="font-weight:600">${esc(p.nombre)}</td><td class="n">${N(p.u)}</td>
+      <td class="n">${S(p.precio)}</td><td class="n">${S(p.neto)}</td>
+      <td class="n">${S(p.mp)} <span style="color:var(--ink5);font-size:11.5px">${P(p.fc_pct,0)}</span></td>
+      <td class="n">${S(p.mod)}</td><td class="n">${S(p.cif)}</td>
+      <td class="n" style="font-weight:700">${S(p.cuf)}</td><td class="n">${S(p.ub)}</td>
+      <td class="n"><span class="bd ${p.ub_pct>=48?'ok':p.ub_pct>=42?'wa':'ba'}">${P(p.ub_pct,1)}</span></td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>TOTAL AÑO</td><td class="n">${N(ps.reduce((s,p)=>s+p.u,0))}</td><td class="n">—</td>
+     <td class="n">${S0(V)}</td><td class="n">${S0(MP)}</td><td class="n">${S0(MO)}</td><td class="n">${S0(CI)}</td>
+     <td class="n">${S0(MP+MO+CI)}</td><td class="n">${S0(UB)}</td><td class="n">${P(100*UB/V,1)}</td></tr></tfoot>
+   </table></div></div>`;
+  $$("#p-res .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+}
+
+/* ---------------- PRODUCTOS ---------------- */
+function vProd(){
+  const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)}));
+  $("#p-prod").innerHTML=`
+  <div class="note">Clic en cualquier tarjeta para abrir su receta completa y los pasos de producción. Los deslizadores simulan cambios sin tocar el dato base.</div>
+  <div class="lg" style="margin-bottom:13px">
+   <span><i style="background:linear-gradient(90deg,#f0a868,#c96b2c)"></i>Materia prima</span>
+   <span><i style="background:linear-gradient(90deg,#7fa8a0,#4a7f73)"></i>Mano de obra</span>
+   <span><i style="background:#b9a37e"></i>CIF</span>
+   <span><i style="background:var(--g100)"></i>Utilidad bruta</span>
+   <button class="btn sm" id="bReset" style="margin-left:auto">Volver al dato base</button></div>
+  <div class="pg">${ps.map(p=>{const a=ST.aj[p.id], w=x=>Math.max(0,100*x/p.neto).toFixed(2);
+   return `<div class="pc">
+    <div class="pci clic" data-p="${p.id}"><svg viewBox="0 0 120 72"><use href="#${p.ill}"/></svg></div>
+    <div class="pcb">
+     <div class="pcn clic" data-p="${p.id}">${esc(p.nombre)}
+       ${p.es_reventa?'<span class="bd nt">reventa</span>':p.categoria==='cafeteria'?'<span class="bd nt">cafetería</span>':''}</div>
+     <div style="font-size:12px;color:var(--ink5);line-height:1.4">${esc(p.desc)}</div>
+     <div class="stk"><i style="width:${w(p.mp)}%;background:linear-gradient(90deg,#f0a868,#c96b2c)"></i>
+      <i style="width:${w(p.mod)}%;background:linear-gradient(90deg,#7fa8a0,#4a7f73)"></i>
+      <i style="width:${w(p.cif)}%;background:#b9a37e"></i><i style="flex:1;background:var(--g100)"></i></div>
+     <div class="mrow"><span>Precio vitrina</span><b>${S(p.precio)}</b></div>
+     <div class="mrow"><span>Materia prima</span><b>${S(p.mp)} · ${P(p.fc_pct,1)}</b></div>
+     <div class="mrow"><span>Mano de obra</span><b>${S(p.mod)} · ${p.min_hombre?N(p.min_hombre,1)+" min":"—"}</b></div>
+     <div class="mrow"><span>CIF</span><b>${S(p.cif)}</b></div>
+     <div class="mrow" style="border-top:2px solid var(--lineS);padding-top:7px;font-size:14px">
+      <span><b>Utilidad bruta</b></span><b style="color:var(--g900)">${S(p.ub)}
+      <span class="bd ${p.ub_pct>=48?'ok':p.ub_pct>=42?'wa':'ba'}">${P(p.ub_pct,1)}</span></b></div>
+     <button class="btn sm clic" data-p="${p.id}" style="margin-top:4px">Ver receta y pasos →</button>
+     <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">
+      ${[["precio","Precio"],["mp","Materia prima"],["mod","Mano de obra"]].map(([k,lb])=>
+        p.es_reventa&&k==="mod"?"":`<div class="fg"><label>${lb}: <span style="font-family:var(--fm);color:var(--c600)">${a[k]>0?"+":""}${a[k]}%</span></label>
+        <input class="sl" type="range" min="-40" max="40" value="${a[k]}" data-p="${p.id}" data-k="${k}"/></div>`).join("")}
+     </div></div></div>`}).join("")}</div>`;
+  $$("#p-prod input[type=range]").forEach(el=>el.oninput=e=>{
+    ST.aj[e.target.dataset.p][e.target.dataset.k]=+e.target.value; save(); vProd(); vRes(); vUtil();});
+  $$("#p-prod .clic").forEach(el=>el.onclick=()=>abrir(el.dataset.p));
+  $("#bReset").onclick=()=>{D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0});save();render();};
+}
+
+/* ---------------- DETALLE: receta + pasos ---------------- */
+function abrir(pid){
+  const p=calc(D.productos.find(x=>x.id===pid));
+  const u=und(pid,ST.anio), L=p.unidades_lote;
+  const masa=p.receta.filter(r=>r.tipo==='masa'), rell=p.receta.filter(r=>r.tipo==='relleno');
+  const emp=p.receta.filter(r=>r.tipo==='empaque'||r.tipo==='compra');
+  const tMasa=masa.reduce((s,r)=>s+r.costo_por_unidad,0);
+  const tRell=rell.reduce((s,r)=>s+r.costo_por_unidad,0);
+  const tEmp=emp.reduce((s,r)=>s+r.costo_por_unidad,0);
+  const minhL=p.pasos.reduce((s,x)=>s+x.minh_lote,0), minmL=p.pasos.reduce((s,x)=>s+x.minm_lote,0);
+  const fila=r=>`<tr><td>${esc(r.nombre)}</td><td><span class="bd nt">${esc(r.familia)}</span></td>
+    <td class="n">${r.cant_lote?N(r.cant_lote,r.unidad==='und'?0:0)+" "+r.unidad:"—"}</td>
+    <td class="n">${r.merma?P(r.merma,1):"—"}</td>
+    <td class="n">${S3(r.costo_unit_ins)}</td>
+    <td class="n">${r.costo_lote!=null?S(r.costo_lote):"—"}</td>
+    <td class="n" style="font-weight:600">${S3(r.costo_por_unidad)}</td></tr>`;
+  $("#modalBody").innerHTML=`
+   <div class="dhead"><div class="dill"><svg viewBox="0 0 120 72"><use href="#${p.ill}"/></svg></div>
+    <div><h2 class="ct" style="font-size:22px">${esc(p.nombre)}</h2>
+     <p class="cs">${esc(p.desc)}</p>
+     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:9px;font-size:13px">
+      <span>Precio vitrina <b>${S(p.precio)}</b></span><span>Neto <b>${S(p.neto)}</b></span>
+      ${p.peso?`<span>Peso <b>${N(p.peso)} g</b></span>`:""}
+      ${L?`<span>Lote de <b>${L} unidades</b></span>`:""}
+      ${p.lotes_semana?`<span><b>${p.lotes_semana}</b> lotes/semana</span>`:""}
+      <span>Vendidas ${ST.anio} <b>${N(u)}</b></span></div></div>
+    <div class="dkpi"><div class="kv" style="color:var(--g900)">${P(p.ub_pct,1)}</div>
+      <div class="kl" style="text-align:center">utilidad bruta</div></div></div>
+
+   <div class="card"><div class="ch"><div><h2 class="ct">1 · Receta</h2>
+     <p class="cs">${p.es_reventa?"Producto de reventa: se compra terminado.":
+       `Cantidades por lote de ${L} unidades. El costo por unidad divide el lote entre las unidades que rinde.`}</p></div></div>
+    <div class="tw"><table><thead><tr><th>Ingrediente</th><th>Familia</th><th class="n">Cant. ${L?'por lote':''}</th>
+      <th class="n">Merma</th><th class="n">Costo unitario</th><th class="n">Costo lote</th><th class="n">Por unidad</th></tr></thead>
+     <tbody>${masa.map(fila).join("")}
+      ${masa.length?`<tr style="background:var(--s100)"><td colspan="6" style="font-weight:700">Subtotal masa</td>
+        <td class="n" style="font-weight:700">${S3(tMasa)}</td></tr>`:""}
+      ${rell.map(fila).join("")}
+      ${rell.length?`<tr style="background:var(--s100)"><td colspan="6" style="font-weight:700">Subtotal relleno</td>
+        <td class="n" style="font-weight:700">${S3(tRell)}</td></tr>`:""}
+      ${emp.map(fila).join("")}</tbody>
+     <tfoot><tr><td colspan="6">MATERIA PRIMA POR UNIDAD</td><td class="n">${S3(p.mp)}</td></tr></tfoot></table></div>
+    ${rell.length?`<div class="note" style="margin:12px 0 0">Los rellenos son sub-recetas: se preparan en tanda aparte y se imputan por gramo consumido.</div>`:""}
+   </div>
+
+   ${p.pasos.length?`<div class="card"><div class="ch"><div><h2 class="ct">2 · Pasos de producción</h2>
+     <p class="cs">Minutos por lote de ${L} unidades. Se separa el tiempo de persona del tiempo de máquina: la fermentación ocupa la cámara 90 minutos pero al panadero solo 2.</p></div></div>
+    <div class="tw"><table><thead><tr><th style="width:34px">#</th><th>Paso</th><th>Estación</th>
+      <th class="n">Min persona<br><span style="font-weight:400;text-transform:none">por lote</span></th>
+      <th class="n">Min máquina<br><span style="font-weight:400;text-transform:none">por lote</span></th>
+      <th class="n">Min persona<br><span style="font-weight:400;text-transform:none">por unidad</span></th>
+      <th class="n">Tarifa S//min</th><th class="n">Costo por unidad</th></tr></thead>
+     <tbody>${p.pasos.map(x=>`<tr><td class="n" style="color:var(--ink5)">${x.orden}</td>
+       <td><b>${esc(x.nombre)}</b><div style="font-size:11.5px;color:var(--ink5)">${esc(x.desc)}</div></td>
+       <td><span class="bd nt">${esc(x.est_nombre)}</span></td>
+       <td class="n">${N(x.minh_lote,1)}</td><td class="n">${x.minm_lote?N(x.minm_lote,1):"—"}</td>
+       <td class="n">${N(x.minh_unid,2)}</td><td class="n">${S3(x.tarifa)}</td>
+       <td class="n" style="font-weight:600">${S3(x.costo_unid)}</td></tr>`).join("")}</tbody>
+     <tfoot><tr><td colspan="3">TOTAL DEL LOTE</td><td class="n">${N(minhL,1)}</td><td class="n">${N(minmL,1)}</td>
+      <td class="n">${N(p.min_hombre,2)}</td><td class="n">—</td><td class="n">${S3(p.mod)}</td></tr></tfoot></table></div>
+    <div class="note" style="margin:12px 0 0"><b>Cómo se llega al unitario:</b> el lote consume ${N(minhL,1)} minutos de persona
+     y rinde ${L} unidades, así que son <b>${N(p.min_hombre,2)} min por unidad</b>.
+     Multiplicado por la tarifa de cada estación da <b>${S(p.mod)}</b> de mano de obra por unidad.</div></div>`:""}
+
+   <div class="card"><div class="ch"><div><h2 class="ct">${p.pasos.length?'3':'2'} · Del costo al margen</h2></div></div>
+    <div class="casc">
+     ${[["Precio neto (sin IGV)",p.neto,"base",""],
+        ["Materia prima",-p.mp,"costo",P(p.fc_pct,1)],
+        ["Mano de obra directa",-p.mod,"costo",P(p.mod_pct,1)],
+        ["CIF de producción",-p.cif,"costo",P(p.cif_pct,1)]].map(([lb,v,t,pc])=>`
+      <div class="cr"><div class="clb"><span>${lb}</span></div>
+       <div class="cbar"><div class="cseg ${t==='base'?'rest':'costo'}" style="width:${Math.min(100,Math.abs(v)*100/p.neto).toFixed(1)}%"></div>
+        <div class="cseg rest" style="width:${(100-Math.min(100,Math.abs(v)*100/p.neto)).toFixed(1)}%"></div></div>
+       <div class="n" style="${v<0?'color:var(--ba)':'font-weight:700'}">${v<0?"−":""}${S(Math.abs(v))}</div>
+       <div class="n">${pc||"100%"}</div></div>`).join("")}
+     <div class="cr" style="border-top:2px solid var(--lineS);border-bottom:none;background:var(--g50);padding:11px 0">
+      <div class="clb"><span style="font-family:var(--fd);font-weight:700;font-size:16px">UTILIDAD BRUTA</span></div>
+      <div class="cbar"><div class="cseg" style="width:${Math.max(0,p.ub_pct).toFixed(1)}%;background:var(--okbar)"></div></div>
+      <div class="n" style="font-weight:700;font-size:16px">${S(p.ub)}</div>
+      <div class="n"><span class="bd ok">${P(p.ub_pct,1)}</span></div></div>
+    </div></div>`;
+  $("#modal").classList.add("on"); ST.abierto=pid; document.body.style.overflow="hidden";
+}
+function cerrar(){$("#modal").classList.remove("on");ST.abierto=null;document.body.style.overflow="";}
+
+/* ---------------- INSUMOS ---------------- */
+function vIns(){
+  const usados={};
+  D.productos.forEach(p=>p.receta.forEach(r=>{usados[r.nombre]=(usados[r.nombre]||0)+1}));
+  const fam={}; D.insumos.forEach(i=>{(fam[i.familia]=fam[i.familia]||[]).push(i)});
+  $("#p-ins").innerHTML=`
+  <div class="note">Maestro de insumos. El <b>costo efectivo</b> aplica la merma: un insumo con 8% de merma cuesta de verdad
+   su precio dividido entre 0.92, porque de cada kilo comprado solo llegan 920 gramos al producto.</div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Insumos <span class="cnt">${D.insumos.length}</span></h2>
+    <p class="cs">Costo de compra, merma y costo efectivo por unidad de receta.</p></div>
+    <input class="btn" id="qIns" placeholder="Buscar insumo..." style="min-width:220px"/></div>
+   <div class="tw"><table><thead><tr><th>Insumo</th><th>Familia</th><th>Proveedor</th>
+     <th class="n">Costo compra</th><th>Unidad</th><th class="n">Merma</th>
+     <th class="n">Aprovecha</th><th class="n">Costo efectivo</th><th class="n">En recetas</th></tr></thead>
+    <tbody id="tbIns">${D.insumos.map(i=>`<tr data-q="${esc((i.nombre+' '+i.familia).toLowerCase())}">
+      <td style="font-weight:600">${esc(i.nombre)}</td><td><span class="bd nt">${esc(i.familia)}</span></td>
+      <td style="color:var(--ink5);font-size:12.5px">${esc(i.proveedor||"—")}</td>
+      <td class="n">${S(i.costo_compra)}</td><td>${esc(i.unidad_compra)}</td>
+      <td class="n">${P(i.merma_pct,1)}</td><td class="n">${P(100-i.merma_pct,1)}</td>
+      <td class="n" style="font-weight:600;color:var(--g900)">${S3(i.costo_efectivo)} <span style="color:var(--ink5);font-size:11px">/${esc(i.unidad_receta)}</span></td>
+      <td class="n">${usados[i.nombre]?`<span class="bd nt">${usados[i.nombre]}</span>`:'<span style="color:var(--ink5);font-size:11.5px">sin uso</span>'}</td></tr>`).join("")}</tbody>
+   </table></div></div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Rellenos <span class="cnt">${D.rellenos.length}</span></h2>
+    <p class="cs">Sub-recetas con su propio rendimiento. El producto paga por los gramos que usa.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Relleno</th><th class="n">Rinde</th><th class="n">Costo tanda</th>
+     <th class="n">Costo por kg</th><th class="n">Min. preparación</th><th>Ingredientes</th></tr></thead>
+    <tbody>${D.rellenos.map(r=>`<tr><td style="font-weight:600">${esc(r.nombre)}</td>
+      <td class="n">${N(r.rinde_g)} g</td><td class="n">${S(r.costo_tanda)}</td>
+      <td class="n">${S(r.costo_por_g*1000)}</td><td class="n">${N(r.min_mano_obra||0)} min</td>
+      <td style="font-size:12.5px;color:var(--ink7)">${r.insumos.map(x=>esc((INS[x.insumo_id]||{}).nombre||x.insumo_id)+" "+N(x.gramos)+"g").join(" · ")}</td></tr>`).join("")}</tbody>
+   </table></div></div>`;
+  $("#qIns").oninput=e=>{const q=e.target.value.toLowerCase();
+    $$("#tbIns tr").forEach(t=>t.style.display=!q||t.dataset.q.includes(q)?"":"none");};
+}
+
+/* ---------------- MANO DE OBRA ---------------- */
+function vMo(){
+  const F=D.factor_seguridad, MZ=D.matriz_mo[ST.anio]||{};
+  const ps=TODOS().filter(p=>p.pasos.length).map(p=>{
+    const m=Object.values(MZ[p.id]||{}).reduce((s,x)=>s+x.min,0)/12;
+    const c=Object.values(MZ[p.id]||{}).reduce((s,x)=>s+x.costo,0)/12;
+    return {...p, u:und(p.id,ST.anio), minMes:m, costoMes:c};
+  });
+  const totDem=ps.reduce((s,p)=>s+p.minMes,0);
+  const cap=D.capacidad.map(c=>{
+    const dem=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/12;
+    return {...c, dem, util:c.min_practica?100*dem/c.min_practica:0,
+            holgura:c.min_practica-dem, utilTeo:c.min_teorica?100*dem/c.min_teorica:0};
+  });
+  const totPrac=cap.reduce((s,c)=>s+c.min_practica,0), totTeo=cap.reduce((s,c)=>s+c.min_teorica,0);
+  const totHolg=totPrac-totDem;
+  const costoMin=cap.reduce((s,c)=>s+c.pool,0);
+  const costoOcio=cap.reduce((s,c)=>s+c.holgura*c.tarifa,0);
+
+  $("#p-mo").innerHTML=`
+  <div class="note">La mano de obra se mide en minutos, no repartiendo sueldos a ojo. Cada paso consume minutos de una estación,
+   y las ventas del año dicen cuántos minutos se piden en total.</div>
+
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Capacidad teórica</span><div class="kv">${N(totTeo/60)} h</div>
+     <div class="kf"><span>horas contratadas al mes</span></div></div>
+   <div class="kpi c"><span class="kl">Capacidad práctica</span><div class="kv">${N(totPrac/60)} h</div>
+     <div class="kf"><span>${P(F*100,0)} de la teórica</span></div></div>
+   <div class="kpi"><span class="kl">Demanda de las ventas</span><div class="kv">${N(totDem/60)} h</div>
+     <div class="kf"><span>${N(totDem)} minutos/mes</span></div></div>
+   <div class="kpi ${totDem/totPrac>=0.95?'ba':totDem/totPrac>=0.85?'wa':'ok'}"><span class="kl">Utilización</span>
+     <div class="kv">${P(100*totDem/totPrac,1)}</div><div class="kf"><span>sobre la práctica</span></div></div>
+   <div class="kpi ok"><span class="kl">Holgura</span><div class="kv">${N(totHolg/60)} h</div>
+     <div class="kf"><span>${S0(costoOcio)} al mes</span></div></div>
+  </div>
+
+  <div class="note warn"><b>Por qué no se usa el 100%.</b> Nadie produce las 8 horas seguidas: hay cambios de turno, limpieza,
+   calibración del horno, mantenimiento, pedidos que se rehacen y días que no salen. Por eso la capacidad que se puede comprometer
+   es el <b>${P(F*100,0)}</b> de la contratada, no el total. Programar contra la teórica es lo que hace que un pedido grande
+   reviente el viernes. La holgura de <b>${N(totHolg/60)} horas</b> no es desperdicio: es el colchón que absorbe los imprevistos.</div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Utilización por estación</h2>
+    <p class="cs">Teórica es lo contratado. Práctica es lo que se puede comprometer de verdad. Demanda es lo que piden las ventas de ${ST.anio}.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Estación</th><th class="n">Teórica</th><th class="n">Práctica</th>
+     <th class="n">Demanda</th><th class="n">Holgura</th><th style="width:170px">Utilización</th><th class="n">S/ por minuto</th></tr></thead>
+    <tbody>${cap.sort((a,b)=>b.dem-a.dem).map(c=>`<tr>
+      <td style="font-weight:600">${esc(c.nombre)}</td>
+      <td class="n" style="color:var(--ink5)">${N(c.min_teorica)}</td>
+      <td class="n">${N(c.min_practica)}</td><td class="n" style="font-weight:600">${N(c.dem)}</td>
+      <td class="n" style="color:${c.holgura<0?'var(--ba)':'var(--ok)'}">${N(c.holgura)}</td>
+      <td><div class="ptr" style="height:20px"><div class="pfl" style="width:${Math.min(100,c.util).toFixed(1)}%;
+        background:${c.util>=95?'linear-gradient(90deg,#f87171,var(--babar))':c.util>=85?'linear-gradient(90deg,#fbbf24,var(--wabar))':'linear-gradient(90deg,#22c55e,var(--okbar))'}"></div>
+        <div class="pac" style="left:100%"></div></div>
+        <div style="font-family:var(--fm);font-size:11.5px;text-align:right;margin-top:2px">${P(c.util,1)}</div></td>
+      <td class="n">${S3(c.tarifa)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>TOTAL</td><td class="n">${N(totTeo)}</td><td class="n">${N(totPrac)}</td>
+      <td class="n">${N(totDem)}</td><td class="n">${N(totHolg)}</td>
+      <td class="n">${P(100*totDem/totPrac,1)}</td><td class="n">${S0(costoMin)}</td></tr></tfoot></table></div>
+   <div class="note" style="margin:12px 0 0">Cómo sale la tarifa: ${esc(cap[0].calculo||"pool mensual ÷ minutos prácticos")}</div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Cuánta mano de obra demanda cada producto</h2>
+    <p class="cs">Minutos al mes que pide cada producto según lo que se vendió. Clic en una fila para ver sus pasos.</p></div></div>
+   <div class="pb">${ps.sort((a,b)=>b.minMes-a.minMes).map(p=>`
+     <div class="pr clic" data-p="${p.id}">
+      <span class="pn" style="background:${p.minMes/totDem>0.15?'var(--babar)':'var(--g800)'}">${Math.round(100*p.minMes/totDem)}</span>
+      <div class="pnm"><span>${esc(p.nombre)}</span>
+       <span class="psb">${N(p.minMes/60)} h/mes · ${N(p.min_hombre,2)} min por unidad · ${S0(p.costoMes)} de mano de obra</span></div>
+      <div class="ptr"><div class="pfl" style="width:${(100*p.minMes/ps[0].minMes).toFixed(1)}%"></div></div>
+      <div class="pmt"><span>${P(100*p.minMes/totDem,1)}</span>
+       <span class="bd ${p.ub_pct>=48?'ok':p.ub_pct>=42?'wa':'ba'}">UB ${P(p.ub_pct,0)}</span></div></div>`).join("")}</div>
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Matriz producto × estación</h2>
+    <p class="cs">Minutos al mes. Sirve para ver dónde se acumula el trabajo y qué producto satura cada puesto.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Producto</th>
+     ${cap.map(c=>`<th class="n">${esc(c.nombre.split(" ")[0])}</th>`).join("")}
+     <th class="n">Total</th><th class="n">min/unidad</th></tr></thead>
+    <tbody>${ps.map(p=>`<tr class="clic" data-p="${p.id}"><td style="font-weight:600">${esc(p.nombre)}</td>
+      ${cap.map(c=>{const m=((MZ[p.id]||{})[c.id]?.min||0)/12;
+        return `<td class="n" ${m/totDem>0.08?'style="background:#fdf0e3;font-weight:600"':''}>${m?N(m):"—"}</td>`}).join("")}
+      <td class="n" style="font-weight:700">${N(p.minMes)}</td>
+      <td class="n">${N(p.min_hombre,2)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>DEMANDA TOTAL</td>${cap.map(c=>`<td class="n">${N(c.dem)}</td>`).join("")}
+      <td class="n">${N(totDem)}</td><td class="n">—</td></tr>
+     <tr><td>CAPACIDAD PRÁCTICA</td>${cap.map(c=>`<td class="n">${N(c.min_practica)}</td>`).join("")}
+      <td class="n">${N(totPrac)}</td><td class="n">—</td></tr>
+     <tr><td>UTILIZACIÓN</td>${cap.map(c=>`<td class="n"><span class="bd ${c.util>=95?'ba':c.util>=85?'wa':'ok'}">${P(c.util,0)}</span></td>`).join("")}
+      <td class="n">${P(100*totDem/totPrac,0)}</td><td class="n">—</td></tr></tfoot></table></div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Planilla</h2>
+    <p class="cs">De aquí sale el costo por minuto. El factor de carga social (${N((D.planilla||{}).factor_carga_social||0,2)})
+     suma gratificaciones, CTS y EsSalud al sueldo bruto. Cada persona tiene ${N((D.planilla||{}).horas_mes||0)} horas al mes,
+     de las que se comprometen el ${P(((D.planilla||{}).factor_capacidad_practica||0)*100,0)}.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Puesto</th><th class="n">Sueldo bruto</th><th class="n">Costo empresa</th>
+     <th class="n">Dedicación a producción</th><th>Tipo</th></tr></thead>
+    <tbody>${((D.planilla||{}).puestos||[]).map(x=>`<tr><td style="font-weight:600">${esc(x.puesto||"")}</td>
+      <td class="n">${S0(x.sueldo_bruto||0)}</td><td class="n" style="font-weight:600">${S0(x.costo_cargado_mes||0)}</td>
+      <td class="n">${P((x.fte_asignado_produccion||0)*100,0)}</td>
+      <td><span class="bd ${x.es_directo?'ok':'nt'}">${x.es_directo?'directo':'indirecto'}</span></td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>TOTAL</td><td class="n">${S0(((D.planilla||{}).puestos||[]).reduce((s,x)=>s+(x.sueldo_bruto||0),0))}</td>
+      <td class="n">${S0(((D.planilla||{}).puestos||[]).reduce((s,x)=>s+(x.costo_cargado_mes||0),0))}</td>
+      <td class="n">—</td><td></td></tr></tfoot></table></div>
+   <div class="note" style="margin:12px 0 0">${esc((D.planilla||{}).nota_calculo||"")}</div></div>`;
+  $$("#p-mo .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+}
+
+/* ---------------- UTILIDAD BRUTA ---------------- */
+function vUtil(){
+  const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)/12}));
+  const V=ps.reduce((s,p)=>s+p.neto*p.u,0), MP=ps.reduce((s,p)=>s+p.mp*p.u,0);
+  const MO=ps.reduce((s,p)=>s+p.mod*p.u,0), CI=ps.reduce((s,p)=>s+p.cif*p.u,0);
+  const UB=V-MP-MO-CI, G=D.gastos.reduce((s,g)=>s+g.monto_mensual,0), UO=UB-G;
+  const f=(lb,v,nota,t)=>`<div class="cr"><div class="clb"><span>${lb}</span><span class="cnt2">${nota}</span></div>
+    <div class="cbar"><div class="cseg ${t}" style="width:${(100*v/V).toFixed(2)}%"></div>
+     <div class="cseg rest" style="width:${(100-100*v/V).toFixed(2)}%"></div></div>
+    <div class="n" style="color:var(--ba)">−${S0(v)}</div><div class="n">${P(100*v/V,1)}</div></div>`;
+  const h=(lb,v,nota,fuerte)=>`<div class="cr" style="border-top:2px solid var(--lineS);border-bottom:none;padding:11px 0;${fuerte?'background:var(--g50)':''}">
+    <div class="clb"><span style="font-family:var(--fd);font-weight:700;font-size:${fuerte?'17px':'15px'}">${lb}</span><span class="cnt2">${nota}</span></div>
+    <div class="cbar"><div class="cseg" style="width:${(100*v/V).toFixed(2)}%;background:${fuerte?'var(--okbar)':'var(--g100)'}"></div></div>
+    <div class="n" style="font-weight:700;font-size:${fuerte?'17px':'15px'}">${S0(v)}</div>
+    <div class="n"><span class="bd ${fuerte?'ok':'wa'}">${P(100*v/V,1)}</span></div></div>`;
+  $("#p-util").innerHTML=`
+  <div class="note">De cada sol que entra, ¿cuánto queda? El food cost es solo el primer escalón. Cifras de un mes promedio de ${ST.anio}.</div>
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Venta neta mensual</span><div class="kv">${S0(V)}</div></div>
+   <div class="kpi c"><span class="kl">Materia prima</span><div class="kv">${P(100*MP/V,1)}</div><div class="kf"><span>${S0(MP)}</span></div></div>
+   <div class="kpi"><span class="kl">Mano de obra</span><div class="kv">${P(100*MO/V,1)}</div><div class="kf"><span>${S0(MO)}</span></div></div>
+   <div class="kpi ok"><span class="kl">Utilidad bruta</span><div class="kv">${P(100*UB/V,1)}</div><div class="kf"><span>${S0(UB)}</span></div></div>
+   <div class="kpi wa"><span class="kl">Utilidad operativa</span><div class="kv">${P(100*UO/V,1)}</div><div class="kf"><span>${S0(UO)}</span></div></div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Paso 1 · Hasta la utilidad bruta</h2>
+    <p class="cs">Los tres costos que son del producto: lo que se compra, lo que se trabaja y lo que cuesta tener la planta andando.</p></div></div>
+   <div class="casc">${h("Venta neta del mes",V,"Un mes promedio de "+ST.anio,false)}
+    ${f("Materia prima",MP,"Insumos valorizados con merma, más rellenos y empaque","costo")}
+    ${f("Mano de obra directa",MO,"Minutos de cada paso por la tarifa de su estación","costo")}
+    ${f("CIF de producción",CI,"Energía, gas, depreciación y alquiler de planta","costo")}
+    ${h("UTILIDAD BRUTA",UB,"Lo que deja el producto antes de sostener la tienda y la oficina",true)}</div></div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Paso 2 · Hasta la utilidad operativa</h2>
+    <p class="cs">Gastos que no son del producto sino del negocio.</p></div></div>
+   <div class="casc">${D.gastos.map(g=>f(esc(g.concepto),g.monto_mensual,"","gasto")).join("")}
+    ${h("UTILIDAD OPERATIVA",UO,"Lo que de verdad queda al mes",false)}</div></div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Pools de CIF</h2>
+    <p class="cs">Costos indirectos de producción y con qué criterio se reparten.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Concepto</th><th>Driver</th><th class="n">S/ al mes</th><th class="n">% del pool</th></tr></thead>
+    <tbody>${D.cif.map(c=>`<tr><td style="font-weight:600">${esc(c.concepto)}</td>
+      <td><span class="bd nt">${esc(c.driver)}</span></td><td class="n">${S(c.monto_mensual)}</td>
+      <td class="n">${P(100*c.monto_mensual/D.cif.reduce((s,x)=>s+x.monto_mensual,0),1)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="2">TOTAL</td><td class="n">${S(D.cif.reduce((s,x)=>s+x.monto_mensual,0))}</td><td class="n">100%</td></tr></tfoot>
+   </table></div></div>`;
+}
+
+/* ---------------- VENTAS + CONSUMO DE MP ---------------- */
+function vVta(){
+  const ps=TODOS();
+  const mesSel=+ST.mes;
+  const porMes={}; for(let m=1;m<=12;m++){porMes[m]=ps.reduce((s,p)=>s+p.neto*und(p.id,ST.anio,String(m)),0);}
+  const maxM=Math.max(...Object.values(porMes));
+  // consumo de materia prima del mes elegido
+  const cons={};
+  ps.forEach(p=>{const u=und(p.id,ST.anio,String(mesSel));
+    p.receta.forEach(r=>{const k=r.nombre;
+      cons[k]=cons[k]||{nombre:r.nombre,familia:r.familia,cant:0,costo:0,unidad:r.unidad,prods:new Set()};
+      const porU = r.cant_lote && p.unidades_lote && r.tipo==='masa' ? r.cant_lote/p.unidades_lote : r.cant_lote;
+      cons[k].cant += (porU||0)*u; cons[k].costo += r.costo_por_unidad*u; cons[k].prods.add(p.nombre);});});
+  const lista=Object.values(cons).sort((a,b)=>b.costo-a.costo);
+  const totMP=lista.reduce((s,x)=>s+x.costo,0);
+  const per=D.perfil, dias=["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
+  const nom=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+  const ventaMes=porMes[mesSel]||0, sem=ventaMes/4.345;
+  $("#p-vta").innerHTML=`
+  <div class="note">Ventas del año ${ST.anio}. Elige un mes para ver exactamente cuánta materia prima consumió.</div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Venta mes a mes</h2>
+    <p class="cs">Clic en una barra para cambiar el mes del análisis.</p></div>
+    <div class="cfg" style="background:var(--s100);border-color:var(--line)">
+     <label style="color:var(--ink7)">Mes</label>
+     <select id="selMes">${[...Array(12)].map((_,i)=>`<option value="${i+1}" ${i+1===mesSel?"selected":""}>${MES[i+1]}</option>`).join("")}</select></div></div>
+   <div class="spark">${Object.entries(porMes).map(([m,v])=>
+     `<i class="${+m===mesSel?'hl':''}" data-m="${m}" style="height:${maxM?Math.max(4,100*v/maxM):4}%" title="${MES[+m]}: ${S0(v)}"></i>`).join("")}</div>
+   <div class="mlab">${Object.keys(porMes).map(m=>`<span>${MES[+m]}</span>`).join("")}</div>
+   <div class="tw" style="margin-top:14px"><table><thead><tr><th>Producto</th>
+     ${[...Array(12)].map((_,i)=>`<th class="n">${MES[i+1]}</th>`).join("")}<th class="n">Año</th></tr></thead>
+    <tbody>${ps.map(p=>`<tr><td style="font-weight:600">${esc(p.nombre)}</td>
+      ${[...Array(12)].map((_,i)=>{const u=und(p.id,ST.anio,String(i+1));
+        return `<td class="n" ${i+1===mesSel?'style="background:var(--g50);font-weight:700"':''}>${u?N(u):"—"}</td>`}).join("")}
+      <td class="n" style="font-weight:700">${N(und(p.id,ST.anio))}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>VENTA NETA</td>${Object.entries(porMes).map(([m,v])=>
+      `<td class="n" ${+m===mesSel?'style="background:var(--g100)"':''}>${S0(v)}</td>`).join("")}
+      <td class="n">${S0(Object.values(porMes).reduce((a,b)=>a+b,0))}</td></tr></tfoot></table></div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Consumo de materia prima · ${MES[mesSel]} ${ST.anio}</h2>
+    <p class="cs">Cuánto se compró de cada insumo para producir lo que se vendió ese mes, y qué parte del gasto representa.</p></div>
+    <div><span class="bd ok">${S0(totMP)} en insumos</span></div></div>
+   <div class="tw"><table><thead><tr><th style="width:34px">#</th><th>Insumo</th><th>Familia</th>
+     <th class="n">Cantidad</th><th class="n">Costo</th><th class="n">% del gasto</th><th class="n">Acum.</th><th>Va en</th></tr></thead>
+    <tbody>${(()=>{let a=0;return lista.map((x,i)=>{const pc=100*x.costo/totMP;a+=pc;
+      return `<tr><td class="n" style="color:var(--ink5)">${i+1}</td>
+       <td style="font-weight:600">${esc(x.nombre)}</td><td><span class="bd nt">${esc(x.familia)}</span></td>
+       <td class="n">${N(x.cant,x.unidad==='und'?0:0)} ${esc(x.unidad)}</td>
+       <td class="n" style="font-weight:600">${S(x.costo)}</td><td class="n">${P(pc,1)}</td>
+       <td class="n"><span class="bd ${a<=80?'ok':'nt'}">${P(a,0)}</span></td>
+       <td style="font-size:11.5px;color:var(--ink5)">${esc([...x.prods].slice(0,2).join(", "))}${x.prods.size>2?` +${x.prods.size-2}`:""}</td></tr>`}).join("")})()}</tbody>
+    <tfoot><tr><td colspan="4">TOTAL MATERIA PRIMA DE ${esc(MES[mesSel].toUpperCase())}</td>
+      <td class="n">${S0(totMP)}</td><td class="n">100%</td><td colspan="2"></td></tr></tfoot></table></div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Reparto por día de semana</h2>
+    <p class="cs">Pan de Shabat: viernes y sábado concentran la venta. Aplicado sobre una semana promedio de ${MES[mesSel]}.</p></div>
+    <span class="bd wa">estimado</span></div>
+   <div class="tw"><table><thead><tr><th>Día</th><th class="n">% de la semana</th><th class="n">Venta neta</th><th class="n">Materia prima</th></tr></thead>
+    <tbody>${dias.map((d,i)=>`<tr${i===4||i===5?' style="background:var(--g50)"':''}>
+      <td style="font-weight:600">${nom[i]}</td><td class="n">${P((per[d]||0)*100,0)}</td>
+      <td class="n">${S0(sem*(per[d]||0))}</td><td class="n">${S0(totMP/4.345*(per[d]||0))}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>SEMANA</td><td class="n">100%</td><td class="n">${S0(sem)}</td><td class="n">${S0(totMP/4.345)}</td></tr></tfoot></table></div></div>`;
+  $("#selMes").onchange=e=>{ST.mes=e.target.value;vVta();};
+  $$("#p-vta .spark i").forEach(b=>b.onclick=()=>{ST.mes=b.dataset.m;vVta();});
+}
+
+/* ---------------- TABLERO DE VENTAS ---------------- */
+function vTablero(){
+  const ps=TODOS(), R=D.rentabilidad_canal[ST.anio]||{};
+  const porMes={}, porMesCanal={};
+  for(let m=1;m<=12;m++){
+    porMes[m]=0; porMesCanal[m]={};
+    D.canales.forEach(c=>porMesCanal[m][c.id]=0);
+    ps.forEach(p=>{const cs=D.ventas[p.id]?.[ST.anio]?.[String(m)]||{};
+      Object.entries(cs).forEach(([ca,u])=>{porMes[m]+=p.neto*u; porMesCanal[m][ca]=(porMesCanal[m][ca]||0)+p.neto*u;});});
+  }
+  const maxM=Math.max(...Object.values(porMes));
+  const V=Object.values(porMes).reduce((a,b)=>a+b,0);
+  const U=ps.reduce((s,p)=>s+und(p.id,ST.anio),0);
+  const mejor=Object.entries(porMes).sort((a,b)=>b[1]-a[1])[0];
+  const peor=Object.entries(porMes).sort((a,b)=>a[1]-b[1])[0];
+  const ant=D.rentabilidad_canal[ST.anio==="2026"?"2025":"2026"]||{};
+  const Vant=D.canales.reduce((s,c)=>s+(ant[c.id]?.venta||0),0);
+  const dif=Vant?100*(V-Vant)/Vant:0;
+  $("#p-tab").innerHTML=`
+  <div class="note">Tablero de ventas de ${ST.anio}. Mide el negocio por canal, por mes y por ticket, antes de entrar al costo.</div>
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Venta neta del año</span><div class="kv">${S0(V)}</div>
+     <div class="kf"><span>${N(U)} unidades</span><span class="bd ${dif>0?'ok':'ba'}">${dif>0?"+":""}${P(dif,1)} vs ${ST.anio==="2026"?"2025":"2026"}</span></div></div>
+   <div class="kpi c"><span class="kl">Ticket promedio</span><div class="kv">${S(V/U)}</div>
+     <div class="kf"><span>por unidad vendida</span></div></div>
+   <div class="kpi ok"><span class="kl">Mejor mes</span><div class="kv">${MES[+mejor[0]]}</div>
+     <div class="kf"><span>${S0(mejor[1])}</span><span>${P(100*mejor[1]/V,1)} del año</span></div></div>
+   <div class="kpi wa"><span class="kl">Mes más flojo</span><div class="kv">${MES[+peor[0]]}</div>
+     <div class="kf"><span>${S0(peor[1])}</span><span>${P(100*peor[1]/V,1)}</span></div></div>
+   <div class="kpi"><span class="kl">Venta promedio/mes</span><div class="kv">${S0(V/12)}</div>
+     <div class="kf"><span>${N(U/12)} unidades</span></div></div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Venta por mes y canal</h2>
+    <p class="cs">Cada barra apilada muestra de dónde vino la venta de ese mes.</p></div>
+   <div class="lg">${D.canales.map(c=>`<span><i style="background:${c.id==='tienda'?'var(--g700)':c.id==='pedidos'?'var(--teal)':'var(--c500)'}"></i>${c.icono} ${esc(c.nombre)}</span>`).join("")}</div></div>
+   <div style="display:flex;align-items:flex-end;gap:5px;height:150px;margin-top:8px">
+    ${Object.entries(porMes).map(([m,v])=>`<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"
+      title="${MES[+m]}: ${S0(v)}">
+      ${D.canales.slice().reverse().map(c=>{const vv=porMesCanal[m][c.id]||0;
+        return `<div style="height:${maxM?(100*vv/maxM):0}%;background:${c.id==='tienda'?'var(--g700)':c.id==='pedidos'?'var(--teal)':'var(--c500)'};
+          ${c.id==='rappi'?'border-radius:3px 3px 0 0':''}"></div>`}).join("")}</div>`).join("")}
+   </div>
+   <div class="mlab">${Object.keys(porMes).map(m=>`<span>${MES[+m]}</span>`).join("")}</div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Productos por canal</h2>
+    <p class="cs">Dónde se vende cada cosa. Hay productos que viven del delivery y otros que son de vitrina.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Producto</th>
+     ${D.canales.map(c=>`<th class="n">${c.icono} ${esc(c.nombre)}</th>`).join("")}
+     <th class="n">Total</th><th>Mix</th></tr></thead>
+    <tbody>${ps.map(p=>{const tot=und(p.id,ST.anio);
+      return `<tr class="clic" data-p="${p.id}"><td style="font-weight:600">${esc(p.nombre)}</td>
+      ${D.canales.map(c=>{const u=und(p.id,ST.anio,c.id);
+        return `<td class="n">${u?N(u):"—"}<div style="font-size:10.5px;color:var(--ink5)">${tot?P(100*u/tot,0):""}</div></td>`}).join("")}
+      <td class="n" style="font-weight:700">${N(tot)}</td>
+      <td><div class="stk" style="width:92px">${D.canales.map(c=>{const u=und(p.id,ST.anio,c.id);
+        return `<i style="width:${tot?100*u/tot:0}%;background:${c.id==='tienda'?'var(--g700)':c.id==='pedidos'?'var(--teal)':'var(--c500)'}"></i>`}).join("")}</div></td></tr>`}).join("")}</tbody>
+   </table></div></div>`;
+  $$("#p-tab .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+}
+
+/* ---------------- CANALES ---------------- */
+function vCanales(){
+  const R=D.rentabilidad_canal[ST.anio]||{};
+  const V=D.canales.reduce((s,c)=>s+(R[c.id]?.venta||0),0);
+  $("#p-can").innerHTML=`
+  <div class="note">Un mismo pan deja distinto según por dónde se venda. Acá se ve qué queda de cada canal
+   <b>después</b> de su comisión y su empaque, que es lo que el food cost nunca muestra.</div>
+  <div class="pg" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr))">
+   ${D.canales.map(c=>{const r=R[c.id]||{};
+    return `<div class="pc"><div class="pcb" style="padding:17px">
+     <div style="display:flex;align-items:center;gap:9px">
+      <span style="font-size:26px">${c.icono}</span>
+      <div><div class="pcn" style="font-size:18px">${esc(c.nombre)}</div>
+       <div style="font-size:11.5px;color:var(--ink5)">${P(100*(r.venta||0)/V,1)} de la venta</div></div></div>
+     <div style="font-size:12.5px;color:var(--ink7);line-height:1.45;margin:3px 0 6px">${esc(c.desc)}</div>
+     <div class="mrow"><span>Unidades</span><b>${N(r.u||0)}</b></div>
+     <div class="mrow"><span>Venta neta</span><b>${S0(r.venta||0)}</b></div>
+     <div class="mrow"><span>Ticket promedio</span><b>${S(r.ticket||0)}</b></div>
+     <div class="mrow" style="border-top:1px dashed var(--line);padding-top:5px"><span>Utilidad bruta</span>
+       <b>${S0(r.ub||0)} · ${P(r.ub_pct||0,1)}</b></div>
+     ${c.comision_pct?`<div class="mrow" style="color:var(--ba)"><span>Comisión ${P(c.comision_pct,0)}</span><b>−${S0(r.comision||0)}</b></div>`:""}
+     ${c.costo_empaque_extra?`<div class="mrow" style="color:var(--ba)"><span>Empaque extra</span><b>−${S0(r.empaque||0)}</b></div>`:""}
+     <div class="mrow" style="border-top:2px solid var(--lineS);padding-top:7px;font-size:14px">
+      <span><b>Margen del canal</b></span>
+      <b style="color:${(r.mc_pct||0)>=40?'var(--ok)':(r.mc_pct||0)>=25?'var(--wa)':'var(--ba)'}">${S0(r.mc||0)}
+      <span class="bd ${(r.mc_pct||0)>=40?'ok':(r.mc_pct||0)>=25?'wa':'ba'}">${P(r.mc_pct||0,1)}</span></b></div>
+    </div></div>`}).join("")}</div>
+  <div class="note bad" style="margin-top:16px"><b>Lo que hay que mirar.</b>
+   Rappi tiene el ticket más alto de los tres (${S(R.rappi?.ticket||0)} contra ${S(R.tienda?.ticket||0)} de tienda)
+   y una utilidad bruta casi igual. Pero después de la comisión del 28% su margen cae a
+   <b>${P(R.rappi?.mc_pct||0,1)}</b> contra <b>${P(R.tienda?.mc_pct||0,1)}</b> de tienda.
+   Vender más por Rappi sube la facturación y baja la utilidad. Para que Rappi iguale a tienda habría que subir
+   el precio de carta del canal alrededor de <b>${P(((R.tienda?.mc_pct||0)-(R.rappi?.mc_pct||0))*1.0,0)}</b>.</div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Comparación directa</h2></div></div>
+   <div class="tw"><table><thead><tr><th>Concepto</th>
+     ${D.canales.map(c=>`<th class="n">${c.icono} ${esc(c.nombre)}</th>`).join("")}</tr></thead>
+    <tbody>
+     ${[["Unidades",c=>N(R[c]?.u||0)],["Venta neta",c=>S0(R[c]?.venta||0)],
+        ["Ticket promedio",c=>S(R[c]?.ticket||0)],["Materia prima",c=>S0(R[c]?.mp||0)],
+        ["Mano de obra",c=>S0(R[c]?.mod||0)],["CIF",c=>S0(R[c]?.cif||0)],
+        ["Utilidad bruta",c=>S0(R[c]?.ub||0)],["Utilidad bruta %",c=>P(R[c]?.ub_pct||0,1)],
+        ["Comisión del canal",c=>(R[c]?.comision||0)?"−"+S0(R[c].comision):"—"],
+        ["Empaque extra",c=>(R[c]?.empaque||0)?"−"+S0(R[c].empaque):"—"]].map(([lb,fn])=>
+       `<tr><td style="font-weight:600">${lb}</td>${D.canales.map(c=>`<td class="n">${fn(c.id)}</td>`).join("")}</tr>`).join("")}
+    </tbody>
+    <tfoot><tr><td>MARGEN DEL CANAL</td>${D.canales.map(c=>
+      `<td class="n">${S0(R[c.id]?.mc||0)}<div><span class="bd ${(R[c.id]?.mc_pct||0)>=40?'ok':(R[c.id]?.mc_pct||0)>=25?'wa':'ba'}">${P(R[c.id]?.mc_pct||0,1)}</span></div></td>`).join("")}</tr></tfoot>
+   </table></div></div>`;
+}
+
+/* ---------------- PRONÓSTICO ---------------- */
+let PR={crec:10, meses:12, precio:0, insumos:0, rappi:0};
+function vPron(){
+  const ps=TODOS(), R=D.rentabilidad_canal[ST.anio]||{};
+  const cap=D.capacidad, F=D.factor_seguridad;
+  const MZ=D.matriz_mo[ST.anio]||{};
+  const g=1+PR.crec/100, fp=1+PR.precio/100, fi=1+PR.insumos/100;
+  // base mensual
+  let V=0,MP=0,MO=0,CI=0,MIN=0,U=0, com=0;
+  const porCanalBase={}; D.canales.forEach(c=>porCanalBase[c.id]=0);
+  ps.forEach(p=>{
+    const u=und(p.id,ST.anio)/12;
+    U+=u; V+=p.neto*u; MP+=p.mp*u; MO+=p.mod*u; CI+=p.cif*u;
+    MIN+=Object.values(MZ[p.id]||{}).reduce((s,x)=>s+x.min,0)/12;
+    D.canales.forEach(c=>{porCanalBase[c.id]+=und(p.id,ST.anio,c.id)/12;});
+  });
+  // proyección
+  const uP=U*g, VP=V*g*fp, MPP=MP*g*fi, MOP=MO*g, CIP=CI*g, MINP=MIN*g;
+  // desplazamiento de mix hacia Rappi
+  const totU=Object.values(porCanalBase).reduce((a,b)=>a+b,0);
+  const mixR=(porCanalBase.rappi/totU)*100 + PR.rappi;
+  const comBase=D.canales.find(c=>c.id==='rappi').comision_pct;
+  const comProy=VP*(mixR/100)*comBase/100;
+  const comHoy =V*(porCanalBase.rappi/totU)*comBase/100;
+  const G=D.gastos.reduce((s,x)=>s+x.monto_mensual,0);
+  const Ghoy=G, Gproy=G - D.gastos.filter(x=>x.id==='go_comisiones_delivery').reduce((s,x)=>s+x.monto_mensual,0) + comProy;
+  const UBh=V-MP-MO-CI, UBp=VP-MPP-MOP-CIP;
+  const UOh=UBh-Ghoy, UOp=UBp-Gproy;
+  const capPrac=cap.reduce((s,c)=>s+c.min_practica,0);
+  const util=100*MINP/capPrac;
+  const falta=MINP-capPrac;
+  const sl=(k,lb,min,max,suf)=>`<div class="fg"><label>${lb}: <span style="font-family:var(--fm);color:var(--c600)">${PR[k]>0?"+":""}${PR[k]}${suf}</span></label>
+    <input class="sl" type="range" min="${min}" max="${max}" value="${PR[k]}" data-pr="${k}"/></div>`;
+  const fil=(lb,a,b,inv)=>{const d=b-a, pc=a?100*d/Math.abs(a):0;
+    return `<tr><td style="font-weight:600">${lb}</td><td class="n">${S0(a)}</td><td class="n">${S0(b)}</td>
+     <td class="n"><span class="bd ${Math.abs(pc)<0.5?'nt':(inv?d<0:d>0)?'ok':'ba'}">${d>0?"+":""}${S0(d)}</span></td>
+     <td class="n" style="color:var(--ink5)">${d>0?"+":""}${P(pc,1)}</td></tr>`;};
+  $("#p-pron").innerHTML=`
+  <div class="note">Mueve los supuestos y mira qué pasa con la utilidad <b>y con la capacidad de la cocina</b>.
+   Crecer en ventas no sirve si no hay minutos para producirlo.</div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Supuestos</h2>
+    <p class="cs">Sobre un mes promedio de ${ST.anio}.</p></div>
+    <button class="btn" id="bPr">Volver a cero</button></div>
+   <div class="simg">
+    ${sl("crec","Crecimiento en unidades",-30,60,"%")}
+    ${sl("precio","Ajuste de precios",-20,30,"%")}
+    ${sl("insumos","Variación costo de insumos",-20,40,"%")}
+    ${sl("rappi","Puntos de mix hacia Rappi",-15,30," pp")}
+   </div></div>
+
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Venta proyectada</span><div class="kv">${S0(VP)}</div>
+     <div class="kf"><span>hoy ${S0(V)}</span></div></div>
+   <div class="kpi c"><span class="kl">Materia prima</span><div class="kv">${P(100*MPP/VP,1)}</div>
+     <div class="kf"><span>${S0(MPP)}</span></div></div>
+   <div class="kpi ok"><span class="kl">Utilidad bruta</span><div class="kv">${P(100*UBp/VP,1)}</div>
+     <div class="kf"><span>${S0(UBp)}</span></div></div>
+   <div class="kpi ${UOp>=UOh?'ok':'ba'}"><span class="kl">Utilidad operativa</span><div class="kv">${P(100*UOp/VP,1)}</div>
+     <div class="kf"><span>${S0(UOp)}</span><span>hoy ${P(100*UOh/V,1)}</span></div></div>
+   <div class="kpi ${util>100?'ba':util>95?'wa':'ok'}"><span class="kl">Uso de capacidad</span><div class="kv">${P(util,1)}</div>
+     <div class="kf"><span>${N(MINP)} de ${N(capPrac)} min</span></div></div>
+  </div>
+
+  ${util>100?`<div class="note bad"><b>No alcanza la gente.</b> Ese crecimiento pide ${N(MINP)} minutos al mes y la capacidad
+    práctica es ${N(capPrac)}: faltan <b>${N(falta)} minutos</b>, unas <b>${N(falta/60)} horas</b>.
+    Son aproximadamente <b>${N(falta/((D.planilla||{}).horas_mes||192)/60*1,1)} personas</b> más a tiempo completo,
+    o reducir el tiempo de formado de los productos más pesados. Crecer así, sin contratar, termina en pedidos que no salen.</div>`
+   :util>95?`<div class="note warn"><b>Al límite.</b> Quedarían ${N(capPrac-MINP)} minutos de holgura al mes (${N((capPrac-MINP)/60)} horas).
+    Con eso no hay margen para un feriado, una máquina parada ni un pedido grande de última hora.</div>`
+   :`<div class="note"><b>Cabe en la capacidad actual.</b> Quedan ${N(capPrac-MINP)} minutos libres al mes
+    (${N((capPrac-MINP)/60)} horas), ${P(100-util,0)} de holgura.</div>`}
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Hoy contra proyectado</h2>
+    <p class="cs">Mes promedio. En verde lo que mejora, en rojo lo que empeora.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Concepto</th><th class="n">Hoy</th><th class="n">Proyectado</th>
+     <th class="n">Diferencia</th><th class="n">%</th></tr></thead>
+    <tbody>
+     ${fil("Venta neta",V,VP)}
+     ${fil("Materia prima",MP,MPP,true)}
+     ${fil("Mano de obra",MO,MOP,true)}
+     ${fil("CIF de producción",CI,CIP,true)}
+     ${fil("Utilidad bruta",UBh,UBp)}
+     ${fil("Comisiones de delivery",comHoy,comProy,true)}
+     ${fil("Resto de gastos",Ghoy-comHoy,Gproy-comProy,true)}
+    </tbody>
+    <tfoot><tr><td>UTILIDAD OPERATIVA</td><td class="n">${S0(UOh)}</td><td class="n">${S0(UOp)}</td>
+     <td class="n"><span class="bd ${UOp>=UOh?'ok':'ba'}">${UOp-UOh>0?"+":""}${S0(UOp-UOh)}</span></td>
+     <td class="n">${P(100*(UOp-UOh)/Math.abs(UOh||1),1)}</td></tr></tfoot></table></div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Qué pide cada estación</h2>
+    <p class="cs">Con el crecimiento aplicado, contra la capacidad práctica de cada puesto.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Estación</th><th class="n">Capacidad práctica</th>
+     <th class="n">Demanda hoy</th><th class="n">Demanda proyectada</th><th style="width:150px">Uso proyectado</th></tr></thead>
+    <tbody>${cap.map(c=>{
+      const dh=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/12, dp=dh*g;
+      const u2=c.min_practica?100*dp/c.min_practica:0;
+      return `<tr><td style="font-weight:600">${esc(c.nombre)}</td><td class="n">${N(c.min_practica)}</td>
+       <td class="n" style="color:var(--ink5)">${N(dh)}</td><td class="n" style="font-weight:600">${N(dp)}</td>
+       <td><div class="ptr" style="height:19px"><div class="pfl" style="width:${Math.min(100,u2).toFixed(1)}%;
+         background:${u2>100?'linear-gradient(90deg,#f87171,var(--babar))':u2>=90?'linear-gradient(90deg,#fbbf24,var(--wabar))':'linear-gradient(90deg,#22c55e,var(--okbar))'}"></div></div>
+         <div style="font-family:var(--fm);font-size:11.5px;text-align:right">${P(u2,1)}${u2>100?' ⚠':''}</div></td></tr>`}).join("")}</tbody>
+   </table></div></div>`;
+  $$("#p-pron input[data-pr]").forEach(el=>el.oninput=e=>{PR[e.target.dataset.pr]=+e.target.value;vPron();});
+  $("#bPr").onclick=()=>{PR={crec:0,meses:12,precio:0,insumos:0,rappi:0};vPron();};
+}
+
+/* ---------------- ESCENARIOS ---------------- */
+function snap(){
+  const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)/12}));
+  const V=ps.reduce((s,p)=>s+p.neto*p.u,0), MP=ps.reduce((s,p)=>s+p.mp*p.u,0);
+  const MO=ps.reduce((s,p)=>s+p.mod*p.u,0), CI=ps.reduce((s,p)=>s+p.cif*p.u,0);
+  const G=D.gastos.reduce((s,g)=>s+g.monto_mensual,0);
+  return {venta:V, mp:MP, ub:V-MP-MO-CI, ub_pct:V?100*(V-MP-MO-CI)/V:0,
+          fc:V?100*MP/V:0, uo:V-MP-MO-CI-G, uo_pct:V?100*(V-MP-MO-CI-G)/V:0};
+}
+function vEsc(){
+  const r=snap(), cam=Object.entries(ST.aj).filter(([,a])=>a.precio||a.mp||a.mod);
+  $("#p-esc").innerHTML=`
+  <div class="note">Guarda el estado de los deslizadores con un nombre y compáralo después. Sirve para responder "¿y si sube la harina 15%?" sin perder el dato base.</div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Situación actual</h2>
+    <p class="cs">${cam.length?`Con ${cam.length} ajuste(s) activo(s)`:"Sin ajustes: datos base"}</p></div>
+    <div style="display:flex;gap:8px"><input id="nom" class="btn" style="min-width:220px" placeholder="Nombre del escenario"/>
+     <button class="btn cr" id="bSave">Guardar</button></div></div>
+   <div class="simg">
+    <div class="kpi"><span class="kl">Venta neta/mes</span><div class="kv">${S0(r.venta)}</div></div>
+    <div class="kpi c"><span class="kl">Food cost</span><div class="kv">${P(r.fc,1)}</div></div>
+    <div class="kpi ok"><span class="kl">Utilidad bruta</span><div class="kv">${P(r.ub_pct,1)}</div></div>
+    <div class="kpi wa"><span class="kl">Utilidad operativa</span><div class="kv">${P(r.uo_pct,1)}</div></div></div>
+   ${cam.length?`<div class="note" style="margin:14px 0 0">Ajustes: ${cam.map(([id,a])=>{
+     const n=D.productos.find(p=>p.id===id).nombre, t=[];
+     if(a.precio)t.push(`precio ${a.precio>0?"+":""}${a.precio}%`);
+     if(a.mp)t.push(`MP ${a.mp>0?"+":""}${a.mp}%`); if(a.mod)t.push(`MOD ${a.mod>0?"+":""}${a.mod}%`);
+     return `<b>${esc(n)}</b> (${t.join(", ")})`}).join(" · ")}</div>`:""}</div>
+  ${ST.esc.length?`<div class="card"><div class="ch"><div><h2 class="ct">Guardados</h2></div></div>
+   <div class="tw"><table><thead><tr><th>Escenario</th><th>Fecha</th><th class="n">Venta</th><th class="n">Food cost</th>
+     <th class="n">Util. bruta</th><th class="n">Util. operativa</th><th class="n">vs ahora</th><th></th></tr></thead>
+    <tbody>${ST.esc.map((e,i)=>{const d=e.r.uo-r.uo;
+      return `<tr><td style="font-weight:600">${esc(e.nombre)}</td><td style="font-size:12.5px;color:var(--ink5)">${esc(e.fecha)}</td>
+       <td class="n">${S0(e.r.venta)}</td><td class="n">${P(e.r.fc,1)}</td><td class="n">${P(e.r.ub_pct,1)}</td>
+       <td class="n">${P(e.r.uo_pct,1)}</td>
+       <td class="n"><span class="bd ${Math.abs(d)<1?'nt':d>0?'ba':'ok'}">${d>0?"+":""}${S0(d)}</span></td>
+       <td><button class="btn sm" data-r="${i}">Restaurar</button> <button class="btn sm" data-x="${i}">Borrar</button></td></tr>`}).join("")}</tbody>
+   </table></div></div>`:`<div class="note">Todavía no hay escenarios. Mueve algo en <b>Productos</b> y guárdalo acá.</div>`}`;
+  $("#bSave").onclick=guardar;
+  $$("#p-esc [data-r]").forEach(b=>b.onclick=()=>{const e=ST.esc[+b.dataset.r];
+    ST.aj=JSON.parse(JSON.stringify(e.aj)); ST.igv=e.igv; $("#inIgv").value=ST.igv; save(); render();});
+  $$("#p-esc [data-x]").forEach(b=>b.onclick=()=>borrarEscenario(ST.esc[+b.dataset.x].id));
+}
+function guardarLocal_noUsado(){
+  const n=($("#nom")?.value||"").trim()||("Escenario "+(ST.esc.length+1));
+  ST.esc.unshift({nombre:n, fecha:new Date().toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"}),
+    aj:JSON.parse(JSON.stringify(ST.aj)), igv:ST.igv, r:snap()});
+  save(); $("#cEsc").textContent=ST.esc.length; vEsc();
+}
+
+/* ---------------- arranque ---------------- */
+function render(){if(esAdmin())vUsuarios();vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vPron();vVta();vEsc();
+  $("#cEsc").textContent=ST.esc.length; $("#cProd").textContent=D.productos.length;}
+$$(".tb").forEach(b=>b.onclick=()=>{$$(".tb").forEach(x=>x.classList.toggle("on",x===b));
+  $$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+b.dataset.t));});
+$("#selAnio").onchange=e=>{ST.anio=e.target.value;render();};
+$("#inIgv").value=ST.igv;
+$("#inIgv").oninput=e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v)&&v>=0){ST.igv=v;save();vProd();vRes();}};
+$("#mClose").onclick=cerrar;
+$("#modal").onclick=e=>{if(e.target.id==="modal")cerrar();};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ST.abierto)cerrar();});
+/* ============================================================
+   ACCESO: sesión, roles y administración de usuarios
+   Quien se registra queda PENDIENTE hasta que un admin lo aprueba.
+   Roles: lectura (solo ve) · edicion (ve y modifica) · admin (ademas aprueba)
+   ============================================================ */
+const SB_URL="https://fqgwcyrmncxmnxyxydux.supabase.co", SB_KEY="sb_publishable_b2I75xOPa2wqffw4XJXMUw_lNoffxiw";
+let sb=null, SESION=null, PERFIL=null;
+const puedeEditar=()=>PERFIL && PERFIL.estado==="aprobado" && (PERFIL.rol==="edicion"||PERFIL.rol==="admin");
+const esAdmin=()=>PERFIL && PERFIL.estado==="aprobado" && PERFIL.rol==="admin";
+
+function pantalla(html){ $("#gate").innerHTML=html; $("#gate").classList.add("on"); $("#app").style.display="none"; }
+function entrar(){ $("#gate").classList.remove("on"); $("#app").style.display="block"; }
+
+const CAJA = (titulo, cuerpo, pie="") => `
+ <div class="gbox">
+  <div class="glogo"><svg width="40" height="40" viewBox="0 0 36 36" fill="none">
+   <path d="M7 22C7 14.5 12 10 18 10C24 10 29 14.5 29 22C29 25.3 26.5 27 23 27H13C9.5 27 7 25.3 7 22Z" fill="#C96B2C"/>
+   <path d="M11 21C13 15.5 16.5 13 18 13C19.5 13 23 15.5 25 21" stroke="#FFEED6" stroke-width="2.2" stroke-linecap="round"/>
+   <path d="M14.5 14.5L18 24.5L21.5 14.5" stroke="#FFEED6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+   <circle cx="18" cy="7" r="2" fill="#E8803A"/></svg></div>
+  <h1 class="gtit">oh-jalá</h1><p class="gsub">${titulo}</p>
+  ${cuerpo}${pie?`<div class="gpie">${pie}</div>`:""}</div>`;
+
+function vLogin(err){
+  pantalla(CAJA("Costeo y rentabilidad", `
+   <div class="gcampo"><label>Correo</label><input id="gEmail" type="email" autocomplete="email" placeholder="tu@correo.com"/></div>
+   <div class="gcampo"><label>Contraseña</label><input id="gPass" type="password" autocomplete="current-password" placeholder="••••••••"/></div>
+   ${err?`<div class="gerr">${esc(err)}</div>`:""}
+   <button class="gbtn" id="gEntrar">Entrar</button>
+   <button class="gbtn sec" id="gIrReg">Crear una cuenta</button>`,
+   "El acceso lo aprueba un administrador."));
+  $("#gEntrar").onclick=login; $("#gIrReg").onclick=()=>vRegistro();
+  $("#gPass").onkeydown=e=>{if(e.key==="Enter")login();};
+  $("#gEmail").onkeydown=e=>{if(e.key==="Enter")$("#gPass").focus();};
+}
+function vRegistro(err,ok){
+  pantalla(CAJA("Crear una cuenta", `
+   <div class="gcampo"><label>Nombre</label><input id="rNom" placeholder="Cómo te llamas"/></div>
+   <div class="gcampo"><label>Correo</label><input id="rEmail" type="email" autocomplete="email"/></div>
+   <div class="gcampo"><label>Contraseña</label><input id="rPass" type="password" autocomplete="new-password" placeholder="mínimo 6 caracteres"/></div>
+   ${err?`<div class="gerr">${esc(err)}</div>`:""}${ok?`<div class="gok">${esc(ok)}</div>`:""}
+   <button class="gbtn" id="rCrear">Crear cuenta</button>
+   <button class="gbtn sec" id="rVolver">Ya tengo cuenta</button>`,
+   "Tu cuenta queda pendiente hasta que un administrador la apruebe."));
+  $("#rCrear").onclick=registrar; $("#rVolver").onclick=()=>vLogin();
+}
+function vPendiente(){
+  pantalla(CAJA("Cuenta pendiente", `
+   <div class="gestado">⏳</div>
+   <p class="gtxt">Tu cuenta <b>${esc(PERFIL?.email||"")}</b> ya está creada, pero todavía no tiene acceso.
+    Un administrador tiene que aprobarla y asignarte un perfil de lectura o de edición.</p>
+   <button class="gbtn sec" id="gRefrescar">Volver a revisar</button>
+   <button class="gbtn sec" id="gSalir2">Cerrar sesión</button>`));
+  $("#gRefrescar").onclick=arrancarSesion; $("#gSalir2").onclick=salir;
+}
+function vBloqueado(){
+  pantalla(CAJA("Acceso retirado", `
+   <div class="gestado">🚫</div>
+   <p class="gtxt">Esta cuenta tiene el acceso retirado. Habla con un administrador si crees que es un error.</p>
+   <button class="gbtn sec" id="gSalir3">Cerrar sesión</button>`));
+  $("#gSalir3").onclick=salir;
+}
+
+async function login(){
+  const email=$("#gEmail").value.trim(), pass=$("#gPass").value;
+  if(!email||!pass) return vLogin("Escribe tu correo y tu contraseña.");
+  $("#gEntrar").disabled=true; $("#gEntrar").textContent="Entrando...";
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error) return vLogin(error.message.includes("Invalid")?"Correo o contraseña incorrectos.":error.message);
+  arrancarSesion();
+}
+async function registrar(){
+  const nom=$("#rNom").value.trim(), email=$("#rEmail").value.trim(), pass=$("#rPass").value;
+  if(!email||pass.length<6) return vRegistro("Pon un correo válido y una contraseña de al menos 6 caracteres.");
+  $("#rCrear").disabled=true; $("#rCrear").textContent="Creando...";
+  const {error}=await sb.auth.signUp({email,password:pass,options:{data:{nombre:nom}}});
+  if(error) return vRegistro(error.message);
+  vRegistro(null,"Cuenta creada. Ahora inicia sesión; vas a quedar en espera de aprobación.");
+  setTimeout(()=>vLogin(),2200);
+}
+async function salir(){ await sb.auth.signOut(); PERFIL=null; SESION=null; vLogin(); }
+
+async function arrancarSesion(){
+  const {data:{session}}=await sb.auth.getSession();
+  SESION=session;
+  if(!session) return vLogin();
+  const {data,error}=await sb.from("perfiles").select("*").eq("id",session.user.id).maybeSingle();
+  if(error) return vLogin("No se pudo leer tu perfil: "+error.message);
+  PERFIL=data;
+  if(!PERFIL) return vPendiente();
+  if(PERFIL.estado==="bloqueado") return vBloqueado();
+  if(PERFIL.estado!=="aprobado") return vPendiente();
+  entrar(); pintarSesion(); await cargarEscenarios(); render();
+}
+function pintarSesion(){
+  const r={lectura:"Lectura",edicion:"Edición",admin:"Administrador"}[PERFIL.rol]||PERFIL.rol;
+  $("#usrBox").innerHTML=`<div class="usr">
+    <div class="uav">${esc((PERFIL.nombre||PERFIL.email)[0].toUpperCase())}</div>
+    <div class="uinfo"><b>${esc(PERFIL.nombre||PERFIL.email)}</b><span>${r}</span></div>
+    <button class="hbtn" id="bSalir">Salir</button></div>`;
+  $("#bSalir").onclick=salir;
+  $("#tabUsr").style.display = esAdmin()?"":"none";
+  if(!puedeEditar()) document.body.classList.add("solo-lectura");
+  else document.body.classList.remove("solo-lectura");
+}
+
+/* ---------- escenarios contra la base ---------- */
+async function cargarEscenarios(){
+  const {data,error}=await sb.from("escenarios").select("*").order("creado_en",{ascending:false});
+  if(error){ ST.esc=[]; return; }
+  ST.esc=(data||[]).map(e=>({id:e.id,nombre:e.nombre,fecha:new Date(e.creado_en).toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"}),
+    aj:e.ajustes,igv:e.igv,r:e.resultados}));
+}
+async function guardar(){
+  if(!puedeEditar()) return alert("Tu perfil es de solo lectura: no puedes guardar escenarios.");
+  const n=($("#nom")?.value||"").trim()||("Escenario "+(ST.esc.length+1));
+  const {error}=await sb.from("escenarios").insert({nombre:n,ajustes:ST.aj,resultados:snap(),igv:ST.igv,anio:ST.anio});
+  if(error) return alert("No se pudo guardar: "+error.message);
+  await cargarEscenarios(); $("#cEsc").textContent=ST.esc.length; vEsc();
+}
+async function borrarEscenario(id){
+  if(!puedeEditar()) return;
+  const {error}=await sb.from("escenarios").delete().eq("id",id);
+  if(error) return alert("No se pudo borrar: "+error.message);
+  await cargarEscenarios(); $("#cEsc").textContent=ST.esc.length; vEsc();
+}
+
+/* ---------- administración de usuarios ---------- */
+async function vUsuarios(){
+  if(!esAdmin()) return;
+  const {data,error}=await sb.from("v_usuarios").select("*");
+  if(error){ $("#p-usr").innerHTML=`<div class="note bad">No se pudo leer la lista: ${esc(error.message)}</div>`; return; }
+  const us=data||[], pend=us.filter(u=>u.estado==="pendiente");
+  const chip=u=>({pendiente:'<span class="bd wa">pendiente</span>',aprobado:'<span class="bd ok">aprobado</span>',
+                  bloqueado:'<span class="bd ba">bloqueado</span>'})[u.estado]||"";
+  $("#p-usr").innerHTML=`
+  <div class="note">Quien se registra entra en espera. Acá le das acceso y decides si puede solo mirar o también editar.</div>
+  ${pend.length?`<div class="note warn"><b>${pend.length} ${pend.length===1?"cuenta espera":"cuentas esperan"} aprobación.</b></div>`:""}
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Usuarios</span><div class="kv">${us.length}</div></div>
+   <div class="kpi wa"><span class="kl">Pendientes</span><div class="kv">${pend.length}</div></div>
+   <div class="kpi ok"><span class="kl">Con acceso</span><div class="kv">${us.filter(u=>u.estado==="aprobado").length}</div></div>
+   <div class="kpi c"><span class="kl">Pueden editar</span><div class="kv">${us.filter(u=>u.estado==="aprobado"&&u.rol!=="lectura").length}</div></div>
+  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Usuarios</h2>
+    <p class="cs">El perfil de <b>lectura</b> ve todo pero no guarda nada. El de <b>edición</b> puede simular y guardar escenarios.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Persona</th><th>Correo</th><th>Registro</th><th>Estado</th>
+     <th style="width:190px">Perfil de acceso</th><th style="width:200px">Acciones</th></tr></thead>
+    <tbody>${us.map(u=>`<tr ${u.estado==="pendiente"?'style="background:#fffaf0"':''}>
+      <td style="font-weight:600">${esc(u.nombre||"—")} ${u.soy_yo?'<span class="bd nt">tú</span>':''}</td>
+      <td style="font-size:12.5px;color:var(--ink7)">${esc(u.email)}</td>
+      <td style="font-size:12px;color:var(--ink5)">${new Date(u.created_at).toLocaleDateString("es-PE")}</td>
+      <td>${chip(u)}</td>
+      <td>${u.soy_yo?'<span style="color:var(--ink5);font-size:12.5px">no puedes cambiarte el tuyo</span>':
+        `<select class="cell-sel" data-rol="${u.id}">
+          <option value="lectura" ${u.rol==="lectura"?"selected":""}>Lectura</option>
+          <option value="edicion" ${u.rol==="edicion"?"selected":""}>Edición</option>
+          <option value="admin" ${u.rol==="admin"?"selected":""}>Administrador</option></select>`}</td>
+      <td>${u.soy_yo?"":`
+        ${u.estado!=="aprobado"?`<button class="btn sm pri" data-ap="${u.id}">Aprobar</button>`:""}
+        ${u.estado==="aprobado"?`<button class="btn sm" data-bl="${u.id}">Retirar acceso</button>`:""}
+        ${u.estado==="bloqueado"?`<button class="btn sm" data-ap="${u.id}">Reactivar</button>`:""}`}</td></tr>`).join("")}</tbody>
+   </table></div></div>`;
+  $$("#p-usr [data-ap]").forEach(b=>b.onclick=()=>cambiarUsuario(b.dataset.ap,{estado:"aprobado",aprobado_en:new Date().toISOString(),aprobado_por:SESION.user.id}));
+  $$("#p-usr [data-bl]").forEach(b=>b.onclick=()=>{ if(confirm("¿Retirar el acceso de esta persona?")) cambiarUsuario(b.dataset.bl,{estado:"bloqueado"}); });
+  $$("#p-usr [data-rol]").forEach(s=>s.onchange=()=>cambiarUsuario(s.dataset.rol,{rol:s.value}));
+}
+async function cambiarUsuario(id,campos){
+  const {error}=await sb.from("perfiles").update(campos).eq("id",id);
+  if(error) return alert("No se pudo actualizar: "+error.message);
+  vUsuarios();
+}
+
+/* ---------- arranque ---------- */
+(async function(){
+  if(typeof window.supabase==="undefined"){ pantalla(CAJA("Sin conexión",
+    `<p class="gtxt">No se pudo cargar la librería de acceso. Revisa tu internet y recarga.</p>`)); return; }
+  sb=window.supabase.createClient(SB_URL,SB_KEY);
+  sb.auth.onAuthStateChange((ev)=>{ if(ev==="SIGNED_OUT"){PERFIL=null;vLogin();} });
+  await arrancarSesion();
+})();
+
+</script>
+</body>
+</html>
