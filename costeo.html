@@ -3495,7 +3495,9 @@ function vEsc(){
     <div class="kpi ok"><span class="kl">Utilidad bruta</span><div class="kv">${P(r.ub_pct,1)}</div></div>
     <div class="kpi wa"><span class="kl">Utilidad operativa</span><div class="kv">${P(r.uo_pct,1)}</div></div></div>
    ${cam.length?`<div class="note" style="margin:14px 0 0">Ajustes: ${cam.map(([id,a])=>{
-     const n=D.productos.find(p=>p.id===id).nombre, t=[];
+     const pr=D.productos.find(p=>p.id===id);
+     if(!pr) return "";   // un escenario viejo puede citar un producto que ya no existe
+     const n=pr.nombre, t=[];
      if(a.precio)t.push(`precio ${a.precio>0?"+":""}${a.precio}%`);
      if(a.mp)t.push(`MP ${a.mp>0?"+":""}${a.mp}%`); if(a.mod)t.push(`MOD ${a.mod>0?"+":""}${a.mod}%`);
      return `<b>${esc(n)}</b> (${t.join(", ")})`}).join(" · ")}</div>`:""}</div>
