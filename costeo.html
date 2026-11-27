@@ -2570,8 +2570,9 @@ function vPlan(){
    Variable = lo que solo existe si vendes una unidad más: insumos, comisiones, empaque.
    Fijo = lo que pagas igual aunque no vendas nada: planilla, alquiler, CIF, estructura. */
 function calcEquilibrio(){
+  // todo en un mes promedio: la venta tambien, si no el margen de seguridad sale absurdo
   const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)/12}));
-  const V=ps.reduce((s,p)=>s+vta(p,ST.anio),0), U=ps.reduce((s,p)=>s+p.u,0);
+  const V=ps.reduce((s,p)=>s+vta(p,ST.anio)/12,0), U=ps.reduce((s,p)=>s+p.u,0);
   const MP=ps.reduce((s,p)=>s+p.mp*p.u,0);
   let com=0,pos=0,empq=0;
   D.canales.forEach(c=>{const e=econCanal(c,ST.anio); com+=e.com/12; pos+=e.pos/12; empq+=(e.emp||0)/12;});
