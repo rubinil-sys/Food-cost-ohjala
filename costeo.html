@@ -3526,13 +3526,14 @@ function guardar(){
 }
 
 /* ---------------- arranque ---------------- */
-function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vVentas();vPron();vPlanilla();vPlan();vVta();vEsc();vAlertas();pintarBadge();setTimeout(()=>tablasFiltrables(),30);if(typeof esAdmin==='function'&&esAdmin())vUsuarios();
+function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vVentas();vPron();vPlanilla();vPlan();vVta();vEsc();vAlertas();pintarBadge();setTimeout(()=>tablasFiltrables(),30);try{ if(esAdmin()) vUsuarios(); }catch(e){}
   $("#cEsc").textContent=ST.esc.length; $("#cProd").textContent=D.productos.length;}
+function puedeVer(k){ try{ return permitida(k); }catch(e){ return true; } }
 function mostrarGrupo(g,activar){
   $$(".gb").forEach(x=>x.classList.toggle("on",x.dataset.g===g));
   let primero=null;
   $$(".tb").forEach(b=>{
-    const perm=(typeof permitida==="function")?permitida(b.dataset.t):true;
+    const perm=puedeVer(b.dataset.t);
     const ver=perm&&b.dataset.g===g;
     b.style.display=ver?"":"none";
     if(ver&&!primero) primero=b;
@@ -3542,8 +3543,7 @@ function mostrarGrupo(g,activar){
 }
 function gruposVisibles(){
   $$(".gb").forEach(g=>{
-    const hay=$$(".tb").some(b=>b.dataset.g===g.dataset.g &&
-      ((typeof permitida==="function")?permitida(b.dataset.t):true));
+    const hay=$$(".tb").some(b=>b.dataset.g===g.dataset.g && puedeVer(b.dataset.t));
     g.style.display=hay?"":"none";
   });
 }
@@ -3552,7 +3552,7 @@ $$(".tb").forEach(b=>b.onclick=()=>{$$(".tb").forEach(x=>x.classList.toggle("on"
   if(b.dataset.t==="ale")vAlertas(); if(b.dataset.t==="usr"&&typeof vUsuarios==="function")vUsuarios();
   $$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+b.dataset.t));
   setTimeout(()=>tablasFiltrables($("#p-"+b.dataset.t)),20);});
-gruposVisibles(); mostrarGrupo("negocio",false);
+setTimeout(()=>{try{gruposVisibles(); mostrarGrupo("negocio",false);}catch(e){}},0);
 $("#selAnio").onchange=e=>{ST.anio=e.target.value;render();};
 $("#inIgv").value=ST.igv;
 $("#inIgv").oninput=e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v)&&v>=0){ST.igv=v;save();vProd();vRes();}};
@@ -3629,7 +3629,7 @@ function permitida(k){
 }
 function aplicarPermisos(){
   let visible=null;
-  const gAct=($$(".gb").find(x=>x.classList.contains("on"))||{dataset:{}}).dataset.g;
+  const gAct=(($$(".gb").filter(x=>x.classList.contains("on"))[0])||{dataset:{}}).dataset.g;
   $$(".tb").forEach(b=>{
     const ok=permitida(b.dataset.t);
     b.style.display=(ok && (!gAct || b.dataset.g===gAct))?"":"none";
