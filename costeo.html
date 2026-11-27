@@ -455,7 +455,7 @@ details summary::marker{color:var(--c600)}
  <button class="tb" data-t="prod">Productos <span class="cnt" id="cProd">10</span></button>
  <button class="tb" data-t="ins">Insumos y recetas</button>
  <button class="tb" data-t="mo">Mano de obra</button>
- <button class="tb" data-t="util">Utilidad bruta</button>
+ <button class="tb" data-t="util">Del costo al EBITDA</button>
  <button class="tb" data-t="tab">Tablero</button>
  <button class="tb" data-t="can">Canales</button>
  <button class="tb" data-t="pron">Pronóstico</button>
@@ -1335,9 +1335,48 @@ function vMo(){
 /* ---------------- UTILIDAD BRUTA ---------------- */
 function vUtil(){
   const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)/12}));
-  const V=ps.reduce((s,p)=>s+vta(p,ST.anio),0), MP=ps.reduce((s,p)=>s+p.mp*p.u,0);
+  const MZ=D.matriz_mo[ST.anio]||{};
+  const V=ps.reduce((s,p)=>s+vta(p,ST.anio)/12,0);
+  const MP=ps.reduce((s,p)=>s+p.mp*p.u,0);
   const MO=ps.reduce((s,p)=>s+p.mod*p.u,0), CI=ps.reduce((s,p)=>s+p.cif*p.u,0);
-  const UB=V-MP-MO-CI, G=D.gastos.reduce((s,g)=>s+g.monto_mensual,0), UO=UB-G;
+  const CUF=MP+MO+CI, MB=V-CUF;                    // piso 1 y margen bruto
+
+  // linea 7: capacidad pagada y no usada, por pool. NO se reparte a productos (NIC 2, parr. 13)
+  const pools=D.capacidad.map(c=>{
+    const dem=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/12;
+    return {...c, dem, holg:Math.max(0,c.min_practica-dem), ocio:Math.max(0,c.min_practica-dem)*c.tarifa};
+  });
+  const OCIO=pools.reduce((s,c)=>s+c.ocio,0);
+  const MERMA=CUF*0.05;                            // provision de mermas, 5% del costo de ventas
+
+  // la bolsa que no se reparte al producto: estructura + periodo
+  const gl=id=>(D.gastos.find(g=>g.id===id)||{}).monto_mensual||0;
+  const ADM=gl("go_administracion"), ALQ=gl("go_alquiler_tienda"), SER=gl("go_servicios");
+  const MKT=gl("go_marketing"), CON=gl("go_contabilidad");
+  const COMD=gl("go_comisiones_delivery");
+  const DEP=(D.cif.find(c=>/depreciac/i.test(c.concepto))||{}).monto_mensual||0;
+  const ESTRUCT=ADM+ALQ+SER+MKT+CON;
+  const PEAJE=OCIO+ESTRUCT;                        // la bolsa no repartible
+  const EBIT=MB-MERMA-COMD-PEAJE;
+  const EBITDA=EBIT+DEP;                           // se devuelve la depreciacion ya cargada en el CIF
+
+  // reparto del peaje POR RECURSOS (minutos), no por venta
+  const minProd=p=>Object.values(MZ[p.id]||{}).reduce((s,x)=>s+x.min,0)/12;
+  const totMin=ps.reduce((s,p)=>s+minProd(p),0);
+  const pr=ps.map(p=>{
+    const m=minProd(p), vP=vta(p,ST.anio)/12, uP=p.u||0;
+    const nt=uP?vP/uP:p.neto;
+    const peaje=totMin?PEAJE*m/totMin:0;           // su parte de la bolsa, por recursos
+    const merma=p.cuf*0.05*uP;
+    const piso1=p.cuf;
+    const piso2=uP?piso1+(totMin?OCIO*m/totMin:0)/uP:piso1;
+    const piso3=uP?piso2+(merma+peaje)/uP:piso2;
+    return {...p, m, vP, nt, uP, peaje, peajeU:uP?peaje/uP:0, piso1, piso2, piso3,
+      mcU:nt-p.mp, mc:(nt-p.mp)*uP, aporte:(nt-piso1)*uP,
+      pagaPeaje:nt>=piso3, pierde:nt<p.mp,
+      pctMin:totMin?100*m/totMin:0, pctVta:V?100*vP/V:0};
+  }).sort((a,b)=>b.aporte-a.aporte);
+
   const f=(lb,v,nota,t)=>`<div class="cr"><div class="clb"><span>${lb}</span><span class="cnt2">${nota}</span></div>
     <div class="cbar"><div class="cseg ${t}" style="width:${(100*v/V).toFixed(2)}%"></div>
      <div class="cseg rest" style="width:${(100-100*v/V).toFixed(2)}%"></div></div>
@@ -1346,37 +1385,205 @@ function vUtil(){
     <div class="clb"><span style="font-family:var(--fd);font-weight:700;font-size:${fuerte?'17px':'15px'}">${lb}</span><span class="cnt2">${nota}</span></div>
     <div class="cbar"><div class="cseg" style="width:${(100*v/V).toFixed(2)}%;background:${fuerte?'var(--okbar)':'var(--g100)'}"></div></div>
     <div class="n" style="font-weight:700;font-size:${fuerte?'17px':'15px'}">${S0(v)}</div>
-    <div class="n"><span class="bd ${fuerte?'ok':'wa'}">${P(100*v/V,1)}</span></div></div>`;
+    <div class="n"><span class="bd ${v>0?(fuerte?'ok':'wa'):'ba'}">${P(100*v/V,1)}</span></div></div>`;
+
   $("#p-util").innerHTML=`
-  <div class="note">De cada sol que entra, ¿cuánto queda? El food cost es solo el primer escalón. Cifras de un mes promedio de ${ST.anio}.</div>
+  <div class="note"><b>Dónde para el costo del producto y dónde empieza la bolsa.</b>
+   Materia prima, mano de obra y CIF son el <b>piso del producto</b>: lo que cuesta fabricarlo.
+   De ahí en adelante nada es del producto — es del negocio. Ordenado como lo ordena el motor, y como lo exige la norma.
+   Cifras de un mes promedio de ${ST.anio}.</div>
+
   <div class="kpis">
-   <div class="kpi"><span class="kl">Venta neta mensual</span><div class="kv">${S0(V)}</div></div>
-   <div class="kpi c"><span class="kl">Materia prima</span><div class="kv">${P(100*MP/V,1)}</div><div class="kf"><span>${S0(MP)}</span></div></div>
-   <div class="kpi"><span class="kl">Mano de obra</span><div class="kv">${P(100*MO/V,1)}</div><div class="kf"><span>${S0(MO)}</span></div></div>
-   <div class="kpi ok"><span class="kl">Utilidad bruta</span><div class="kv">${P(100*UB/V,1)}</div><div class="kf"><span>${S0(UB)}</span></div></div>
-   <div class="kpi wa"><span class="kl">Utilidad operativa</span><div class="kv">${P(100*UO/V,1)}</div><div class="kf"><span>${S0(UO)}</span></div></div>
+   <div class="kpi"><span class="kl">Venta neta del mes</span><div class="kv">${S0(V)}</div></div>
+   <div class="kpi c"><span class="kl">Costo de fabricar (CUF)</span><div class="kv">${P(100*CUF/V,1)}</div>
+     <div class="kf"><span>${S0(CUF)} · piso 1</span></div></div>
+   <div class="kpi ok"><span class="kl">Margen bruto</span><div class="kv">${P(100*MB/V,1)}</div>
+     <div class="kf"><span>${S0(MB)}</span></div></div>
+   <div class="kpi wa"><span class="kl">Peaje (bolsa no repartible)</span><div class="kv">${P(100*PEAJE/V,1)}</div>
+     <div class="kf"><span>${S0(PEAJE)}</span></div></div>
+   <div class="kpi ${EBITDA>0?'ok':'ba'}"><span class="kl">EBITDA</span><div class="kv">${P(100*EBITDA/V,1)}</div>
+     <div class="kf"><span>${S0(EBITDA)}</span></div></div>
   </div>
-  <div class="card"><div class="ch"><div><h2 class="ct">Paso 1 · Hasta la utilidad bruta</h2>
-    <p class="cs">Los tres costos que son del producto: lo que se compra, lo que se trabaja y lo que cuesta tener la planta andando.</p></div></div>
-   <div class="casc">${h("Venta neta del mes",V,"Un mes promedio de "+ST.anio,false)}
-    ${f("Materia prima",MP,"Insumos valorizados con merma, más rellenos y empaque","costo")}
-    ${f("Mano de obra directa",MO,"Minutos de cada paso por la tarifa de su estación","costo")}
-    ${f("CIF de producción",CI,"Energía, gas, depreciación y alquiler de planta","costo")}
-    ${h("UTILIDAD BRUTA",UB,"Lo que deja el producto antes de sostener la tienda y la oficina",true)}</div></div>
-  <div class="card"><div class="ch"><div><h2 class="ct">Paso 2 · Hasta la utilidad operativa</h2>
-    <p class="cs">Gastos que no son del producto sino del negocio.</p></div></div>
-   <div class="casc">${D.gastos.map(g=>f(esc(g.concepto),g.monto_mensual,"","gasto")).join("")}
-    ${h("UTILIDAD OPERATIVA",UO,"Lo que de verdad queda al mes",false)}</div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">El P&amp;L por líneas, hasta el EBITDA</h2>
+    <p class="cs">La misma escalera que usa el motor de costeo: primero lo que es del producto, después lo que es del periodo.</p></div>
+   <span class="bd nt">mes promedio</span></div>
+   <div class="casc">
+    ${h("1 · Venta neta sin IGV",V,"Cada canal a su propio precio",false)}
+    ${f("2 · Costo de ventas (CUF)",CUF,"Materia prima + minutos cronometrados × tarifa + CIF por driver","costo")}
+    ${h("3 · MARGEN BRUTO",MB,"Hasta acá llega el costo del producto",true)}
+    ${f("4 · Provisión de mermas",MERMA,"5% del costo de ventas: lo que se rompe, se pasa o se regala","costo")}
+    ${f("5 · Comisiones de plataforma",COMD,"Rappi, 28% de su venta bruta. No es costo del pan: es costo del canal","gasto")}
+    ${f("6 · Capacidad pagada y no usada",OCIO,"Línea 7 del motor. NO se reparte a productos (NIC 2, párr. 13)","gasto")}
+    ${f("7 · Estructura: administración y ventas",ADM,"Planilla indirecta, administradora de tienda, mostrador","gasto")}
+    ${f("8 · Estructura: alquiler de tienda",ALQ,"El área de venta. La parte de planta ya está dentro del CIF","gasto")}
+    ${f("9 · Estructura: servicios de tienda",SER,"Luz, agua, internet, POS","gasto")}
+    ${f("10 · Estructura: marketing",MKT,"Redes, fotografía de producto","gasto")}
+    ${f("11 · Estructura: contabilidad",CON,"Asesoría externa","gasto")}
+    ${h("12 · RESULTADO OPERATIVO (EBIT)",EBIT,"Lo que queda después de todo lo de arriba",false)}
+    ${h("13 · EBITDA",EBITDA,"EBIT + "+S0(DEP)+" de depreciación de equipos que ya iba dentro del CIF",true)}
+   </div>
+   <div class="note" style="margin:15px 0 0"><b>Por qué el EBITDA se calcula así y no como "margen bruto menos gastos".</b>
+    La depreciación de los equipos de producción (${S0(DEP)} al mes) está <b>dentro</b> del CIF, o sea ya se restó en la línea 2.
+    EBITDA significa resultado antes de intereses, impuestos, depreciación y amortización: por eso hay que devolverla.
+    Si no se devuelve, lo que sale es EBIT, no EBITDA, y la diferencia acá es ${P(100*DEP/V,1)} de la venta.
+    Aviso honesto: <b>EBITDA no es una medida de las NIIF</b> — no está definida en ninguna norma contable. Es una convención
+    de gestión y de banca. El resultado que sí está normado es el operativo.</div>
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Los cuatro pisos de un producto</h2>
+    <p class="cs">Cada piso sirve para una decisión distinta y no se mezclan. Esta es la respuesta a
+     "¿hasta dónde es costo del producto?".</p></div></div>
+   <div class="tw"><table><thead><tr><th style="width:150px">Piso</th><th>Qué incluye</th><th>Para qué sirve</th><th>Qué NO puede hacer</th></tr></thead>
+    <tbody>
+     <tr><td style="font-weight:700;color:var(--g900)">1 · Costo de fabricación<div style="font-size:11px;font-weight:400;color:var(--ink5)">el CUF</div></td>
+      <td>Materia prima real + minutos cronometrados × tarifa de mano de obra + minutos × tarifa de cada pool de CIF.</td>
+      <td>Valorizar inventario, el costo de ventas del P&amp;L, y ver si una receta se encareció. Es lo único <b>medido</b>.</td>
+      <td>No dice si el precio es suficiente: todavía no tiene nada del negocio.</td></tr>
+     <tr><td style="font-weight:700">2 · Costo de producción pleno</td>
+      <td>CUF + la capacidad pagada que no se usó.</td>
+      <td>Decisiones de precio de largo plazo: si la planta está a media máquina, el pan "verdadero" cuesta más.</td>
+      <td><b>No valoriza inventario ni entra al costo de ventas.</b> La NIC 2 párr. 13 lo prohíbe expresamente.</td></tr>
+     <tr><td style="font-weight:700">3 · Costo pleno</td>
+      <td>Piso 2 + mermas + gastos de operación, repartidos <b>por capas separadas</b> (tienda / servir / estructura).</td>
+      <td>Una venta corporativa al costo. Es el número de "cuánto me cuesta de verdad atender a este cliente".</td>
+      <td>No se construye con un solo porcentaje sobre el precio: eso esconde quién consume qué.</td></tr>
+     <tr style="background:var(--g50)"><td style="font-weight:700">4 · Precio piso<div style="font-size:11px;font-weight:400;color:var(--ink5)">hay dos, no uno</div></td>
+      <td><b>Incremental:</b> cubre lo que esa unidad causa. <b>Recuperación plena:</b> cubre además su parte de la bolsa.</td>
+      <td>El incremental es el mínimo para llenar capacidad ociosa (un pedido puntual). El pleno es el mínimo para un negocio permanente.</td>
+      <td>Vender siempre al incremental quiebra la empresa: nadie estaría pagando los fijos.</td></tr>
+    </tbody></table></div>
+   <div class="note warn" style="margin:13px 0 0"><b>La regla que ordena todo esto.</b>
+    NIC 2, párrafo 13: el costo indirecto fijo se distribuye según la <b>capacidad normal</b>, y
+    "el importe de costos indirectos fijos distribuido a cada unidad de producción no se incrementará como consecuencia
+    de un nivel bajo de producción, ni por la existencia de capacidad ociosa.
+    Los costos indirectos no distribuidos se reconocerán como gastos del periodo en que han sido incurridos".
+    Traducido: <b>la capacidad que pagaste y no usaste es gasto del mes, no costo del pan</b>. Por eso la línea 6 de arriba
+    está separada y no se reparte entre productos.</div>
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">La bolsa en acción: cuánto aporta cada producto al peaje</h2>
+    <p class="cs"><b>Peaje</b> = su parte de los gastos fijos que no se reparten al costo del producto: estructura
+     más capacidad pagada sin usar. Se reparte <b>por los recursos que consume</b>, no por lo que vende:
+     el que más planta usa, más carga.</p></div>
+   <span class="bd wa">${S0(PEAJE)} al mes por repartir</span></div>
+   <div class="tw"><table><thead><tr><th>Producto</th><th class="n">Unid./mes</th><th class="n">% de la venta</th>
+     <th class="n">% de los minutos</th><th class="n">Aporte a la bolsa</th><th class="n">Peaje asignado</th>
+     <th class="n">Sobra / falta</th><th class="n">Piso 1</th><th class="n">Piso 3</th><th class="n">Precio</th><th>Veredicto</th></tr></thead>
+    <tbody>${pr.map(p=>{const sobra=p.aporte-p.peaje;
+      return `<tr class="clic" data-p="${p.id}">
+      <td style="font-weight:600">${esc(p.nombre)}</td>
+      <td class="n">${N(p.uP)}</td>
+      <td class="n">${P(p.pctVta,1)}</td>
+      <td class="n" style="color:${p.pctMin>p.pctVta*1.25?'var(--ba)':'var(--ink7)'}">${P(p.pctMin,1)}</td>
+      <td class="n" style="font-weight:600">${S0(p.aporte)}</td>
+      <td class="n" style="color:var(--ba)">−${S0(p.peaje)}</td>
+      <td class="n" style="font-weight:700;color:${sobra>0?'var(--ok)':'var(--ba)'}">${sobra>0?"+":"−"}${S0(Math.abs(sobra))}</td>
+      <td class="n" style="color:var(--ink5)">${S(p.piso1)}</td>
+      <td class="n">${S(p.piso3)}</td>
+      <td class="n" style="font-weight:600">${S(p.nt)}</td>
+      <td>${p.pierde?'<span class="bd ba">pierde plata</span>'
+        :p.pagaPeaje?'<span class="bd ok">paga su peaje</span>'
+        :'<span class="bd wa">cubre su costo, no su peaje</span>'}</td></tr>`}).join("")}</tbody>
+    <tfoot><tr><td>TOTAL</td><td class="n">${N(pr.reduce((s,p)=>s+p.uP,0))}</td><td class="n">100%</td><td class="n">100%</td>
+      <td class="n">${S0(pr.reduce((s,p)=>s+p.aporte,0))}</td>
+      <td class="n">−${S0(PEAJE)}</td>
+      <td class="n">${S0(pr.reduce((s,p)=>s+p.aporte,0)-PEAJE)}</td>
+      <td class="n">—</td><td class="n">—</td><td class="n">—</td><td></td></tr></tfoot></table></div>
+   <div class="note" style="margin:13px 0 0"><b>Cómo se lee esta tabla.</b>
+    Las tres columnas que importan son <b>% de la venta</b>, <b>% de los minutos</b> y <b>sobra/falta</b>.
+    Cuando un producto pesa más en minutos que en venta, está consumiendo más planta de la que paga: ese es el subsidio cruzado
+    que el reparto por ventas esconde y el reparto por recursos destapa.
+    ${(()=>{const sub=pr.filter(p=>p.pctMin>p.pctVta*1.2).sort((a,b)=>(b.pctMin-b.pctVta)-(a.pctMin-a.pctVta));
+      const pag=pr.filter(p=>p.aporte-p.peaje>0).sort((a,b)=>(b.aporte-b.peaje)-(a.aporte-a.peaje));
+      return (sub.length?`Hoy el caso más claro es <b>${esc(sub[0].nombre)}</b>: ${P(sub[0].pctVta,1)} de la venta
+        pero ${P(sub[0].pctMin,1)} de los minutos. `:"Hoy ningún producto está claramente subsidiado. ")+
+       (pag.length?`Y el que carga la casa es <b>${esc(pag[0].nombre)}</b>, que después de pagar su peaje todavía deja
+        ${S0(pag[0].aporte-pag[0].peaje)} al mes para los demás.`:"")})()}</div>
+   <div class="note warn" style="margin:13px 0 0"><b>Tres veredictos, no dos.</b>
+    <b>Paga su peaje</b> = el precio cubre el piso 3, el producto se sostiene solo.
+    <b>Cubre su costo pero no su peaje</b> = cubre lo que causa pero no su parte de los fijos; no se saca sin mirar
+    quién pagaría esos fijos en su lugar, porque sacarlo no los elimina, los traslada.
+    <b>Pierde plata</b> = el precio no cubre ni la materia prima: cada unidad vendida resta.</div>
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Qué hay dentro de la bolsa</h2>
+    <p class="cs">Planilla, alquileres y servicios: dónde está cada sol y por qué no se reparte al producto.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Concepto</th><th>Dónde vive</th><th class="n">S/ al mes</th>
+     <th class="n">% de la venta</th><th>Por qué ahí</th></tr></thead>
+    <tbody>
+     <tr style="background:var(--g50)"><td colspan="5" style="font-weight:700">Dentro del costo del producto (sí se reparte)</td></tr>
+     <tr><td style="font-weight:600">Planilla directa de producción</td><td><span class="bd ok">CUF · piso 1</span></td>
+      <td class="n">${S0((D.planilla||{}).pool_directo_mensual||0)}</td>
+      <td class="n">${P(100*((D.planilla||{}).pool_directo_mensual||0)/V,1)}</td>
+      <td style="font-size:12.5px">Se reparte por <b>minutos cronometrados</b> de cada paso. Solo entra la parte usada.</td></tr>
+     ${D.cif.map(c=>`<tr><td>${esc(c.concepto)}</td><td><span class="bd ok">CUF · piso 1</span></td>
+      <td class="n">${S0(c.monto_mensual)}</td><td class="n">${P(100*c.monto_mensual/V,1)}</td>
+      <td style="font-size:12.5px">Driver: <b>${esc(c.driver)}</b></td></tr>`).join("")}
+     <tr style="background:#fff7ef"><td colspan="5" style="font-weight:700">Fuera del costo del producto (la bolsa / el peaje)</td></tr>
+     <tr><td style="font-weight:600">Capacidad pagada y no usada</td><td><span class="bd ba">gasto del periodo</span></td>
+      <td class="n">${S0(OCIO)}</td><td class="n">${P(100*OCIO/V,1)}</td>
+      <td style="font-size:12.5px"><b>NIC 2 párr. 13</b>: no puede subir el costo unitario del inventario.</td></tr>
+     <tr><td style="font-weight:600">Administración y ventas (planilla indirecta)</td><td><span class="bd wa">estructura</span></td>
+      <td class="n">${S0(ADM)}</td><td class="n">${P(100*ADM/V,1)}</td>
+      <td style="font-size:12.5px">Administradora, mostrador: no fabrican, atienden. Planilla indirecta ${S0((D.planilla||{}).pool_indirecto_mensual||0)}.</td></tr>
+     <tr><td style="font-weight:600">Alquiler de tienda</td><td><span class="bd wa">estructura</span></td>
+      <td class="n">${S0(ALQ)}</td><td class="n">${P(100*ALQ/V,1)}</td>
+      <td style="font-size:12.5px">Área de venta. El alquiler del <b>área de producción</b> ya está arriba, dentro del CIF, por m².</td></tr>
+     <tr><td style="font-weight:600">Servicios de tienda</td><td><span class="bd wa">estructura</span></td>
+      <td class="n">${S0(SER)}</td><td class="n">${P(100*SER/V,1)}</td>
+      <td style="font-size:12.5px">Luz, agua, internet y POS del local, no del horno.</td></tr>
+     <tr><td style="font-weight:600">Marketing</td><td><span class="bd wa">estructura</span></td>
+      <td class="n">${S0(MKT)}</td><td class="n">${P(100*MKT/V,1)}</td>
+      <td style="font-size:12.5px">Gasto del periodo: no se activa ni se mete al pan.</td></tr>
+     <tr><td style="font-weight:600">Contabilidad</td><td><span class="bd wa">estructura</span></td>
+      <td class="n">${S0(CON)}</td><td class="n">${P(100*CON/V,1)}</td>
+      <td style="font-size:12.5px">Gasto del periodo.</td></tr>
+     <tr><td style="font-weight:600">Comisiones de delivery</td><td><span class="bd ba">costo del canal</span></td>
+      <td class="n">${S0(COMD)}</td><td class="n">${P(100*COMD/V,1)}</td>
+      <td style="font-size:12.5px">No es del pan ni de la estructura: es de por dónde se vendió. Por eso va al canal.</td></tr>
+    </tbody>
+    <tfoot><tr><td>BOLSA NO REPARTIBLE (peaje)</td><td></td><td class="n">${S0(PEAJE)}</td>
+      <td class="n">${P(100*PEAJE/V,1)}</td><td></td></tr></tfoot></table></div>
+   <div class="note" style="margin:13px 0 0"><b>La tentación que hay que resistir.</b>
+    Repartir el alquiler y la administración entre los productos a prorrata de la venta es lo que hace casi todo el mundo,
+    y es lo que hace que un producto bueno parezca malo: carga costos que no causa y que no desaparecen si lo sacas del menú.
+    Acá la bolsa se reparte <b>por recursos</b> solo para <i>juzgar</i> si cada producto paga lo suyo — nunca para
+    valorizar inventario ni para fijar el costo de ventas.</div>
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">La capacidad pagada y no usada, pool por pool</h2>
+    <p class="cs">Línea 6 del P&amp;L. No se reparte a productos, pero sí hay que venderla.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Estación</th><th class="n">Capacidad práctica</th><th class="n">Minutos usados</th>
+     <th class="n">Minutos pagados sin usar</th><th class="n">S/ por minuto</th><th class="n">S/ al mes</th><th style="width:120px">Uso</th></tr></thead>
+    <tbody>${pools.sort((a,b)=>b.ocio-a.ocio).map(c=>{const uso=c.min_practica?100*c.dem/c.min_practica:0;
+      return `<tr class="clic" data-e="${c.id}"><td style="font-weight:600">${esc(c.nombre)}</td>
+       <td class="n">${N(c.min_practica)}</td><td class="n">${N(c.dem)}</td>
+       <td class="n" style="font-weight:600">${N(c.holg)}</td>
+       <td class="n">${S3(c.tarifa)}</td>
+       <td class="n" style="font-weight:700;color:var(--ba)">${S0(c.ocio)}</td>
+       <td><div class="ptr" style="height:15px"><div class="pfl" style="width:${Math.min(100,uso).toFixed(0)}%;
+        background:${uso>=95?'linear-gradient(90deg,#f87171,var(--babar))':'linear-gradient(90deg,#22c55e,var(--okbar))'}"></div></div>
+        <div style="font-family:var(--fm);font-size:10.5px;text-align:right">${P(uso,0)}</div></td></tr>`}).join("")}</tbody>
+    <tfoot><tr><td>TOTAL</td><td class="n">${N(pools.reduce((s,c)=>s+c.min_practica,0))}</td>
+      <td class="n">${N(pools.reduce((s,c)=>s+c.dem,0))}</td>
+      <td class="n">${N(pools.reduce((s,c)=>s+c.holg,0))}</td><td class="n">—</td>
+      <td class="n">${S0(OCIO)}</td><td></td></tr></tfoot></table></div>
+   <div class="note" style="margin:13px 0 0">Clic en una estación para ver qué productos la cargan.
+    Esta holgura no es desperdicio puro: es el colchón del feriado y del pedido grande. Pero cuesta ${S0(OCIO)} al mes
+    y alguien la tiene que pagar — por eso aparece en el P&amp;L y no escondida dentro del pan.</div>
+  </div>
+
   <div class="card"><div class="ch"><div><h2 class="ct">Pools de CIF</h2>
-    <p class="cs">Costos indirectos de producción y con qué criterio se reparten.</p></div></div>
+    <p class="cs">Costos indirectos de producción y con qué criterio se reparten. Estos sí entran al costo del producto.</p></div></div>
    <div class="tw"><table><thead><tr><th>Concepto</th><th>Driver</th><th class="n">S/ al mes</th><th class="n">% del pool</th></tr></thead>
     <tbody>${D.cif.map(c=>`<tr><td style="font-weight:600">${esc(c.concepto)}</td>
       <td><span class="bd nt">${esc(c.driver)}</span></td><td class="n">${S(c.monto_mensual)}</td>
       <td class="n">${P(100*c.monto_mensual/D.cif.reduce((s,x)=>s+x.monto_mensual,0),1)}</td></tr>`).join("")}</tbody>
     <tfoot><tr><td colspan="2">TOTAL</td><td class="n">${S(D.cif.reduce((s,x)=>s+x.monto_mensual,0))}</td><td class="n">100%</td></tr></tfoot>
    </table></div></div>` + cardEquilibrio();
+  $$("#p-util .clic").forEach(t=>t.onclick=()=>t.dataset.e?abrirEst(t.dataset.e):abrir(t.dataset.p));
 }
-
 /* ---------------- VENTAS + CONSUMO DE MP ---------------- */
 function vVta(){
   const ps=TODOS();
