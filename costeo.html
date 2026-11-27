@@ -226,6 +226,32 @@ th.ord::after{content:" \2195";font-size:10px}
  font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s}
 .gb:hover{border-color:var(--c500);color:var(--ink)}
 .gb.on{background:var(--g900);border-color:var(--g900);color:#fff}
+.flujo{display:flex;align-items:stretch;gap:5px;flex-wrap:wrap;margin-top:6px}
+.fcaja{flex:1 1 140px;min-width:132px;text-align:left;background:#fff;border:1.5px solid var(--lineS);border-radius:11px;
+ padding:11px 12px;cursor:pointer;font-family:inherit;transition:border-color .12s,transform .12s}
+.fcaja:hover{border-color:var(--c600);transform:translateY(-1px)}
+.fcaja b{display:block;font-size:14px;color:var(--ink)}
+.fcaja em{display:block;font-style:normal;font-family:var(--fm);font-size:10.5px;color:var(--c600);font-weight:700;margin:2px 0 5px}
+.fcaja span{display:block;font-size:11.5px;color:var(--ink5);line-height:1.4}
+.fflecha{display:flex;align-items:center;color:var(--c500);font-size:21px;font-weight:700}
+.mruta{border-top:1px solid var(--line);padding:14px 0}
+.mruta:first-of-type{border-top:none}
+.mq{font-family:var(--fd);font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:9px}
+.mpasos{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.mpaso{text-align:left;background:var(--s100);border:1px solid var(--lineS);border-radius:9px;padding:8px 11px;
+ cursor:pointer;font-family:inherit;flex:1 1 150px;min-width:140px;transition:all .12s}
+.mpaso:hover{background:#fff;border-color:var(--c600)}
+.mpaso b{display:block;font-size:12.5px;color:var(--ink)}
+.mpaso span{display:block;font-size:11px;color:var(--ink5);margin-top:2px;line-height:1.35}
+.mflecha{display:flex;align-items:center;color:var(--c500);font-weight:700}
+.mr{font-size:12.5px;color:var(--ink7);margin-top:9px;padding-left:11px;border-left:2.5px solid var(--c500);line-height:1.5}
+.msec{margin-top:15px}
+.msec:first-of-type{margin-top:4px}
+.msh{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:7px}
+.msh b{font-family:var(--fd);font-size:16px;color:var(--g900)}
+.msh span{font-size:12.5px;color:var(--ink5)}
+.mfila{cursor:pointer}
+.mfila:hover{background:var(--s100)}
 </style>
 </head>
 <body>
@@ -1056,6 +1082,115 @@ function vPlanilla(){
     <tfoot><tr><td>TOTAL</td><td class="n">${Q.length}</td><td class="n">${S0(tot("sueldo_bruto"))}</td>
       <td class="n">${S0(tot("costo_cargado_mes"))}</td><td class="n">100%</td>
       <td class="n">${P(100*tot("costo_cargado_mes")/V,1)}</td></tr></tfoot></table></div></div>`;
+}
+
+/* ---------------- MAPA: donde esta cada cosa ----------------
+   Quince pestañas en cinco grupos es mucho para adivinar. Esto dice
+   que responde cada una y por donde pasar para resolver una pregunta. */
+const MAPA_GRUPOS=[
+ {g:"negocio", n:"Negocio", d:"La foto completa y lo que hay que atender.",
+  t:[["res","Resumen","Cuánto se vende, cuánto deja cada producto y el recargo al consumo."],
+     ["util","Del costo al EBITDA","El P&L línea por línea, los cuatro pisos del costo, el peaje y el impuesto."],
+     ["ale","Alertas","Lo que está mal hoy: márgenes bajos, estaciones saturadas, precios desfasados."],
+     ["esc","Escenarios","Guardar un estado de los deslizadores y compararlo después."]]},
+ {g:"productos", n:"Productos", d:"De qué está hecho cada pan y cuánto trabajo lleva.",
+  t:[["prod","Productos","Ficha de cada uno: receta en cascada, pasos, márgenes y precio sugerido."],
+     ["ins","Insumos y recetas","Precios de compra, mermas, masas compartidas y rellenos."],
+     ["mo","Mano de obra","Minutos por estación, tarifas, capacidad y quién satura qué."]]},
+ {g:"ventas", n:"Ventas", d:"Lo que entra por caja, por canal y lo que viene.",
+  t:[["ventas","Ventas","Transacciones, ticket, meta contra real, margen por canal y curva horaria."],
+     ["tab","Tablero","Venta por mes y canal, 2025 contra 2026, en soles o en unidades."],
+     ["can","Canales","Economía de tienda, pedidos, Rappi y corporativo. Clientes B2B y simulador."],
+     ["pron","Pronóstico","Proyección por base elegible, con supuestos y capacidad."]]},
+ {g:"operacion", n:"Operación", d:"Qué hornear y qué comprar.",
+  t:[["plan","Plan de producción","Stock inicial, demanda y lotes: la orden de producción del día."],
+     ["vta","Consumo","Cuánta materia prima se fue en el periodo."]]},
+ {g:"equipo", n:"Equipo", d:"La gente y los accesos.",
+  t:[["planilla","Planilla","Cada persona con su sueldo, cargas y clase contable."],
+     ["usr","Usuarios","Quién entra, a qué pestañas, y la prueba de accesos."]]}
+];
+const MAPA_RUTAS=[
+ {q:"¿Cuánto me cuesta de verdad una jalá?",
+  p:[["prod","Productos","Clic en la jalá: receta por niveles"],["ins","Insumos y recetas","De dónde sale cada gramo"],["mo","Mano de obra","Los minutos que lleva"]],
+  r:"La ficha abre la cascada: masa, relleno, directos y empaque. Ahí se ve que la masa base la comparten cinco productos."},
+ {q:"¿Puedo subir un precio? ¿Cuánto?",
+  p:[["prod","Productos","Precio manual y sugerido"],["util","Del costo al EBITDA","Los dos precios piso"],["ale","Alertas","Si queda desfasado"]],
+  r:"El piso incremental es el mínimo para llenar capacidad ociosa; el de recuperación plena, el mínimo para un negocio permanente."},
+ {q:"¿Por qué el viernes no da abasto?",
+  p:[["mo","Mano de obra","Clic en la estación saturada"],["plan","Plan de producción","El pico del día"],["pron","Pronóstico","Qué pasa si crece"]],
+  r:"La ficha de estación ordena los productos por minutos y dice cuántos hacen el 80% de la carga."},
+ {q:"¿Rappi me conviene?",
+  p:[["can","Canales","Comisión, empaque y costo financiero"],["ventas","Ventas","Peso en venta contra peso en margen"],["util","Del costo al EBITDA","Dónde cae en el P&L"]],
+  r:"La utilidad bruta es casi igual a tienda; lo que se lleva todo es la comisión. Por eso va al canal y no al pan."},
+ {q:"¿Debo abrir o ampliar el canal corporativo?",
+  p:[["can","Canales","Los cuatro clientes y el simulador"],["mo","Mano de obra","Si hay capacidad libre"],["util","Del costo al EBITDA","Qué deja después del peaje"]],
+  r:"Con la planta llena manda el descuento de indiferencia, no el descuento máximo: el volumen nuevo sale de tienda."},
+ {q:"¿Cuánto hay que hornear mañana?",
+  p:[["pron","Pronóstico","Elegir la base"],["plan","Plan de producción","Stock inicial y lotes"],["vta","Consumo","Qué insumo se va"]],
+  r:"El plan descuenta lo que ya hay en vitrina y redondea al lote: no se hornea media tanda."},
+ {q:"¿Dónde se va la plata que no es el pan?",
+  p:[["util","Del costo al EBITDA","Clic en cada línea para abrirla"],["planilla","Planilla","Quién cuesta qué"],["res","Resumen","El recargo al consumo"]],
+  r:"Materia prima, mano de obra y CIF son el piso del producto. De ahí en adelante es la bolsa: estructura, capacidad ociosa y periodo."},
+ {q:"Quiero darle acceso a alguien del equipo",
+  p:[["usr","Usuarios","Aprobar y elegir pestañas"],["usr","Usuarios","Probar como esa persona"]],
+  r:"Recetas, mano de obra y canales no se dan: son know-how, sueldos e información comercial."}
+];
+function irA(t){
+  const b=$$(".tb").find(x=>x.dataset.t===t); if(!b) return;
+  const g=b.dataset.g;
+  if(typeof mostrarGrupo==="function") mostrarGrupo(g,false);
+  b.style.display=""; b.click();
+  cerrar(); window.scrollTo({top:0,behavior:"smooth"});
+}
+function abrirMapa(){
+  const paso=(t,n,d)=>`<button class="mpaso" data-ir="${t}"><b>${esc(n)}</b><span>${esc(d)}</span></button>`;
+  $(".mtop b").textContent="Mapa: dónde está cada cosa";
+  $("#modalBody").innerHTML=`
+  <div class="note">Quince pestañas en cinco secciones. Esto dice qué responde cada una y por dónde pasar
+   para resolver una pregunta concreta. <b>Todo lo de acá se puede tocar y te lleva.</b></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Cómo se forma el número</h2>
+    <p class="cs">De izquierda a derecha, cada paso usa el anterior. Si cambias algo a la izquierda,
+     todo lo de la derecha se mueve.</p></div></div>
+   <div class="flujo">
+    ${[["ins","Insumo","Harina, huevo, relleno","Precio de compra y merma"],
+       ["ins","Masa","Semielaborado","Una masa alimenta varios panes"],
+       ["prod","Producto","Receta + pasos","Materia prima, mano de obra y CIF"],
+       ["can","Canal","Tienda, Rappi, B2B","Precio propio, comisión y crédito"],
+       ["util","P&L","Línea por línea","Margen bruto, peaje y EBITDA"],
+       ["util","Resultado","Neto","Después de intereses e impuesto"]].map((x,i,a)=>`
+      <button class="fcaja" data-ir="${x[0]}">
+       <b>${esc(x[1])}</b><em>${esc(x[2])}</em><span>${esc(x[3])}</span></button>
+      ${i<a.length-1?'<div class="fflecha">›</div>':''}`).join("")}
+   </div>
+   <div class="note" style="margin:13px 0 0">La regla que ordena todo: <b>materia prima, mano de obra y CIF son del producto</b>.
+    Comisiones son del canal. Estructura y capacidad ociosa son del periodo y no se reparten a nadie.</div>
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Si quieres responder esto, pasa por acá</h2>
+    <p class="cs">Ocho preguntas que la aplicación sabe contestar, con el camino.</p></div></div>
+   ${MAPA_RUTAS.map(r=>`<div class="mruta">
+     <div class="mq">${esc(r.q)}</div>
+     <div class="mpasos">${r.p.map((x,i)=>paso(x[0],(i+1)+" · "+x[1],x[2])).join('<span class="mflecha">›</span>')}</div>
+     <div class="mr">${esc(r.r)}</div></div>`).join("")}
+  </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Las cinco secciones</h2>
+    <p class="cs">Qué hay en cada una.</p></div></div>
+   ${MAPA_GRUPOS.map(g=>`<div class="msec">
+     <div class="msh"><b>${esc(g.n)}</b><span>${esc(g.d)}</span></div>
+     <div class="tw"><table><tbody>${g.t.map(t=>`<tr class="mfila" data-ir="${t[0]}">
+      <td style="font-weight:600;width:200px">${esc(t[1])} <span style="color:var(--c600);font-size:11px">ir ›</span></td>
+      <td style="font-size:12.5px;color:var(--ink7)">${esc(t[2])}</td></tr>`).join("")}</tbody></table></div>
+    </div>`).join("")}
+  </div>
+
+  <div class="note warn"><b>Tres cosas que conviene saber antes de tocar nada.</b>
+   <b>Uno:</b> los deslizadores de Insumos y de Mano de obra mueven todo el modelo a la vez; para volver atrás está
+   "Volver a cero" en cada pestaña. <b>Dos:</b> lo que guardas en Escenarios es el estado de los deslizadores, no los datos.
+   <b>Tres:</b> las cifras son de demostración, construidas para el curso; la estructura de costeo sí es la real.</div>`;
+  $$("#modalBody [data-ir]").forEach(b=>b.onclick=()=>irA(b.dataset.ir));
+  $("#modal").classList.add("on"); document.body.style.overflow="hidden";
 }
 
 /* ---------------- RESUMEN ---------------- */
@@ -3784,11 +3919,13 @@ function pintarSesion(){
   $("#usrBox").innerHTML=`<div class="usr">
     <div class="uav">${esc((PERFIL.nombre||PERFIL.email)[0].toUpperCase())}</div>
     <div class="uinfo"><b>${esc(PERFIL.nombre||PERFIL.email)}</b><span>${r}</span></div>
+    <button class="hbtn" id="bMapa" title="Dónde está cada cosa">Mapa</button>
     ${esAdminReal()?(VISTA.activa
       ?'<button class="hbtn ac" id="bFinVista">Volver a mi perfil</button>'
       :'<button class="hbtn ac" id="bVerComo">Ver como…</button>'):""}
     <button class="hbtn" id="bSalir">Salir</button></div>`;
   $("#bSalir").onclick=salir;
+  if($("#bMapa")) $("#bMapa").onclick=()=>abrirMapa();
   if($("#bVerComo")) $("#bVerComo").onclick=()=>abrirPrueba();
   if($("#bFinVista")) $("#bFinVista").onclick=salirVista;
   if(!puedeEditar()) document.body.classList.add("solo-lectura");
