@@ -120,6 +120,9 @@ tfoot td{background:var(--s100);font-weight:700;padding:10px 11px;border-top:2px
 .sl{width:100%;accent-color:var(--c500)}
 .simg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:15px}
 .fg{display:flex;flex-direction:column;gap:5px}
+.inp{width:100%;padding:8px 11px;border:1px solid var(--lineS);border-radius:8px;background:#fff;
+ font-family:var(--fm);font-size:14px;font-weight:700;text-align:right;outline:none;color:var(--ink)}
+.inp:focus{border-color:var(--c600)}
 .fg label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink7)}
 .spark{display:flex;align-items:flex-end;gap:3px;height:48px}
 .spark i{flex:1;background:linear-gradient(180deg,var(--g700),var(--g900));border-radius:2px 2px 0 0;min-height:2px;display:block}
@@ -425,6 +428,7 @@ body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:40
  <button class="tb" data-t="tab">Tablero</button>
  <button class="tb" data-t="can">Canales</button>
  <button class="tb" data-t="pron">Pronóstico</button>
+ <button class="tb" data-t="plan">Plan de producción</button>
  <button class="tb" data-t="vta">Consumo</button>
  <button class="tb" data-t="ale">Alertas <span class="cnt" id="cAle">0</span></button>
  <button class="tb" data-t="esc">Escenarios <span class="cnt" id="cEsc">0</span></button>
@@ -441,6 +445,7 @@ body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:40
  <section id="p-tab" class="pane"></section>
  <section id="p-can" class="pane"></section>
  <section id="p-pron" class="pane"></section>
+ <section id="p-plan" class="pane"></section>
  <section id="p-vta" class="pane"></section>
  <section id="p-ale" class="pane"></section>
  <section id="p-esc" class="pane"></section>
@@ -465,14 +470,14 @@ const INS={}; D.insumos.forEach(i=>INS[i.id]=i);
 const INS_FAM={}; D.insumos.forEach(i=>INS_FAM[i.nombre]=i.familia);
 
 let ST={anio:"2026", mes:"12", igv:D.meta.igv, aj:{}, esc:[], abierto:null,
-        insumos:{}, estaciones:{}};   // variaciones por familia de insumo y por estacion
+        insumos:{}, estaciones:{}, stock:{}};   // variaciones por familia de insumo y por estacion
 const FAMILIAS=[...new Set(D.insumos.map(i=>i.familia))].sort();
 FAMILIAS.forEach(f=>ST.insumos[f]=0);
 D.estaciones.forEach(e=>ST.estaciones[e.id]=0);
-D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});
+D.productos.forEach(p=>{ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null};ST.stock[p.id]=0;});
 try{const g=localStorage.getItem("ohjala_v2");if(g){const o=JSON.parse(g);
-  if(o.esc)ST.esc=o.esc; if(o.aj)Object.assign(ST.aj,o.aj); if(o.igv)ST.igv=o.igv; if(o.insumos)Object.assign(ST.insumos,o.insumos); if(o.estaciones)Object.assign(ST.estaciones,o.estaciones);}}catch(e){}
-const save=()=>{try{localStorage.setItem("ohjala_v2",JSON.stringify({esc:ST.esc,aj:ST.aj,igv:ST.igv}))}catch(e){}};
+  if(o.esc)ST.esc=o.esc; if(o.aj)Object.assign(ST.aj,o.aj); if(o.igv)ST.igv=o.igv; if(o.insumos)Object.assign(ST.insumos,o.insumos); if(o.estaciones)Object.assign(ST.estaciones,o.estaciones); if(o.stock)Object.assign(ST.stock,o.stock);}}catch(e){}
+const save=()=>{try{localStorage.setItem("ohjala_v2",JSON.stringify({esc:ST.esc,aj:ST.aj,igv:ST.igv,insumos:ST.insumos,estaciones:ST.estaciones,stock:ST.stock}))}catch(e){}};
 
 function factorMP(p){
   // la variacion de cada familia pesa segun cuanto aporta esa familia al costo del producto
@@ -631,7 +636,7 @@ function vProd(){
     refrescarTarjeta(pid); save(); vRes(); vUtil(); vAlertas(); pintarBadge();
   });
   $$("#p-prod .clic").forEach(el=>el.onclick=()=>abrir(el.dataset.p));
-  $("#bReset").onclick=()=>{D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});FAMILIAS.forEach(f=>ST.insumos[f]=0); D.estaciones.forEach(e=>ST.estaciones[e.id]=0); save();render();};
+  $("#bReset").onclick=()=>{D.productos.forEach(p=>{ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null};ST.stock[p.id]=0;});FAMILIAS.forEach(f=>ST.insumos[f]=0); D.estaciones.forEach(e=>ST.estaciones[e.id]=0); save();render();};
 }
 
 function refrescarTarjeta(pid){
@@ -797,6 +802,100 @@ function abrir(pid){
 }
 function cerrar(){$("#modal").classList.remove("on");ST.abierto=null;document.body.style.overflow="";}
 
+/* ---------- FICHA DE ESTACION: quien la carga y por que no cuadra ----------
+   Una estacion saturada no es culpa de "la panaderia": son unos pocos productos
+   que piden casi todos los minutos. Esto los ordena de mayor a menor y dice
+   cuantos hacen el 80%, y cuantas unidades habria que mover para que quepa. */
+function abrirEst(cid){
+  const c=D.capacidad.find(x=>x.id===cid); if(!c) return;
+  const MZ=D.matriz_mo[ST.anio]||{};
+  const filas=D.productos.map(p=>{
+    const m=(((MZ[p.id]||{})[cid])||{}).min||0, uA=und(p.id,ST.anio);
+    const ps=(p.pasos||[]).filter(x=>x.estacion===cid);
+    return {id:p.id, nombre:p.nombre, lote:p.unidades_lote||0,
+      min:m/12, u:uA/12, minU:uA?m/uA:0, pasos:ps};
+  }).filter(f=>f.min>0.4).sort((a,b)=>b.min-a.min);
+  const dem=filas.reduce((s,f)=>s+f.min,0);
+  const falta=dem-c.min_practica;
+  // cuantos productos hacen el 80%
+  let ac=0, n80=0; filas.forEach(f=>{ if(ac<80){n80++;} ac+=100*f.min/dem; });
+  const SEM=4.345, perV=(D.perfil_dia||{}).viernes||0;
+  const capDia=c.min_practica/SEM/6, demV=dem/SEM*perV;
+  const ptos=[]; let acu=0;
+  $(".mtop b").textContent="Estación · "+c.nombre;
+  $("#modalBody").innerHTML=`
+  <div class="kpis" style="margin-bottom:15px">
+   <div class="kpi"><span class="kl">Capacidad práctica</span><div class="kv">${N(c.min_practica/60)} h</div>
+     <div class="kf"><span>${N(c.min_practica)} min/mes · ${P(c.factor*100,0)} de la contratada</span></div></div>
+   <div class="kpi c"><span class="kl">Lo que piden las ventas</span><div class="kv">${N(dem/60)} h</div>
+     <div class="kf"><span>${N(dem)} min/mes</span></div></div>
+   <div class="kpi ${falta>0?'ba':dem/c.min_practica>0.9?'wa':'ok'}"><span class="kl">Utilización</span>
+     <div class="kv">${P(100*dem/c.min_practica,1)}</div>
+     <div class="kf"><span>${falta>0?"faltan "+N(falta)+" min":"sobran "+N(-falta)+" min"}</span></div></div>
+   <div class="kpi"><span class="kl">Productos que la usan</span><div class="kv">${filas.length}</div>
+     <div class="kf"><span>${n80} hacen el 80% de la carga</span></div></div>
+  </div>
+
+  <div class="note ${falta>0?'bad':'warn'}"><b>Por qué no cuadra.</b>
+   ${filas.length} productos pasan por ${esc(c.nombre)}. Entre todos piden <b>${N(dem)} minutos al mes</b>
+   y la estación da <b>${N(c.min_practica)}</b>.
+   ${falta>0?`Faltan <b>${N(falta)} minutos</b> (${N(falta/60,1)} horas). No es que falte un poco en todos:
+     <b>${esc(filas[0].nombre)}</b> solo ya pide ${N(filas[0].min)} min (${P(100*filas[0].min/dem,0)} de la estación),
+     y los ${n80} primeros se llevan el 80%. Mover esos ${n80} es lo único que cambia el número.`
+    :`Queda holgura de ${N(-falta)} minutos, pero el reparto de la semana es lo que importa: ver la fila del viernes abajo.`}</div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Quién carga la estación</h2>
+    <p class="cs">Minutos de persona al mes, de mayor a menor. La columna acumulada dice dónde está el 80%.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Producto</th><th class="n">Unid./mes</th><th class="n">Min. por unidad</th>
+     <th class="n">Min./mes</th><th class="n">Horas/mes</th><th class="n">% estación</th><th class="n">Acumulado</th>
+     <th style="width:120px">Peso</th></tr></thead>
+    <tbody>${filas.map((f,i)=>{const pc=100*f.min/dem; acu+=pc;
+      return `<tr class="clic" data-p="${f.id}"${acu<=80.5?' style="background:var(--g50)"':''}>
+       <td style="font-weight:600">${i+1}. ${esc(f.nombre)}</td>
+       <td class="n">${N(f.u)}</td><td class="n">${N(f.minU,2)}</td>
+       <td class="n" style="font-weight:700">${N(f.min)}</td>
+       <td class="n">${N(f.min/60,1)}</td>
+       <td class="n">${P(pc,1)}</td>
+       <td class="n" style="font-family:var(--fm);color:var(--ink7)">${P(acu,1)}</td>
+       <td><div class="ptr" style="height:14px"><div class="pfl" style="width:${pc.toFixed(1)}%;
+        background:linear-gradient(90deg,#22c55e,var(--okbar))"></div></div></td></tr>`}).join("")}</tbody>
+    <tfoot><tr><td>TOTAL</td><td class="n">—</td><td class="n">—</td><td class="n">${N(dem)}</td>
+      <td class="n">${N(dem/60,1)}</td><td class="n">100%</td><td class="n"></td><td></td></tr></tfoot></table></div>
+   <div class="note" style="margin:12px 0 0">Clic en una fila abre la ficha del producto con sus pasos.</div></div>
+
+  ${filas[0]&&filas[0].pasos.length?`<div class="card"><div class="ch"><div><h2 class="ct">Qué se hace acá</h2>
+    <p class="cs">Los pasos de ${esc(filas[0].nombre)} que caen en esta estación, con sus minutos por lote.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Paso</th><th class="n">Min. persona/lote</th><th class="n">Min. máquina/lote</th>
+     <th class="n">Min. persona/unidad</th></tr></thead>
+    <tbody>${filas[0].pasos.map(x=>`<tr><td>${esc(x.nombre||x.paso||"—")}</td>
+     <td class="n">${N(x.minh_lote,1)}</td><td class="n">${N(x.minm_lote,1)}</td>
+     <td class="n">${N(x.minh_lote/(filas[0].lote||1),2)}</td></tr>`).join("")}</tbody></table></div></div>`:""}
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Qué hacer con los minutos que faltan</h2>
+    <p class="cs">Tres salidas, con su número al lado. No son excluyentes.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Salida</th><th class="n">Cuánto</th><th>Qué significa</th></tr></thead>
+    <tbody>
+     <tr><td style="font-weight:600">Sumar gente</td>
+      <td class="n">${falta>0?N(falta/((D.planilla||{}).minutos_disponibles_por_persona_mes||2995),2)+" FTE":"—"}</td>
+      <td>${falta>0?`A ${N((D.planilla||{}).minutos_disponibles_por_persona_mes||2995)} minutos útiles por persona al mes,
+       ya con el ${P(c.factor*100,0)} de capacidad práctica aplicado.`:"No hace falta."}</td></tr>
+     <tr><td style="font-weight:600">Bajar el minuto por unidad</td>
+      <td class="n">${falta>0?P(100*falta/dem,1):"—"}</td>
+      <td>${falta>0?`Habría que recortar ese % de minuto en toda la estación. En ${esc(filas[0].nombre)}
+       son ${N(filas[0].minU*falta/dem,2)} min menos por unidad.`:"—"}</td></tr>
+     <tr><td style="font-weight:600">Mover volumen</td>
+      <td class="n">${falta>0&&filas[0].minU?N(falta/filas[0].minU)+" u":"—"}</td>
+      <td>${falta>0&&filas[0].minU?`Unidades de ${esc(filas[0].nombre)} que habría que dejar de producir al mes
+       (${N(falta/filas[0].minU/SEM)} por semana) para que la estación quepa sin tocar nada más.`:"—"}</td></tr>
+    </tbody></table></div>
+   <div class="note ${demV>capDia?'bad':'warn'}" style="margin:12px 0 0"><b>Ojo con el viernes.</b>
+    El día da ${N(capDia)} minutos y el viernes pide ${N(demV)} (${P(perV*100,0)} de la semana).
+    ${demV>capDia?`<b>Ese día no cabe</b>: faltan ${N(demV-capDia)} minutos aunque el mes cierre con holgura.
+      Es el día que hay que resolver, no el promedio.`:"Ese día sí cabe."}</div></div>`;
+  $$("#modalBody .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+  $("#modal").classList.add("on"); document.body.style.overflow="hidden";
+}
+
 /* ---------------- INSUMOS ---------------- */
 function vIns(){
   const usados={};
@@ -937,10 +1036,11 @@ function vMo(){
 
   <div class="card"><div class="ch"><div><h2 class="ct">Utilización por estación</h2>
     <p class="cs">Teórica es lo contratado. Práctica es lo que se puede comprometer de verdad. Demanda es lo que piden las ventas de ${ST.anio}.</p></div></div>
+   <p class="cs" style="margin:0 0 9px">Clic en una estación para ver qué productos la cargan y por qué no cuadra.</p>
    <div class="tw"><table><thead><tr><th>Estación</th><th class="n">Teórica</th><th class="n">Práctica</th>
      <th class="n">Demanda</th><th class="n">Holgura</th><th style="width:170px">Utilización</th><th class="n">S/ por minuto</th></tr></thead>
-    <tbody>${cap.sort((a,b)=>b.dem-a.dem).map(c=>`<tr>
-      <td style="font-weight:600">${esc(c.nombre)}</td>
+    <tbody>${cap.sort((a,b)=>b.dem-a.dem).map(c=>`<tr class="clic" data-e="${c.id}">
+      <td style="font-weight:600">${esc(c.nombre)} <span style="color:var(--c600);font-size:11px">ver carga ›</span></td>
       <td class="n" style="color:var(--ink5)">${N(c.min_teorica)}</td>
       <td class="n">${N(c.min_practica)}</td><td class="n" style="font-weight:600">${N(c.dem)}</td>
       <td class="n" style="color:${c.holgura<0?'var(--ba)':'var(--ok)'}">${N(c.holgura)}</td>
@@ -1006,7 +1106,7 @@ function vMo(){
     window._te=setTimeout(()=>{save();vMo();vRes();vProd();vUtil();vAlertas();pintarBadge();},300);
   });
   $("#bEstReset").onclick=()=>{D.estaciones.forEach(e=>ST.estaciones[e.id]=0);save();render();};
-  $$("#p-mo .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+  $$("#p-mo .clic").forEach(t=>t.onclick=()=>t.dataset.e?abrirEst(t.dataset.e):abrir(t.dataset.p));
 }
 
 /* ---------------- UTILIDAD BRUTA ---------------- */
@@ -1436,7 +1536,8 @@ function vPron(){
     <tbody>${cap.map(c=>{
       const base=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/12, dp=base*g*(estac*12/100);
       const u2=c.min_practica?100*dp/c.min_practica:0;
-      return `<tr><td style="font-weight:600">${esc(c.nombre)}</td><td class="n">${N(c.min_practica)}</td>
+      return `<tr class="clic" data-e="${c.id}"><td style="font-weight:600">${esc(c.nombre)}
+       <span style="color:var(--c600);font-size:11px">ver carga ›</span></td><td class="n">${N(c.min_practica)}</td>
        <td class="n" style="font-weight:600">${N(dp)}</td><td class="n">${N(dp/SEM)}</td>
        <td><div class="ptr" style="height:19px"><div class="pfl" style="width:${Math.min(100,u2).toFixed(1)}%;
          background:${u2>100?'linear-gradient(90deg,#f87171,var(--babar))':u2>=90?'linear-gradient(90deg,#fbbf24,var(--wabar))':'linear-gradient(90deg,#22c55e,var(--okbar))'}"></div></div>
@@ -1446,7 +1547,215 @@ function vPron(){
   $("#pMes").onchange=e=>{ST.mes=e.target.value;vPron();};
   $("#pBase").onchange=e=>{PR.base=e.target.value;vPron();};
   $("#bPr").onclick=()=>{PR={crec:0,precio:0,insumos:0,rappi:0};vPron();};
-  $$("#p-pron .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+  $$("#p-pron .clic").forEach(t=>t.onclick=()=>t.dataset.e?abrirEst(t.dataset.e):abrir(t.dataset.p));
+}
+
+/* ---------------- PLAN DE PRODUCCION ----------------
+   Del pronostico sale cuanto se VENDE. Lo que hay que PRODUCIR es otra cosa:
+     produccion = demanda del dia + lo que se quiere dejar en vitrina - lo que ya hay
+   y redondeado hacia arriba al tamano del lote, porque no se hornea media tanda.
+   El domingo no se produce: lo que se venda ese dia sale del horno del sabado. */
+let PL={cob:30, dia:"viernes", prodDom:false};
+const ORD=["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
+const NOMD={lunes:"Lunes",martes:"Martes",miercoles:"Miércoles",jueves:"Jueves",viernes:"Viernes",sabado:"Sábado",domingo:"Domingo"};
+
+function basePron(pid){
+  const mesSel=+ST.mes, prev=ST.anio==="2026"?"2025":"2026";
+  switch(PR.base){
+    case "promedio": return und(pid,ST.anio)/12;
+    case "trim":{let s=0,n=0;for(let k=0;k<3;k++){const m=mesSel-k;if(m>=1){s+=und(pid,ST.anio,null,String(m));n++;}}return n?s/n:0;}
+    case "anterior": return und(pid,prev,null,String(mesSel));
+    default: return und(pid,ST.anio,null,String(mesSel));
+  }
+}
+function calcPlan(){
+  const SEM=4.345, g=1+PR.crec/100, per=D.perfil_dia||{}, MZ=D.matriz_mo[ST.anio]||{};
+  const prodDias=PL.prodDom?ORD:ORD.filter(d=>d!=="domingo");
+  const items=D.productos.filter(p=>!p.es_reventa && (p.pasos||[]).length).map(p=>{
+    const uMes=basePron(p.id)*g, uSem=uMes/SEM;
+    const minU=Object.values(MZ[p.id]||{}).reduce((s,x)=>s+x.min,0)/(und(p.id,ST.anio)||1);
+    const dias={}; let stock=ST.stock[p.id]||0; let prodTot=0, sobra=0, falt=0;
+    ORD.forEach((d,i)=>{
+      const dem=uSem*(per[d]||0);
+      const sig=ORD[(i+1)%7], demSig=uSem*(per[sig]||0);
+      // si manana no se produce, hoy hay que dejar tambien su demanda
+      const puente=prodDias.indexOf(sig)<0?demSig:0;
+      const obj=demSig*(PL.cob/100)+puente;
+      const apertura=stock;
+      let prod=0, lotes=0;
+      if(prodDias.indexOf(d)>=0){
+        const neto=dem+obj-apertura;
+        if(neto>0){ const L=p.unidades_lote||1; lotes=Math.ceil(neto/L); prod=lotes*L; }
+      }
+      const cubierto=Math.min(dem,apertura+prod);
+      if(cubierto<dem-0.5) falt+=dem-cubierto;
+      stock=apertura+prod-cubierto;
+      prodTot+=prod;
+      dias[d]={dem,apertura,prod,lotes,cierre:stock,obj,min:minU*prod};
+    });
+    sobra=stock;
+    return {...calc(p), uSem, minU, dias, prodTot, sobra, falt, lote:p.unidades_lote||1};
+  }).filter(x=>x.uSem>0.5);
+  // reventa: no se produce, se repone
+  const rev=D.productos.filter(p=>p.es_reventa||!(p.pasos||[]).length).map(p=>{
+    const uSem=basePron(p.id)*g/SEM; return {...calc(p), uSem, stock:ST.stock[p.id]||0};
+  }).filter(x=>x.uSem>0.5);
+  const porDia={}; ORD.forEach(d=>{
+    porDia[d]={dem:0,prod:0,lotes:0,min:0,cierre:0,
+      prodHoy:prodDias.indexOf(d)>=0};
+    items.forEach(it=>{const x=it.dias[d];
+      porDia[d].dem+=x.dem; porDia[d].prod+=x.prod; porDia[d].lotes+=x.lotes;
+      porDia[d].min+=x.min; porDia[d].cierre+=x.cierre;});
+  });
+  const capPrac=D.capacidad.reduce((s,c)=>s+c.min_practica,0);
+  const capDia=capPrac/SEM/prodDias.length;
+  return {items,rev,porDia,prodDias,capDia,capSem:capPrac/SEM,SEM};
+}
+function vPlan(){
+  const K=calcPlan(), per=D.perfil_dia||{};
+  const mesSel=+ST.mes, prev=ST.anio==="2026"?"2025":"2026";
+  const BASES={mes:`${MES[mesSel]} de ${ST.anio}`, promedio:`promedio mensual de ${ST.anio}`,
+    trim:`promedio de los últimos 3 meses hasta ${MES[mesSel]}`, anterior:`${MES[mesSel]} de ${prev}`};
+  const totProd=K.items.reduce((s,x)=>s+x.prodTot,0);
+  const totDem=ORD.reduce((s,d)=>s+K.porDia[d].dem,0);
+  const totLot=ORD.reduce((s,d)=>s+K.porDia[d].lotes,0);
+  const totMin=ORD.reduce((s,d)=>s+K.porDia[d].min,0);
+  const sobra=K.items.reduce((s,x)=>s+x.sobra,0);
+  const falt=K.items.reduce((s,x)=>s+x.falt,0);
+  const stockIni=K.items.reduce((s,x)=>s+(ST.stock[x.id]||0),0);
+  const pico=ORD.slice().sort((a,b)=>K.porDia[b].min-K.porDia[a].min)[0];
+  const usoPico=K.capDia?100*K.porDia[pico].min/K.capDia:0;
+
+  $("#p-plan").innerHTML=`
+  <div class="note"><b>Esto no es el pronóstico, es la orden de producción.</b> El pronóstico dice cuánto se vende;
+   acá se descuenta lo que ya hay en vitrina y se redondea al tamaño del lote, porque no se hornea media tanda.
+   La fórmula de cada día es: <b>demanda + lo que quiero dejar para mañana − lo que ya tengo</b>, redondeado hacia arriba al lote.</div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Con qué se está calculando</h2>
+    <p class="cs">Si cambias la base o el crecimiento en la pestaña Pronóstico, este plan se mueve con ellos.</p></div>
+    <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+     <button class="btn" id="bIrPron">Cambiar el pronóstico ›</button></div></div>
+   <div class="tw"><table><thead><tr><th>Criterio</th><th>Qué se está usando</th></tr></thead>
+    <tbody>
+     <tr><td style="font-weight:600">Base de la demanda</td><td><b>${esc(BASES[PR.base])}</b></td></tr>
+     <tr><td style="font-weight:600">Crecimiento aplicado</td><td>${PR.crec>0?"+":""}${PR.crec}% sobre esa base</td></tr>
+     <tr><td style="font-weight:600">Reparto en la semana</td><td>Perfil de días de la panadería: viernes ${P((per.viernes||0)*100,0)}, sábado ${P((per.sabado||0)*100,0)}, el resto ${P(100-((per.viernes||0)+(per.sabado||0))*100,0)}</td></tr>
+     <tr><td style="font-weight:600">Stock inicial</td><td>${N(stockIni)} unidades cargadas a mano (lunes por la mañana)</td></tr>
+     <tr><td style="font-weight:600">Cobertura objetivo</td><td>${PL.cob}% de la demanda del día siguiente, en vitrina al cierre</td></tr>
+     <tr><td style="font-weight:600">Días de horno</td><td>${K.prodDias.length} días (${PL.prodDom?"se produce domingo":"domingo no se produce: su venta sale del sábado"})</td></tr>
+    </tbody></table></div></div>
+
+  <div class="kpis">
+   <div class="kpi"><span class="kl">Demanda de la semana</span><div class="kv">${N(totDem)}</div>
+     <div class="kf"><span>unidades que se esperan vender</span></div></div>
+   <div class="kpi c"><span class="kl">Hay que producir</span><div class="kv">${N(totProd)}</div>
+     <div class="kf"><span>${N(totLot)} lotes · ${totDem?P(100*totProd/totDem,0):"—"} de la demanda</span></div></div>
+   <div class="kpi ${stockIni>0?'ok':''}"><span class="kl">Stock inicial</span><div class="kv">${N(stockIni)}</div>
+     <div class="kf"><span>se descuenta del lunes</span></div></div>
+   <div class="kpi ${sobra>totDem*0.08?'wa':'ok'}"><span class="kl">Sobra al domingo</span><div class="kv">${N(sobra)}</div>
+     <div class="kf"><span>${totProd?P(100*sobra/totProd,1):"—"} de lo producido</span></div></div>
+   <div class="kpi ${falt>1?'ba':'ok'}"><span class="kl">Venta que no se alcanza</span><div class="kv">${N(falt)}</div>
+     <div class="kf"><span>${falt>1?"por el redondeo del lote":"la demanda queda cubierta"}</span></div></div>
+   <div class="kpi ${usoPico>100?'ba':usoPico>90?'wa':'ok'}"><span class="kl">Día pico</span><div class="kv">${NOMD[pico]}</div>
+     <div class="kf"><span>${P(usoPico,0)} de la capacidad del día</span></div></div>
+  </div>
+
+  ${usoPico>100?`<div class="note bad"><b>El ${NOMD[pico].toLowerCase()} no cabe.</b> Pide ${N(K.porDia[pico].min)} minutos
+    de persona y el día da ${N(K.capDia)}. Faltan ${N(K.porDia[pico].min-K.capDia)} (${N((K.porDia[pico].min-K.capDia)/60,1)} horas).
+    Adelantar producción al jueves solo sirve en lo que aguante en vitrina: subir la cobertura objetivo mueve el pico hacia atrás.</div>`
+   :`<div class="note"><b>El plan cabe.</b> El día más cargado es el ${NOMD[pico].toLowerCase()} con
+    ${P(usoPico,0)} de la capacidad del día.</div>`}
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Plan de producción diario</h2>
+    <p class="cs">Cada fila es un día. El stock final de un día es el stock inicial del siguiente.</p></div>
+    <div class="cfg" style="background:var(--s100);border-color:var(--line)">
+     <label style="color:var(--ink7)">Cobertura objetivo</label>
+     <select id="plCob">${[0,15,30,50,80,100].map(v=>`<option value="${v}" ${PL.cob===v?"selected":""}>${v}% del día siguiente</option>`).join("")}</select></div></div>
+   <div class="tw"><table><thead><tr><th>Día</th><th class="n">Stock inicial</th><th class="n">Demanda</th>
+     <th class="n">Producir</th><th class="n">Lotes</th><th class="n">Stock final</th>
+     <th class="n">Min. persona</th><th style="width:130px">Uso del día</th></tr></thead>
+    <tbody>${ORD.map(d=>{const x=K.porDia[d], uso=K.capDia?100*x.min/K.capDia:0;
+      return `<tr${d===pico?' style="background:var(--g50)"':''}>
+       <td style="font-weight:600">${NOMD[d]}${x.prodHoy?"":' <span class="bd nt">sin horno</span>'}</td>
+       <td class="n">${N(ORD.indexOf(d)===0?stockIni:K.porDia[ORD[ORD.indexOf(d)-1]].cierre)}</td>
+       <td class="n">${N(x.dem)}</td>
+       <td class="n" style="font-weight:700;color:var(--g900)">${x.prod?N(x.prod):"—"}</td>
+       <td class="n">${x.lotes||"—"}</td>
+       <td class="n">${N(x.cierre)}</td>
+       <td class="n">${N(x.min)}</td>
+       <td><div class="ptr" style="height:17px"><div class="pfl" style="width:${Math.min(100,uso).toFixed(0)}%;
+        background:${uso>100?'linear-gradient(90deg,#f87171,var(--babar))':uso>85?'linear-gradient(90deg,#fbbf24,var(--wabar))':'linear-gradient(90deg,#22c55e,var(--okbar))'}"></div></div>
+        <div style="font-family:var(--fm);font-size:10.5px;text-align:right">${P(uso,0)}${uso>100?' ⚠':''}</div></td></tr>`}).join("")}</tbody>
+    <tfoot><tr><td>SEMANA</td><td class="n">${N(stockIni)}</td><td class="n">${N(totDem)}</td>
+      <td class="n">${N(totProd)}</td><td class="n">${N(totLot)}</td><td class="n">${N(sobra)}</td>
+      <td class="n">${N(totMin)}</td><td></td></tr></tfoot></table></div>
+   <div class="note" style="margin:12px 0 0">Producir ${N(totProd)} para vender ${N(totDem)} no es un error:
+    el lote mínimo obliga a redondear hacia arriba. Esa diferencia de ${N(Math.max(0,totProd+stockIni-totDem))} unidades
+    es lo que queda en vitrina o se remata.</div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Orden de producción del día</h2>
+    <p class="cs">Lo que hay que sacar producto por producto. Esta es la hoja que va a la panadería.</p></div>
+    <div class="cfg" style="background:var(--s100);border-color:var(--line)">
+     <label style="color:var(--ink7)">Día</label>
+     <select id="plDia">${ORD.map(d=>`<option value="${d}" ${PL.dia===d?"selected":""}>${NOMD[d]}</option>`).join("")}</select></div></div>
+   <div class="tw"><table><thead><tr><th>Producto</th><th class="n">Stock al abrir</th><th class="n">Demanda del día</th>
+     <th class="n">Dejar para mañana</th><th class="n">Producir</th><th class="n">Lote</th><th class="n">Tandas</th>
+     <th class="n">Min. persona</th><th class="n">Costo MP</th></tr></thead>
+    <tbody>${K.items.slice().sort((a,b)=>b.dias[PL.dia].prod-a.dias[PL.dia].prod).map(it=>{const x=it.dias[PL.dia];
+      return `<tr class="clic" data-p="${it.id}"><td style="font-weight:600">${esc(it.nombre)}</td>
+       <td class="n">${N(x.apertura)}</td><td class="n">${N(x.dem)}</td><td class="n">${N(x.obj)}</td>
+       <td class="n" style="font-weight:700;color:${x.prod?'var(--g900)':'var(--ink5)'}">${x.prod?N(x.prod):"—"}</td>
+       <td class="n" style="color:var(--ink5)">${it.lote}</td>
+       <td class="n">${x.lotes||"—"}</td><td class="n">${N(x.min)}</td>
+       <td class="n">${S0(x.prod*it.mp)}</td></tr>`}).join("")}</tbody>
+    <tfoot><tr><td>TOTAL ${NOMD[PL.dia].toUpperCase()}</td>
+      <td class="n">${N(K.items.reduce((s,i)=>s+i.dias[PL.dia].apertura,0))}</td>
+      <td class="n">${N(K.porDia[PL.dia].dem)}</td><td class="n">—</td>
+      <td class="n">${N(K.porDia[PL.dia].prod)}</td><td class="n">—</td>
+      <td class="n">${K.porDia[PL.dia].lotes||"—"}</td><td class="n">${N(K.porDia[PL.dia].min)}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.dias[PL.dia].prod*i.mp,0))}</td></tr></tfoot></table></div>
+   ${K.rev.length?`<div class="note" style="margin:12px 0 0"><b>No se producen, se reponen:</b>
+     ${K.rev.map(r=>`${esc(r.nombre)} ${N(r.uSem*(per[PL.dia]||0))} u`).join(" · ")}.
+     Son compra directa, no pasan por horno.</div>`:""}</div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Stock inicial</h2>
+    <p class="cs">Lo que hay en vitrina el lunes por la mañana. Se descuenta de la primera producción de la semana.</p></div>
+    <button class="btn" id="bStk0">Poner todo en cero</button></div>
+   <div class="simg">${K.items.concat(K.rev).map(it=>`<div class="fg">
+     <label>${esc(it.nombre)} <span style="color:var(--ink5)">(vende ${N(it.uSem)} u/semana)</span></label>
+     <input class="inp" type="number" min="0" step="1" value="${ST.stock[it.id]||0}" data-stk="${it.id}"/></div>`).join("")}</div>
+   <div class="note" style="margin:13px 0 0">Con stock inicial en cero, el plan produce todo desde el lunes.
+    Si cargas lo que de verdad hay, la primera tanda baja y se ve cuánto de la semana ya estaba resuelto.</div></div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Cuánto cuesta la semana</h2>
+    <p class="cs">Materia prima y mano de obra de lo que hay que producir, no de lo que se vende.</p></div></div>
+   <div class="tw"><table><thead><tr><th>Concepto</th><th class="n">Unidades</th><th class="n">Materia prima</th>
+     <th class="n">Mano de obra</th><th class="n">Total</th></tr></thead>
+    <tbody>
+     <tr><td style="font-weight:600">Lo que se va a vender</td><td class="n">${N(totDem)}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.uSem*i.mp,0))}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.uSem*i.mod,0))}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.uSem*(i.mp+i.mod),0))}</td></tr>
+     <tr><td style="font-weight:600">Lo que hay que producir</td><td class="n">${N(totProd)}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.prodTot*i.mp,0))}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.prodTot*i.mod,0))}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+i.prodTot*(i.mp+i.mod),0))}</td></tr>
+     <tr style="background:var(--g50)"><td style="font-weight:700">Diferencia por lote y vitrina</td>
+      <td class="n" style="font-weight:700">${N(totProd-totDem)}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+(i.prodTot-i.uSem)*i.mp,0))}</td>
+      <td class="n">${S0(K.items.reduce((s,i)=>s+(i.prodTot-i.uSem)*i.mod,0))}</td>
+      <td class="n" style="font-weight:700">${S0(K.items.reduce((s,i)=>s+(i.prodTot-i.uSem)*(i.mp+i.mod),0))}</td></tr>
+    </tbody></table></div>
+   <div class="note" style="margin:12px 0 0">Esa última fila es plata que sale del lote mínimo y de la vitrina.
+    Si se vende, es venta; si se remata o se bota, es merma. Bajar la cobertura objetivo la reduce, a costa de quedarse corto un viernes.</div></div>`;
+
+  $("#plCob").onchange=e=>{PL.cob=+e.target.value;vPlan();};
+  $("#plDia").onchange=e=>{PL.dia=e.target.value;vPlan();};
+  $("#bIrPron").onclick=()=>document.querySelector('.tb[data-t="pron"]').click();
+  $("#bStk0").onclick=()=>{D.productos.forEach(p=>ST.stock[p.id]=0);save();vPlan();};
+  $$("#p-plan input[data-stk]").forEach(el=>el.onchange=e=>{
+    ST.stock[e.target.dataset.stk]=Math.max(0,+e.target.value||0);save();vPlan();});
+  $$("#p-plan .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
 }
 
 /* ---------- PUNTO DE EQUILIBRIO ----------
@@ -1599,7 +1908,7 @@ function calcAlertas(){
   const A=[], ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)}));
   const MZ=D.matriz_mo[ST.anio]||{}, cap=D.capacidad;
   const V=ps.reduce((s,p)=>s+p.neto*p.u,0);
-  const add=(sev,tipo,titulo,detalle,accion,ir)=>A.push({sev,tipo,titulo,detalle,accion,ir});
+  const add=(sev,tipo,titulo,detalle,accion,ir,est)=>A.push({sev,tipo,titulo,detalle,accion,ir,est});
 
   // 1. margen por debajo del objetivo
   ps.filter(p=>p.u>0).forEach(p=>{
@@ -1634,10 +1943,10 @@ function calcAlertas(){
     const u=c.min_practica?100*dem/c.min_practica:0;
     if(u>100) add("alta","capacidad",`${c.nombre} sin capacidad`,
       `Pide ${N(dem)} minutos al mes y solo hay ${N(c.min_practica)}. Faltan ${N(dem-c.min_practica)}.`,
-      `Contratar, redistribuir carga o bajar volumen de los productos más pesados de esa estación.`, "mo");
+      `Contratar, redistribuir carga o bajar volumen de los productos más pesados de esa estación.`, "mo", c.id);
     else if(u>UMB.util_max) add("media","capacidad",`${c.nombre} al límite`,
       `Utilización de ${P(u,1)}, sobre el umbral de ${P(UMB.util_max,0)}. Holgura: ${N(c.min_practica-dem)} minutos.`,
-      `Sin margen para un feriado o una máquina parada. Vigilar antes de aceptar pedidos grandes.`, "mo");
+      `Sin margen para un feriado o una máquina parada. Vigilar antes de aceptar pedidos grandes.`, "mo", c.id);
   });
 
   // 5. viernes: el día que revienta
@@ -1647,7 +1956,7 @@ function calcAlertas(){
     const capDia=c.min_practica/4.345/6, demV=demSem*perV;
     if(capDia && demV/capDia>1.1) add("alta","capacidad",`El viernes satura ${c.nombre}`,
       `Ese día pide ${N(demV)} minutos y la capacidad diaria es ${N(capDia)}: ${P(100*demV/capDia,0)} de uso.`,
-      `El pan de Shabat no se adelanta. Hay que sumar gente el viernes o adelantar lo que aguante frío.`, "pron");
+      `El pan de Shabat no se adelanta. Hay que sumar gente el viernes o adelantar lo que aguante frío.`, "plan", c.id);
   });
 
   // 6. canales
@@ -1721,6 +2030,7 @@ function vAlertas(){
       <div style="font-size:12.8px;color:var(--g900);margin-top:6px;padding:7px 10px;background:var(--g50);border-radius:7px">
        <b>Qué hacer:</b> ${esc(a.accion)}</div>
      </div>
+     ${a.est?`<button class="btn sm" data-est="${a.est}">Ver qué la carga →</button>`:""}
      <button class="btn sm" data-ir="${a.ir}">Ver →</button>
     </div></div>`).join("")
   :`<div class="card" style="text-align:center;padding:40px">
@@ -1731,6 +2041,7 @@ function vAlertas(){
   const bs=$("#bSellar"); if(bs) bs.onclick=sellarTestigos;
   $$("#p-ale input[data-u]").forEach(el=>el.oninput=e=>{UMB[e.target.dataset.u]=+e.target.value;vAlertas();pintarBadge();});
   $$("#p-ale [data-ir]").forEach(b=>b.onclick=()=>document.querySelector(`.tb[data-t="${b.dataset.ir}"]`)?.click());
+  $$("#p-ale [data-est]").forEach(b=>b.onclick=()=>abrirEst(b.dataset.est));
 }
 function pintarBadge(){
   const A=calcAlertas(), alta=A.filter(x=>x.sev==='alta').length, med=A.filter(x=>x.sev==='media').length;
@@ -1800,7 +2111,7 @@ function guardar(){
 }
 
 /* ---------------- arranque ---------------- */
-function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vPron();vVta();vEsc();vAlertas();pintarBadge();if(typeof esAdmin==='function'&&esAdmin())vUsuarios();
+function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vPron();vPlan();vVta();vEsc();vAlertas();pintarBadge();if(typeof esAdmin==='function'&&esAdmin())vUsuarios();
   $("#cEsc").textContent=ST.esc.length; $("#cProd").textContent=D.productos.length;}
 $$(".tb").forEach(b=>b.onclick=()=>{$$(".tb").forEach(x=>x.classList.toggle("on",x===b));if(b.dataset.t==="ale")vAlertas(); if(b.dataset.t==="usr"&&typeof vUsuarios==="function")vUsuarios();
   $$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+b.dataset.t));});
