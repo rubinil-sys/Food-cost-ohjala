@@ -187,6 +187,24 @@ body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:40
 .bv button{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.45);
  border-radius:7px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
 .bv button:hover{background:rgba(255,255,255,.32)}
+.paso{display:flex;gap:14px;align-items:flex-start;padding:17px 0;border-top:1px solid var(--line)}
+.paso:first-of-type{border-top:none}
+.pn{width:27px;height:27px;border-radius:50%;background:var(--g900);color:#fff;display:flex;align-items:center;
+ justify-content:center;font-family:var(--fm);font-size:13px;font-weight:700;flex:0 0 27px}
+.paso h3{margin:0 0 3px;font-size:15.5px;font-weight:700;color:var(--ink)}
+.paso p{margin:0 0 10px;font-size:13px;color:var(--ink5)}
+.paqs{display:flex;gap:10px;flex-wrap:wrap}
+.paq{text-align:left;background:#fff;border:1.5px solid var(--lineS);border-radius:11px;padding:11px 13px;
+ cursor:pointer;font-family:inherit;min-width:190px;max-width:260px;flex:1 1 190px;transition:border-color .12s,background .12s}
+.paq:hover{border-color:var(--c500)}
+.paq.on{border-color:var(--c600);background:#fff7ef;box-shadow:0 0 0 2px rgba(201,107,44,.14)}
+.paq b{display:block;font-size:14px;color:var(--ink)}
+.paq span{display:block;font-family:var(--fm);font-size:11px;color:var(--c600);font-weight:700;margin:1px 0 5px}
+.paq em{display:block;font-style:normal;font-size:12px;color:var(--ink5);line-height:1.4}
+.paq.ch{min-width:220px}
+.paqt{margin-top:7px;font-size:11px;color:var(--ink7);border-top:1px solid var(--line);padding-top:6px;line-height:1.45}
+details summary{font-weight:700;color:var(--ink);outline:none}
+details summary::marker{color:var(--c600)}
 </style>
 </head>
 <body>
@@ -2635,8 +2653,10 @@ function pintarSesion(){
   $("#usrBox").innerHTML=`<div class="usr">
     <div class="uav">${esc((PERFIL.nombre||PERFIL.email)[0].toUpperCase())}</div>
     <div class="uinfo"><b>${esc(PERFIL.nombre||PERFIL.email)}</b><span>${r}</span></div>
+    ${esAdminReal()&&!VISTA.activa?'<button class="hbtn ac" id="bVerComo">Ver como…</button>':""}
     <button class="hbtn" id="bSalir">Salir</button></div>`;
   $("#bSalir").onclick=salir;
+  if($("#bVerComo")) $("#bVerComo").onclick=()=>abrirPrueba();
   if(!puedeEditar()) document.body.classList.add("solo-lectura");
   else document.body.classList.remove("solo-lectura");
   aplicarPermisos();
@@ -2677,92 +2697,123 @@ async function vUsuarios(){
   const listaPest=u=>{const p=u.pestanas; return (!p||!Array.isArray(p)||!p.length)?"todas":
     PESTANAS.filter(x=>p.indexOf(x.k)>=0).map(x=>x.n).join(", ");};
   $("#p-usr").innerHTML=`
-  <div class="note">Quien se registra entra en espera. Acá le das acceso, decides si puede solo mirar o también editar,
-   y eliges <b>a qué pestañas entra</b>.</div>
+  ${pend.length?`<div class="note warn"><b>${pend.length} ${pend.length===1?"cuenta espera":"cuentas esperan"} aprobación.</b></div>`:""}
 
-  <div class="card" style="border-color:var(--c600)"><div class="ch"><div><h2 class="ct">Probar las restricciones sin cerrar sesión</h2>
-    <p class="cs">Arma un usuario de prueba, entra en vista previa y la aplicación se comporta como si fueras él.
-     Tus permisos reales no se tocan y sales con un botón.</p></div></div>
-   <div class="simg">
-    <div class="fg"><label>Cómo se llama</label>
-     <input class="inp" id="vpNom" type="text" style="text-align:left" value="${esc(VISTA.nombre)}"/></div>
-    <div class="fg"><label>Qué puede hacer</label>
-     <select id="vpRol" style="padding:8px 11px;border:1px solid var(--lineS);border-radius:8px;font-size:13.5px;font-weight:600">
-      <option value="lectura" ${VISTA.rol==="lectura"?"selected":""}>Lectura — ve pero no guarda</option>
-      <option value="edicion" ${VISTA.rol==="edicion"?"selected":""}>Edición — simula y guarda escenarios</option>
-      <option value="admin" ${VISTA.rol==="admin"?"selected":""}>Administrador</option></select></div>
-    <div class="fg"><label>Partir de un paquete</label>
-     <select id="vpPaq" style="padding:8px 11px;border:1px solid var(--lineS);border-radius:8px;font-size:13.5px;font-weight:600">
-      <option value="">— elige uno y se marcan las casillas —</option>
-      ${Object.entries(PAQUETES).map(([k,v])=>`<option value="${k}">${esc(v.n)} (${v.v.length})</option>`).join("")}</select></div>
-   </div>
-   <div style="display:flex;flex-wrap:wrap;gap:9px 17px;margin:14px 0 0">
-    ${PESTANAS.filter(p=>p.k!=="usr").map(p=>`<label style="display:flex;gap:7px;align-items:center;font-size:13px;font-weight:600;cursor:pointer">
-     <input type="checkbox" data-vp="${p.k}" ${VISTA.set.has(p.k)?"checked":""}/> ${esc(p.n)}</label>`).join("")}</div>
-   <div style="display:flex;gap:9px;margin:15px 0 0;flex-wrap:wrap">
-    <button class="btn pri" id="vpEntrar">Entrar en vista previa</button>
-    <span style="font-size:12.5px;color:var(--ink5);align-self:center">La prueba vive solo en este navegador: no crea ninguna cuenta.</span></div>
-   ${Object.entries(PAQUETES).map(([k,v])=>`<div class="note" style="margin:13px 0 0"><b>${esc(v.n)}:</b> ${esc(v.d)}</div>`).join("")}
-  </div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Usuarios</h2>
+    <p class="cs">Apruebas el acceso, eliges si solo mira o también edita, y a qué pestañas entra.</p></div>
+    <button class="btn pri" id="bProbar">Ver la app como otra persona</button></div>
+   <div class="tw"><table><thead><tr><th>Persona</th><th>Estado</th>
+     <th style="width:150px">Puede</th><th>Entra a</th><th style="width:180px"></th></tr></thead>
+    <tbody>${us.map(u=>`<tr ${u.estado==="pendiente"?'style="background:#fffaf0"':''}>
+      <td style="font-weight:600">${esc(u.nombre||"—")} ${u.soy_yo?'<span class="bd nt">tú</span>':''}
+       <div style="font-size:12px;color:var(--ink5);font-weight:400">${esc(u.email)}</div></td>
+      <td>${chip(u)}</td>
+      <td>${u.soy_yo?'<span style="color:var(--ink5);font-size:12.5px">—</span>':
+        `<select class="cell-sel" data-rol="${u.id}">
+          <option value="lectura" ${u.rol==="lectura"?"selected":""}>Solo mirar</option>
+          <option value="edicion" ${u.rol==="edicion"?"selected":""}>Mirar y simular</option>
+          <option value="admin" ${u.rol==="admin"?"selected":""}>Administrador</option></select>`}</td>
+      <td style="font-size:12.5px;color:var(--ink7);max-width:260px">${u.soy_yo?"todas":esc(listaPest(u))}</td>
+      <td>${u.soy_yo?"":`<button class="btn sm" data-pest="${u.id}">Pestañas</button>
+        ${u.estado!=="aprobado"?`<button class="btn sm pri" data-ap="${u.id}">Aprobar</button>`:""}
+        ${u.estado==="aprobado"?`<button class="btn sm" data-bl="${u.id}">Retirar</button>`:""}`}</td></tr>`).join("")}</tbody>
+   </table></div>
+   <div class="note" style="margin:13px 0 0"><b>Probar antes de dar.</b> El botón de arriba —y el de
+    <b>Ver como…</b> en la cabecera, que está siempre a la mano— te mete en la piel de esa persona sin cerrar tu sesión.
+    Sales con la banda naranja.</div></div>
 
-  <div class="card"><div class="ch"><div><h2 class="ct">Qué pestaña conviene dar, y a quién</h2>
-    <p class="cs">La sensibilidad no es el margen que muestra, es lo que alguien podría deducir si se la lleva.</p></div></div>
+  <div class="card"><details><summary class="ct" style="cursor:pointer;font-size:16px">Qué pestaña conviene dar, y a quién</summary>
+   <p class="cs" style="margin:8px 0 13px">La sensibilidad no es el margen que muestra, es lo que alguien podría deducir si se la lleva.</p>
    <div class="tw"><table><thead><tr><th>Pestaña</th><th class="n">Sensibilidad</th><th>Para quién</th><th>Qué deja ver</th></tr></thead>
     <tbody>${PESTANAS.map(p=>`<tr>
      <td style="font-weight:600">${esc(p.n)}</td><td class="n">${sens(p.sens)}</td>
      <td style="font-size:12.5px">${esc(p.qui)}</td>
      <td style="font-size:12.5px;color:var(--ink7)">${esc(p.expone)}</td></tr>`).join("")}</tbody></table></div>
    <div class="note warn" style="margin:13px 0 0"><b>Las tres que no se dan.</b>
-    <b>Insumos y recetas</b> es el know-how de la panadería: con eso alguien replica el producto.
-    <b>Mano de obra</b> deja deducir los sueldos de cada puesto, y eso no se comparte entre compañeros.
-    <b>Canales</b> trae la comisión negociada con Rappi y los descuentos B2B, que es información comercial.
-    El resto se puede repartir con criterio. Para la panadería, <b>Plan de producción</b> sola ya sirve.</div>
-  </div>
-  ${pend.length?`<div class="note warn"><b>${pend.length} ${pend.length===1?"cuenta espera":"cuentas esperan"} aprobación.</b></div>`:""}
-  <div class="kpis">
-   <div class="kpi"><span class="kl">Usuarios</span><div class="kv">${us.length}</div></div>
-   <div class="kpi wa"><span class="kl">Pendientes</span><div class="kv">${pend.length}</div></div>
-   <div class="kpi ok"><span class="kl">Con acceso</span><div class="kv">${us.filter(u=>u.estado==="aprobado").length}</div></div>
-   <div class="kpi c"><span class="kl">Pueden editar</span><div class="kv">${us.filter(u=>u.estado==="aprobado"&&u.rol!=="lectura").length}</div></div>
-  </div>
-  <div class="card"><div class="ch"><div><h2 class="ct">Usuarios</h2>
-    <p class="cs">El perfil de <b>lectura</b> ve todo pero no guarda nada. El de <b>edición</b> puede simular y guardar escenarios.</p></div></div>
-   <div class="tw"><table><thead><tr><th>Persona</th><th>Correo</th><th>Registro</th><th>Estado</th>
-     <th style="width:190px">Perfil de acceso</th><th>Pestañas</th><th style="width:200px">Acciones</th></tr></thead>
-    <tbody>${us.map(u=>`<tr ${u.estado==="pendiente"?'style="background:#fffaf0"':''}>
-      <td style="font-weight:600">${esc(u.nombre||"—")} ${u.soy_yo?'<span class="bd nt">tú</span>':''}</td>
-      <td style="font-size:12.5px;color:var(--ink7)">${esc(u.email)}</td>
-      <td style="font-size:12px;color:var(--ink5)">${new Date(u.created_at).toLocaleDateString("es-PE")}</td>
-      <td>${chip(u)}</td>
-      <td>${u.soy_yo?'<span style="color:var(--ink5);font-size:12.5px">no puedes cambiarte el tuyo</span>':
-        `<select class="cell-sel" data-rol="${u.id}">
-          <option value="lectura" ${u.rol==="lectura"?"selected":""}>Lectura</option>
-          <option value="edicion" ${u.rol==="edicion"?"selected":""}>Edición</option>
-          <option value="admin" ${u.rol==="admin"?"selected":""}>Administrador</option></select>`}</td>
-      <td style="font-size:12px;color:var(--ink7);max-width:230px">${u.soy_yo?"todas":
-        `<div style="margin-bottom:5px">${esc(listaPest(u))}</div>
-         <button class="btn sm" data-pest="${u.id}">Elegir pestañas</button>`}</td>
-      <td>${u.soy_yo?"":`
-        ${u.estado!=="aprobado"?`<button class="btn sm pri" data-ap="${u.id}">Aprobar</button>`:""}
-        ${u.estado==="aprobado"?`<button class="btn sm" data-bl="${u.id}">Retirar acceso</button>`:""}
-        ${u.estado==="bloqueado"?`<button class="btn sm" data-ap="${u.id}">Reactivar</button>`:""}`}</td></tr>`).join("")}</tbody>
-   </table></div></div>`;
+    <b>Insumos y recetas</b> es el know-how: con eso alguien replica el producto.
+    <b>Mano de obra</b> deja deducir los sueldos de cada puesto.
+    <b>Canales</b> trae la comisión negociada con Rappi y los descuentos B2B.
+    El resto se reparte con criterio; para la panadería, <b>Plan de producción</b> sola ya sirve.</div>
+  </details></div>`;
+  $("#bProbar").onclick=()=>abrirPrueba();
   $$("#p-usr [data-ap]").forEach(b=>b.onclick=()=>cambiarUsuario(b.dataset.ap,{estado:"aprobado",aprobado_en:new Date().toISOString(),aprobado_por:SESION.user.id}));
   $$("#p-usr [data-bl]").forEach(b=>b.onclick=()=>{ if(confirm("¿Retirar el acceso de esta persona?")) cambiarUsuario(b.dataset.bl,{estado:"bloqueado"}); });
   $$("#p-usr [data-rol]").forEach(s=>s.onchange=()=>cambiarUsuario(s.dataset.rol,{rol:s.value}));
   $$("#p-usr [data-pest]").forEach(b=>b.onclick=()=>abrirPestanas(us.find(x=>x.id===b.dataset.pest)));
-  // vista previa
-  $$("#p-usr [data-vp]").forEach(c=>c.onchange=e=>{
-    const k=e.target.dataset.vp; e.target.checked?VISTA.set.add(k):VISTA.set.delete(k);});
-  $("#vpPaq").onchange=e=>{const p=PAQUETES[e.target.value];
-    if(p){ VISTA.set=new Set(p.v); $$("#p-usr [data-vp]").forEach(c=>c.checked=VISTA.set.has(c.dataset.vp)); }};
-  $("#vpRol").onchange=e=>{VISTA.rol=e.target.value;};
-  $("#vpEntrar").onclick=()=>{
-    VISTA.nombre=($("#vpNom").value||"").trim()||"Usuario de prueba";
-    if(!VISTA.set.size) return alert("Marca al menos una pestaña, si no la prueba se queda sin nada que mostrar.");
-    VISTA.activa=true; pintarSesion(); aplicarPermisos(); render();
-    window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- probar como otra persona: un dialogo, tres pasos ---------- */
+function abrirPrueba(pre){
+  if(pre){ VISTA.nombre=pre.nombre; VISTA.rol=pre.rol; VISTA.set=new Set(pre.pest); }
+  const paqActual=()=>{
+    for(const [k,v] of Object.entries(PAQUETES))
+      if(v.v.length===VISTA.set.size && v.v.every(x=>VISTA.set.has(x))) return k;
+    return "medida";
   };
+  const pintar=()=>{
+    const pa=paqActual();
+    $(".mtop b").textContent="Ver la aplicación como otra persona";
+    $("#modalBody").innerHTML=`
+    <div class="note">Esto no crea ninguna cuenta ni cambia permisos. La aplicación se comporta como esa persona
+     hasta que salgas con el botón de la banda naranja.</div>
+
+    <div class="paso"><div class="pn">1</div><div style="flex:1">
+      <h3>¿Quién es?</h3><p>Solo para acordarte de a quién le estás probando el acceso.</p>
+      <input class="inp" id="pbNom" type="text" style="text-align:left;max-width:340px" value="${esc(VISTA.nombre)}" placeholder="Rosa, de panadería"/>
+    </div></div>
+
+    <div class="paso"><div class="pn">2</div><div style="flex:1">
+      <h3>¿Qué va a ver?</h3><p>Elige un paquete. Casi siempre uno de estos cuatro alcanza.</p>
+      <div class="paqs">${Object.entries(PAQUETES).map(([k,v])=>`
+       <button class="paq ${pa===k?"on":""}" data-paq="${k}">
+        <b>${esc(v.n)}</b><span>${v.v.length} pestañas</span>
+        <em>${esc(v.d)}</em>
+        <div class="paqt">${v.v.map(x=>esc((PESTANAS.find(p=>p.k===x)||{}).n||x)).join(" · ")}</div></button>`).join("")}
+       <button class="paq ${pa==="medida"?"on":""}" data-paq="medida">
+        <b>A medida</b><span>${VISTA.set.size} pestañas</span>
+        <em>Marca una por una, abajo.</em></button></div>
+      <details ${pa==="medida"?"open":""} style="margin-top:12px"><summary>Marcar pestaña por pestaña</summary>
+       <div style="display:flex;flex-wrap:wrap;gap:9px 17px;margin:11px 0 0">
+        ${PESTANAS.filter(p=>p.k!=="usr").map(p=>`<label style="display:flex;gap:7px;align-items:center;font-size:13px;font-weight:600;cursor:pointer">
+         <input type="checkbox" data-pb="${p.k}" ${VISTA.set.has(p.k)?"checked":""}/> ${esc(p.n)}</label>`).join("")}</div></details>
+    </div></div>
+
+    <div class="paso"><div class="pn">3</div><div style="flex:1">
+      <h3>¿Puede cambiar cosas?</h3><p>Lectura es lo normal para alguien que solo consulta.</p>
+      <div class="paqs">
+       ${[["lectura","Solo mirar","Ve los números pero no guarda nada."],
+          ["edicion","Mirar y simular","Puede mover supuestos y guardar escenarios."]].map(([k,t,d])=>`
+        <button class="paq ch ${VISTA.rol===k?"on":""}" data-rol2="${k}"><b>${t}</b><em>${d}</em></button>`).join("")}</div>
+    </div></div>
+
+    <div style="display:flex;gap:9px;margin:20px 0 0;flex-wrap:wrap;align-items:center">
+     <button class="btn pri" id="pbIr" style="padding:11px 20px;font-size:14px">Entrar como ${esc(VISTA.nombre||"esa persona")}</button>
+     <button class="btn" id="pbNo">Cancelar</button></div>`;
+
+    $$("#modalBody [data-paq]").forEach(b=>b.onclick=()=>{
+      const k=b.dataset.paq;
+      VISTA.nombre=($("#pbNom").value||"").trim()||VISTA.nombre;
+      if(k!=="medida") VISTA.set=new Set(PAQUETES[k].v);
+      pintar();
+    });
+    $$("#modalBody [data-rol2]").forEach(b=>b.onclick=()=>{
+      VISTA.nombre=($("#pbNom").value||"").trim()||VISTA.nombre;
+      VISTA.rol=b.dataset.rol2; pintar();});
+    $$("#modalBody [data-pb]").forEach(c=>c.onchange=e=>{
+      e.target.checked?VISTA.set.add(e.target.dataset.pb):VISTA.set.delete(e.target.dataset.pb);
+      const n=$("#modalBody [data-paq='medida'] span"); if(n) n.textContent=VISTA.set.size+" pestañas";});
+    $("#pbNom").oninput=e=>{const v=(e.target.value||"").trim()||"esa persona";
+      $("#pbIr").textContent="Entrar como "+v;};
+    $("#pbNo").onclick=cerrar;
+    $("#pbIr").onclick=()=>{
+      VISTA.nombre=($("#pbNom").value||"").trim()||"Usuario de prueba";
+      if(!VISTA.set.size) return alert("Marca al menos una pestaña, si no entra y no ve nada.");
+      VISTA.activa=true; cerrar(); pintarSesion(); aplicarPermisos(); render();
+      window.scrollTo({top:0,behavior:"smooth"});
+    };
+  };
+  pintar();
+  $("#modal").classList.add("on"); document.body.style.overflow="hidden";
 }
 
 /* elegir pestañas de una persona de verdad */
@@ -2793,9 +2844,7 @@ function abrirPestanas(u){
   $$("#modalBody [data-paq]").forEach(b=>b.onclick=()=>{const s=new Set(PAQUETES[b.dataset.paq].v);
     $$("#modalBody [data-pk]").forEach(c=>c.checked=s.has(c.dataset.pk));});
   $("#pestNo").onclick=cerrar;
-  $("#pestVer").onclick=()=>{VISTA.set=new Set(leer()); VISTA.rol=u.rol; VISTA.nombre=u.nombre||u.email;
-    if(!VISTA.set.size) return alert("Marca al menos una pestaña.");
-    VISTA.activa=true; cerrar(); pintarSesion(); aplicarPermisos(); render(); window.scrollTo({top:0,behavior:"smooth"});};
+  $("#pestVer").onclick=()=>abrirPrueba({nombre:u.nombre||u.email, rol:u.rol==="admin"?"edicion":u.rol, pest:leer()});
   $("#pestOk").onclick=async()=>{
     const v=leer();
     if(!v.length) return alert("Marca al menos una pestaña, o la persona entra y no ve nada.");
