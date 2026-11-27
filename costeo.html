@@ -458,18 +458,44 @@ const N=(n,d=0)=>(Number(n)||0).toLocaleString("es-PE",{minimumFractionDigits:d,
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const MES=["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Set","Oct","Nov","Dic"];
 const INS={}; D.insumos.forEach(i=>INS[i.id]=i);
+const INS_FAM={}; D.insumos.forEach(i=>INS_FAM[i.nombre]=i.familia);
 
-let ST={anio:"2026", mes:"12", igv:D.meta.igv, aj:{}, esc:[], abierto:null};
+let ST={anio:"2026", mes:"12", igv:D.meta.igv, aj:{}, esc:[], abierto:null,
+        insumos:{}, estaciones:{}};   // variaciones por familia de insumo y por estacion
+const FAMILIAS=[...new Set(D.insumos.map(i=>i.familia))].sort();
+FAMILIAS.forEach(f=>ST.insumos[f]=0);
+D.estaciones.forEach(e=>ST.estaciones[e.id]=0);
 D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});
 try{const g=localStorage.getItem("ohjala_v2");if(g){const o=JSON.parse(g);
-  if(o.esc)ST.esc=o.esc; if(o.aj)Object.assign(ST.aj,o.aj); if(o.igv)ST.igv=o.igv;}}catch(e){}
+  if(o.esc)ST.esc=o.esc; if(o.aj)Object.assign(ST.aj,o.aj); if(o.igv)ST.igv=o.igv; if(o.insumos)Object.assign(ST.insumos,o.insumos); if(o.estaciones)Object.assign(ST.estaciones,o.estaciones);}}catch(e){}
 const save=()=>{try{localStorage.setItem("ohjala_v2",JSON.stringify({esc:ST.esc,aj:ST.aj,igv:ST.igv}))}catch(e){}};
 
+function factorMP(p){
+  // la variacion de cada familia pesa segun cuanto aporta esa familia al costo del producto
+  if(!p.receta||!p.receta.length) return 1;
+  const tot=p.receta.reduce((s,r)=>s+r.costo_por_unidad,0);
+  if(!tot) return 1;
+  let f=0;
+  p.receta.forEach(r=>{
+    const fam=r.familia==='relleno'?'relleno':(INS_FAM[r.nombre]||r.familia||'otros');
+    const v=(ST.insumos[fam]!=null?ST.insumos[fam]:0)/100;
+    f += (r.costo_por_unidad/tot)*(1+v);
+  });
+  return f;
+}
+function factorMOD(p){
+  if(!p.pasos||!p.pasos.length) return 1;
+  const tot=p.pasos.reduce((s,x)=>s+x.costo_unid,0);
+  if(!tot) return 1;
+  let f=0;
+  p.pasos.forEach(x=>{ const v=(ST.estaciones[x.estacion]||0)/100; f += (x.costo_unid/tot)*(1+v); });
+  return f;
+}
 function calc(p){
   const a=ST.aj[p.id]||{precio:0,mp:0,mod:0,manual:null};
   // si hay precio escrito a mano, ese manda sobre el deslizador
   const neto = (a.manual!=null && a.manual>0) ? a.manual/(1+ST.igv/100) : p.neto*(1+a.precio/100);
-  const mp=p.mp*(1+a.mp/100), mod=p.mod*(1+a.mod/100), cif=p.cif;
+  const mp=p.mp*factorMP(p), mod=p.mod*factorMOD(p), cif=p.cif;
   const cuf=mp+mod+cif;
   return {...p, neto, mp, mod, cif, cuf, ub:neto-cuf,
     ub_pct:neto?100*(neto-cuf)/neto:0, fc_pct:neto?100*mp/neto:0,
@@ -541,7 +567,9 @@ function vRes(){
 function vProd(){
   const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)}));
   $("#p-prod").innerHTML=`
-  <div class="note">Clic en cualquier tarjeta para abrir su receta completa y los pasos de producción. Los deslizadores simulan cambios sin tocar el dato base.</div>
+  <div class="note">Clic en cualquier tarjeta para abrir su receta y sus pasos. Acá decides el <b>precio</b>, que es lo único
+   que se fija por producto. Los costos no se tocan desde aquí: la materia prima se mueve en <b>Insumos</b> y la mano de obra
+   en <b>Mano de obra</b>, porque un cambio ahí afecta a todos los productos que lo usan.</div>
   <div class="lg" style="margin-bottom:13px">
    <span><i style="background:linear-gradient(90deg,#f0a868,#c96b2c)"></i>Materia prima</span>
    <span><i style="background:linear-gradient(90deg,#7fa8a0,#4a7f73)"></i>Mano de obra</span>
@@ -580,18 +608,8 @@ function vProd(){
       <span><b>Utilidad bruta</b></span><b data-k="ub" style="color:var(--g900)">${S(p.ub)}
       <span class="bd ${p.ub_pct>=48?'ok':p.ub_pct>=42?'wa':'ba'}">${P(p.ub_pct,1)}</span></b></div>
      <button class="btn sm clic" data-p="${p.id}" style="margin-top:4px">Ver receta y pasos →</button>
-     <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">
-      ${[["precio","Precio"],["mp","Materia prima"],["mod","Mano de obra"]].map(([k,lb])=>
-        p.es_reventa&&k==="mod"?"":`<div class="fg"><label>${lb}: <span data-sl="${k}" style="font-family:var(--fm);color:var(--c600)">${a[k]>0?"+":""}${a[k]}%</span></label>
-        <input class="sl" type="range" min="-40" max="40" value="${a[k]}" data-p="${p.id}" data-k="${k}"/></div>`).join("")}
-     </div></div></div>`}).join("")}</div>`;
-  $$("#p-prod input[type=range]").forEach(el=>el.oninput=e=>{
-    const pid=e.target.dataset.p, k=e.target.dataset.k;
-    ST.aj[pid][k]=+e.target.value;
-    refrescarTarjeta(pid);
-    clearTimeout(window._tref);
-    window._tref=setTimeout(()=>{ save(); vRes(); vUtil(); vAlertas(); pintarBadge(); }, 260);
-  });
+     </div></div>`}).join("")}</div>`;
+
   $$("#p-prod input[data-precio]").forEach(el=>{
     el.onchange=e=>{
       const pid=e.target.dataset.precio, v=parseFloat(e.target.value);
@@ -609,7 +627,7 @@ function vProd(){
     refrescarTarjeta(pid); save(); vRes(); vUtil(); vAlertas(); pintarBadge();
   });
   $$("#p-prod .clic").forEach(el=>el.onclick=()=>abrir(el.dataset.p));
-  $("#bReset").onclick=()=>{D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});save();render();};
+  $("#bReset").onclick=()=>{D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});FAMILIAS.forEach(f=>ST.insumos[f]=0); D.estaciones.forEach(e=>ST.estaciones[e.id]=0); save();render();};
 }
 
 function refrescarTarjeta(pid){
@@ -728,6 +746,26 @@ function vIns(){
   $("#p-ins").innerHTML=`
   <div class="note">Maestro de insumos. El <b>costo efectivo</b> aplica la merma: un insumo con 8% de merma cuesta de verdad
    su precio dividido entre 0.92, porque de cada kilo comprado solo llegan 920 gramos al producto.</div>
+  <div class="card"><div class="ch"><div><h2 class="ct">Simular alza de precios</h2>
+    <p class="cs">Mueve una familia y el cambio llega solo a los productos que la usan, en la proporción que cada receta
+     la lleva. Así se responde "¿qué pasa si la harina sube 15%?" sin tocar producto por producto.</p></div>
+    <button class="btn" id="bInsReset">Volver a cero</button></div>
+   <div class="simg">${FAMILIAS.map(f=>{const v=ST.insumos[f]||0;
+     const n=D.insumos.filter(i=>i.familia===f).length;
+     return `<div class="fg"><label>${esc(f)} <span style="color:var(--ink5);font-weight:400">(${n})</span>:
+       <span style="font-family:var(--fm);color:${v>0?'var(--ba)':v<0?'var(--ok)':'var(--c600)'}">${v>0?"+":""}${v}%</span></label>
+       <input class="sl" type="range" min="-30" max="50" value="${v}" data-fam="${esc(f)}"/></div>`}).join("")}</div>
+   ${(()=>{const ps=TODOS(); const hay=FAMILIAS.some(f=>ST.insumos[f]);
+     if(!hay) return "";
+     const base=D.productos.map(p=>p.mp*und(p.id,ST.anio)/12).reduce((a,b)=>a+b,0);
+     const ahora=ps.map(p=>p.mp*und(p.id,ST.anio)/12).reduce((a,b)=>a+b,0);
+     const d=ahora-base;
+     const peor=[...ps].map(p=>({p,v:p.mp/D.productos.find(x=>x.id===p.id).mp-1})).sort((a,b)=>b.v-a.v)[0];
+     return `<div class="note ${d>0?'bad':'warn'}" style="margin:14px 0 0">
+      La materia prima del mes pasa de <b>${S0(base)}</b> a <b>${S0(ahora)}</b>:
+      ${d>0?"son":"se ahorran"} <b>${S0(Math.abs(d))}</b> al mes (${P(100*Math.abs(d)/base,1)}).
+      El más golpeado es <b>${esc(peor.p.nombre)}</b>, con ${P(100*peor.v,1)} más de costo de insumos.</div>`})()}
+  </div>
   <div class="card"><div class="ch"><div><h2 class="ct">Insumos <span class="cnt">${D.insumos.length}</span></h2>
     <p class="cs">Costo de compra, merma y costo efectivo por unidad de receta.</p></div>
     <input class="btn" id="qIns" placeholder="Buscar insumo..." style="min-width:220px"/></div>
@@ -751,6 +789,15 @@ function vIns(){
       <td class="n">${S(r.costo_por_g*1000)}</td><td class="n">${N(r.min_mano_obra||0)} min</td>
       <td style="font-size:12.5px;color:var(--ink7)">${r.insumos.map(x=>esc((INS[x.insumo_id]||{}).nombre||x.insumo_id)+" "+N(x.gramos)+"g").join(" · ")}</td></tr>`).join("")}</tbody>
    </table></div></div>`;
+  $$("#p-ins input[data-fam]").forEach(el=>el.oninput=e=>{
+    ST.insumos[e.target.dataset.fam]=+e.target.value;
+    const lb=e.target.parentElement.querySelector("span");
+    if(lb){const v=+e.target.value; lb.textContent=(v>0?"+":"")+v+"%";
+      lb.style.color=v>0?"var(--ba)":v<0?"var(--ok)":"var(--c600)";}
+    clearTimeout(window._ti);
+    window._ti=setTimeout(()=>{save();vIns();vRes();vProd();vUtil();vAlertas();pintarBadge();},300);
+  });
+  $("#bInsReset").onclick=()=>{FAMILIAS.forEach(f=>ST.insumos[f]=0);save();render();};
   $("#qIns").oninput=e=>{const q=e.target.value.toLowerCase();
     $$("#tbIns tr").forEach(t=>t.style.display=!q||t.dataset.q.includes(q)?"":"none");};
 }
@@ -795,6 +842,23 @@ function vMo(){
    calibración del horno, mantenimiento, pedidos que se rehacen y días que no salen. Por eso la capacidad que se puede comprometer
    es el <b>${P(F*100,0)}</b> de la contratada, no el total. Programar contra la teórica es lo que hace que un pedido grande
    reviente el viernes. La holgura de <b>${N(totHolg/60)} horas</b> no es desperdicio: es el colchón que absorbe los imprevistos.</div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Simular cambios de tarifa</h2>
+    <p class="cs">Un aumento de sueldo o un cambio de dotación mueve el costo por minuto, y de ahí se propaga a cada
+     producto según los minutos que consume en esa estación.</p></div>
+    <button class="btn" id="bEstReset">Volver a cero</button></div>
+   <div class="simg">${D.estaciones.map(e=>{const v=ST.estaciones[e.id]||0;
+     return `<div class="fg"><label>${esc(e.nombre)}:
+      <span style="font-family:var(--fm);color:${v>0?'var(--ba)':v<0?'var(--ok)':'var(--c600)'}">${v>0?"+":""}${v}%</span></label>
+      <input class="sl" type="range" min="-20" max="40" value="${v}" data-est="${e.id}"/>
+      <div style="font-size:11px;color:var(--ink5)">${S3(e.costo_minuto_hombre*(1+v/100))} por minuto</div></div>`}).join("")}</div>
+   ${(()=>{const hay=D.estaciones.some(e=>ST.estaciones[e.id]);
+     if(!hay) return "";
+     const b=D.productos.map(p=>p.mod*und(p.id,ST.anio)/12).reduce((a,x)=>a+x,0);
+     const a2=TODOS().map(p=>p.mod*und(p.id,ST.anio)/12).reduce((a,x)=>a+x,0);
+     return `<div class="note ${a2>b?'bad':'warn'}" style="margin:14px 0 0">La mano de obra del mes pasa de
+      <b>${S0(b)}</b> a <b>${S0(a2)}</b>: ${a2>b?"son":"se ahorran"} <b>${S0(Math.abs(a2-b))}</b> al mes.</div>`})()}
+  </div>
 
   <div class="card"><div class="ch"><div><h2 class="ct">Utilización por estación</h2>
     <p class="cs">Teórica es lo contratado. Práctica es lo que se puede comprometer de verdad. Demanda es lo que piden las ventas de ${ST.anio}.</p></div></div>
@@ -858,6 +922,15 @@ function vMo(){
       <td class="n">${S0(((D.planilla||{}).puestos||[]).reduce((s,x)=>s+(x.costo_cargado_mes||0),0))}</td>
       <td class="n">—</td><td></td></tr></tfoot></table></div>
    <div class="note" style="margin:12px 0 0">${esc((D.planilla||{}).nota_calculo||"")}</div></div>`;
+  $$("#p-mo input[data-est]").forEach(el=>el.oninput=e=>{
+    ST.estaciones[e.target.dataset.est]=+e.target.value;
+    const lb=e.target.parentElement.querySelector("span");
+    if(lb){const v=+e.target.value; lb.textContent=(v>0?"+":"")+v+"%";
+      lb.style.color=v>0?"var(--ba)":v<0?"var(--ok)":"var(--c600)";}
+    clearTimeout(window._te);
+    window._te=setTimeout(()=>{save();vMo();vRes();vProd();vUtil();vAlertas();pintarBadge();},300);
+  });
+  $("#bEstReset").onclick=()=>{D.estaciones.forEach(e=>ST.estaciones[e.id]=0);save();render();};
   $$("#p-mo .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
 }
 
@@ -1607,7 +1680,11 @@ function vEsc(){
    </table></div></div>`:`<div class="note">Todavía no hay escenarios. Mueve algo en <b>Productos</b> y guárdalo acá.</div>`}`;
   $("#bSave").onclick=guardar;
   $$("#p-esc [data-r]").forEach(b=>b.onclick=()=>{const e=ST.esc[+b.dataset.r];
-    ST.aj=JSON.parse(JSON.stringify(e.aj)); ST.igv=e.igv; $("#inIgv").value=ST.igv; save(); render();});
+    const p=e.aj||{};
+    if(p.productos){ ST.aj=JSON.parse(JSON.stringify(p.productos));
+      if(p.insumos)Object.assign(ST.insumos,p.insumos); if(p.estaciones)Object.assign(ST.estaciones,p.estaciones); }
+    else ST.aj=JSON.parse(JSON.stringify(p));
+    ST.igv=e.igv; $("#inIgv").value=ST.igv; save(); render();});
   $$("#p-esc [data-x]").forEach(b=>b.onclick=()=>{ST.esc.splice(+b.dataset.x,1);save();vEsc();$("#cEsc").textContent=ST.esc.length;});
 }
 function guardar(){
@@ -1754,7 +1831,8 @@ async function cargarEscenarios(){
 async function guardar(){
   if(!puedeEditar()) return alert("Tu perfil es de solo lectura: no puedes guardar escenarios.");
   const n=($("#nom")?.value||"").trim()||("Escenario "+(ST.esc.length+1));
-  const {error}=await sb.from("escenarios").insert({nombre:n,ajustes:ST.aj,resultados:snap(),igv:ST.igv,anio:ST.anio});
+  const paq={productos:ST.aj, insumos:ST.insumos, estaciones:ST.estaciones};
+  const {error}=await sb.from("escenarios").insert({nombre:n,ajustes:paq,resultados:snap(),igv:ST.igv,anio:ST.anio});
   if(error) return alert("No se pudo guardar: "+error.message);
   await cargarEscenarios(); $("#cEsc").textContent=ST.esc.length; vEsc();
 }
