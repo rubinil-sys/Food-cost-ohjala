@@ -180,7 +180,13 @@ body.solo-lectura #p-esc .btn.cr::after{content:" (solo lectura)";font-weight:40
 .nivh{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
 .nivn{font-family:var(--fm);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
  background:var(--c600);color:#fff;padding:2px 8px;border-radius:999px}
-#bandaVista{position:sticky;top:0;z-index:90}
+#bandaVista{position:fixed;top:0;left:0;right:0;z-index:9000}
+body.en-prueba{padding-top:42px}
+#salidaFija{position:fixed;right:20px;bottom:20px;z-index:9001;background:var(--g900);color:#fff;
+ border:2px solid #fff;border-radius:13px;padding:11px 17px;font-family:inherit;font-size:14px;font-weight:700;
+ cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+#salidaFija small{font-size:11px;font-weight:500;opacity:.8}
+#salidaFija:hover{background:#000}
 .bv{background:linear-gradient(90deg,var(--c600),var(--c500));color:#fff;padding:9px 18px;font-size:13px;
  display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.14)}
 .bv b{font-weight:800}
@@ -2537,18 +2543,38 @@ function aplicarPermisos(){
   if(!$$(".tb.on").filter(b=>b.style.display!=="none").length && visible) visible.click();
   pintarBanda();
 }
+function salirVista(){
+  VISTA.activa=false;
+  const b=$("#bandaVista"); if(b) b.remove();
+  const f=$("#salidaFija"); if(f) f.remove();
+  document.body.classList.remove("en-prueba");
+  pintarSesion(); aplicarPermisos(); render();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
 function pintarBanda(){
-  let b=$("#bandaVista");
-  if(!VISTA.activa){ if(b) b.remove(); document.body.style.paddingTop=""; return; }
+  let b=$("#bandaVista"), f=$("#salidaFija");
+  if(!VISTA.activa){
+    if(b) b.remove(); if(f) f.remove();
+    document.body.classList.remove("en-prueba"); return;
+  }
+  document.body.classList.add("en-prueba");
   if(!b){ b=document.createElement("div"); b.id="bandaVista"; document.body.prepend(b); }
   const n=PESTANAS.filter(p=>VISTA.set.has(p.k)).length;
   b.innerHTML=`<div class="bv">
-   <b>Vista previa</b> — estás viendo la aplicación como <b>${esc(VISTA.nombre)}</b>
-   (${{lectura:"solo lectura",edicion:"puede editar",admin:"administrador"}[VISTA.rol]},
-   ${n} ${n===1?"pestaña":"pestañas"}). Tus permisos reales no cambiaron.
-   <button id="bSalirVista">Salir de la vista previa</button></div>`;
-  $("#bSalirVista").onclick=()=>{VISTA.activa=false; pintarSesion(); aplicarPermisos(); render();};
+   <b>Estás viendo la app como ${esc(VISTA.nombre)}</b>
+   — ${{lectura:"solo lectura",edicion:"puede editar",admin:"administrador"}[VISTA.rol]},
+   ${n} ${n===1?"pestaña":"pestañas"} de ${PESTANAS.length}. Tu cuenta no cambió.
+   <button id="bSalirVista">Volver a mi perfil</button></div>`;
+  // boton flotante: no se pierde por mucho que bajes
+  if(!f){ f=document.createElement("button"); f.id="salidaFija"; document.body.appendChild(f); }
+  f.innerHTML="↩ Volver a mi perfil<small>estás probando como "+esc(VISTA.nombre)+"</small>";
+  $("#bSalirVista").onclick=salirVista;
+  f.onclick=salirVista;
 }
+// la tecla Escape tambien saca de la prueba
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && VISTA.activa && !$("#modal").classList.contains("on")) salirVista();
+});
 
 const puedeEditar=()=>PERFIL && PERFIL.estado==="aprobado" && (rolEf()==="edicion"||rolEf()==="admin");
 const esAdmin=()=>PERFIL && PERFIL.estado==="aprobado" && rolEf()==="admin" && (!VISTA.activa||VISTA.rol==="admin");
@@ -2653,10 +2679,13 @@ function pintarSesion(){
   $("#usrBox").innerHTML=`<div class="usr">
     <div class="uav">${esc((PERFIL.nombre||PERFIL.email)[0].toUpperCase())}</div>
     <div class="uinfo"><b>${esc(PERFIL.nombre||PERFIL.email)}</b><span>${r}</span></div>
-    ${esAdminReal()&&!VISTA.activa?'<button class="hbtn ac" id="bVerComo">Ver como…</button>':""}
+    ${esAdminReal()?(VISTA.activa
+      ?'<button class="hbtn ac" id="bFinVista">Volver a mi perfil</button>'
+      :'<button class="hbtn ac" id="bVerComo">Ver como…</button>'):""}
     <button class="hbtn" id="bSalir">Salir</button></div>`;
   $("#bSalir").onclick=salir;
   if($("#bVerComo")) $("#bVerComo").onclick=()=>abrirPrueba();
+  if($("#bFinVista")) $("#bFinVista").onclick=salirVista;
   if(!puedeEditar()) document.body.classList.add("solo-lectura");
   else document.body.classList.remove("solo-lectura");
   aplicarPermisos();
@@ -2754,8 +2783,9 @@ function abrirPrueba(pre){
     const pa=paqActual();
     $(".mtop b").textContent="Ver la aplicación como otra persona";
     $("#modalBody").innerHTML=`
-    <div class="note">Esto no crea ninguna cuenta ni cambia permisos. La aplicación se comporta como esa persona
-     hasta que salgas con el botón de la banda naranja.</div>
+    <div class="note">Esto no crea ninguna cuenta ni cambia permisos.
+     <b>Para volver a lo tuyo</b> tienes tres caminos: la banda naranja de arriba, el botón flotante de abajo a la derecha,
+     o la tecla <b>Esc</b>. Y si te pierdes, basta con recargar la página.</div>
 
     <div class="paso"><div class="pn">1</div><div style="flex:1">
       <h3>¿Quién es?</h3><p>Solo para acordarte de a quién le estás probando el acceso.</p>
