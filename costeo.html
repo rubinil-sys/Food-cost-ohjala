@@ -1612,8 +1612,10 @@ function vUtil(){
       <div class="note warn" style="margin:13px 0 0"><b>Lo que cambia según dónde cae cada sueldo.</b>
        Los ${S0(suma("MOD_PROD","costo_cargado_mes")+suma("MOD_FOH","costo_cargado_mes"))} de producción se reparten al pan
        <b>por minutos cronometrados</b>, y solo la parte usada: lo que sobra queda en la línea de capacidad pagada sin usar.
-       Los ${S0(cp)} de supervisión y almacén entran al pan pero por el <b>pool de CIF</b>, no por cronómetro, porque nadie
-       cronometra a la jefa de producción. Y los ${S0(ga+gv)} de administración y tienda <b>no tocan el costo del pan</b>:
+       Los ${S0(suma("CIF_PROD","costo_cargado_mes"))} de supervisión y almacén entran al pan pero por el <b>pool de CIF</b>,
+       no por cronómetro, porque nadie cronometra a la jefa de producción.
+       Y los ${S0(suma("GA_PLANILLA","costo_cargado_mes")+suma("GV_PLANILLA","costo_cargado_mes"))} de administración
+       y tienda <b>no tocan el costo del pan</b>:
        si los repartieras, cada producto cargaría un sueldo que no causa y que seguiría existiendo aunque lo saques del menú.</div>`})()}
   </div>
   <div class="card"><div class="ch"><div><h2 class="ct">La capacidad pagada y no usada, pool por pool</h2>
