@@ -1411,9 +1411,9 @@ function guardar(){
 }
 
 /* ---------------- arranque ---------------- */
-function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vPron();vVta();vEsc();
+function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vPron();vVta();vEsc();vAlertas();pintarBadge();if(typeof esAdmin==='function'&&esAdmin())vUsuarios();
   $("#cEsc").textContent=ST.esc.length; $("#cProd").textContent=D.productos.length;}
-$$(".tb").forEach(b=>b.onclick=()=>{$$(".tb").forEach(x=>x.classList.toggle("on",x===b));
+$$(".tb").forEach(b=>b.onclick=()=>{$$(".tb").forEach(x=>x.classList.toggle("on",x===b));if(b.dataset.t==="ale")vAlertas(); if(b.dataset.t==="usr"&&typeof vUsuarios==="function")vUsuarios();
   $$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+b.dataset.t));});
 $("#selAnio").onchange=e=>{ST.anio=e.target.value;render();};
 $("#inIgv").value=ST.igv;
