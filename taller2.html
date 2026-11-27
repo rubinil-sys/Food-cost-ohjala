@@ -1,0 +1,3153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Cost – Control de costos de ventas y operaciones | Oh Jalá</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <!-- supabase-js: cliente de la base de datos -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <!-- SheetJS para carga y descarga nativa de archivos Excel (.xlsx) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+          onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);"></script>
+  <style>
+    :root {
+      /* Branding Oh Jalá (arena, corteza dorada, terracota suave) + Encabezado Verde Gastronómico */
+      --green-950: #102e24;
+      --green-900: #174133;
+      --green-800: #1e5442;
+      --green-700: #276953;
+      --green-100: #e3f1ec;
+      --green-50:  #f2f8f5;
+
+      --crust-600: #c96b2c;
+      --crust-500: #e8803a;
+      --crust-100: #fcecd9;
+      --sand-200:  #e5dfd0;
+      --sand-100:  #f5f1e7;
+      --cream-bg:  #faf7f0;
+      --surface:   #ffffff;
+      --surface-2: #fcfaf5;
+
+      --ink-900:   #1c2421;
+      --ink-700:   #3b4742;
+      --ink-500:   #66736d;
+      --line:      #e4dfd3;
+      --line-strong:#cfc7b6;
+
+      /* Semáforo operativo */
+      --ok-ink:    #166534;
+      --ok-bg:     #dcfce7;
+      --ok-bar:    #1f8f52;
+      --ok-border: #86efac;
+
+      --warn-ink:  #92400e;
+      --warn-bg:   #fef3c7;
+      --warn-bar:  #d97706;
+      --warn-border:#fcd34d;
+
+      --bad-ink:   #991b1b;
+      --bad-bg:    #fee2e2;
+      --bad-bar:   #dc2626;
+      --bad-border:#fca5a5;
+
+      --teal-accent:#3f9099;
+
+      --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-disp: "Fraunces", Georgia, serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+
+      --radius-lg: 16px;
+      --radius-md: 11px;
+      --radius-sm: 8px;
+      --shadow-sm: 0 2px 8px rgba(28, 36, 33, 0.05);
+      --shadow-md: 0 8px 24px rgba(28, 36, 33, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--cream-bg);
+      color: var(--ink-900);
+      font-size: 14.5px;
+      line-height: 1.48;
+      min-height: 100vh;
+    }
+
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+
+    /* ================= ENCABEZADO VERDE + BRANDING OH JALÁ ================= */
+    .app-header {
+      background: linear-gradient(135deg, var(--green-950) 0%, var(--green-900) 55%, var(--green-800) 100%);
+      color: #ffffff;
+      border-top: 4px solid var(--crust-500);
+      box-shadow: 0 4px 18px rgba(16, 46, 36, 0.22);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+    .brand-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #f7efe2, #eadbc3);
+      border: 2px solid rgba(232, 128, 58, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .brand-logo:hover::after {
+      content: "Logo";
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 46, 36, 0.82);
+      color: #fff;
+      font-size: 10.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .brand-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .brand-kicker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .brand-input-name {
+      font-family: var(--font-disp);
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffeed6;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed rgba(255, 238, 214, 0.35);
+      padding: 0 2px;
+      width: 120px;
+      outline: none;
+    }
+    .brand-input-name:focus {
+      border-bottom-color: var(--crust-500);
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 4px;
+    }
+    .brand-pill {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(232, 128, 58, 0.22);
+      color: #ffd5b5;
+      border: 1px solid rgba(232, 128, 58, 0.45);
+    }
+    .app-main-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.94);
+      letter-spacing: -0.01em;
+    }
+    .brand-sub-input {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed transparent;
+      padding: 0;
+      width: 280px;
+      max-width: 100%;
+      outline: none;
+    }
+    .brand-sub-input:hover { border-bottom-color: rgba(255, 255, 255, 0.3); }
+    .brand-sub-input:focus { border-bottom-color: var(--crust-500); color: #fff; }
+
+    /* Controles de configuración en encabezado verde */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .config-box {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 7px 13px;
+      border-radius: 11px;
+      backdrop-filter: blur(6px);
+    }
+    .config-box label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.92);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .meta-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      background: #ffffff;
+      color: var(--ink-900);
+      border-radius: 7px;
+      padding: 3px 8px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+    }
+    .meta-input-wrap input {
+      width: 54px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14.5px;
+      text-align: right;
+      color: var(--green-900);
+      outline: none;
+    }
+    .meta-input-wrap span {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--ink-500);
+      margin-left: 3px;
+    }
+    .igv-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .igv-check input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--crust-500);
+      cursor: pointer;
+      margin: 0;
+    }
+    .hdr-btn {
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .hdr-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    .hdr-btn.accent {
+      background: var(--crust-500);
+      border-color: var(--crust-500);
+      color: #fff;
+    }
+    .hdr-btn.accent:hover { background: var(--crust-600); }
+
+    .periodo-select {
+      background: #ffffff;
+      color: var(--ink-900);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      max-width: 190px;
+      outline: none;
+    }
+    .periodo-select:focus { border-color: var(--crust-500); box-shadow: 0 0 0 3px rgba(232, 128, 58, 0.22); }
+    .periodo-chip {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--green-100);
+      color: var(--green-900);
+      border: 1px solid #b7dfd0;
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+
+    /* ================= NAVEGACIÓN DE 4 PESTAÑAS ================= */
+    .tabs-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 2px 6px rgba(28, 36, 33, 0.03);
+    }
+    .tabs-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 14px 18px 12px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--ink-500);
+      border-bottom: 3px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .tab-btn:hover {
+      color: var(--green-900);
+      background: var(--surface-2);
+    }
+    .tab-btn.active {
+      color: var(--green-900);
+      border-bottom-color: var(--crust-500);
+      font-weight: 700;
+    }
+    .tab-count {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--sand-100);
+      color: var(--ink-700);
+    }
+    .tab-btn.active .tab-count {
+      background: var(--crust-100);
+      color: var(--crust-600);
+    }
+    .save-status {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--ink-500);
+      white-space: nowrap;
+      padding-left: 12px;
+    }
+
+    /* ================= LAYOUT PRINCIPAL Y TARJETAS ================= */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.16s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      margin: 0;
+      font-family: var(--font-disp);
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--green-950);
+      letter-spacing: -0.01em;
+    }
+    .card-subtitle {
+      margin: 3px 0 0;
+      font-size: 13px;
+      color: var(--ink-500);
+    }
+
+    /* ================= ALERTA DE DESVÍO (PESTAÑA 1) ================= */
+    .alert-banner {
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .alert-banner.danger {
+      background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+      border: 1.5px solid var(--bad-border);
+      color: var(--bad-ink);
+    }
+    .alert-banner.ok {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 1.5px solid var(--ok-border);
+      color: var(--ok-ink);
+    }
+    .alert-main {
+      flex: 1 1 460px;
+    }
+    .alert-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .alert-desc {
+      margin: 0;
+      font-size: 13.8px;
+      line-height: 1.5;
+    }
+    .top-deviations {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .dev-pill {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(153, 27, 27, 0.22);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--ink-900);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .alert-banner.ok .dev-pill {
+      border-color: rgba(22, 101, 52, 0.22);
+    }
+    .dev-rank {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bad-bar);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .alert-banner.ok .dev-rank { background: var(--ok-bar); }
+
+    /* ================= TARJETAS KPI ================= */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 680px)  { .kpi-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); } }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--green-800);
+      border-radius: var(--radius-md);
+      padding: 15px 16px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .kpi-card.accent-crust { border-top-color: var(--crust-500); }
+    .kpi-card.state-ok     { border-top-color: var(--ok-bar); }
+    .kpi-card.state-warn   { border-top-color: var(--warn-bar); }
+    .kpi-card.state-bad    { border-top-color: var(--bad-bar); }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-500);
+    }
+    .kpi-value {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ink-900);
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-foot {
+      font-size: 12.5px;
+      color: var(--ink-500);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ================= BARRAS DE FOOD COST CON LÍNEA DE META ================= */
+    .chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12.5px;
+      color: var(--ink-700);
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .legend-line {
+      width: 3px;
+      height: 14px;
+      background: var(--green-950);
+      display: inline-block;
+      border-radius: 1px;
+    }
+    .bars-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 210px 1fr 150px;
+      align-items: center;
+      gap: 14px;
+    }
+    @media (max-width: 760px) {
+      .bar-row { grid-template-columns: 1fr; gap: 6px; }
+    }
+    .bar-dish-name {
+      font-weight: 700;
+      color: var(--ink-900);
+      display: flex;
+      flex-direction: column;
+    }
+    .bar-dish-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-500);
+    }
+    .bar-track-wrap {
+      position: relative;
+      height: 30px;
+      background: var(--sand-100);
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      overflow: visible;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      transition: width 0.2s ease, background-color 0.2s ease;
+      min-width: 3px;
+    }
+    .bar-fill.ok   { background: linear-gradient(90deg, #22c55e, var(--ok-bar)); }
+    .bar-fill.warn { background: linear-gradient(90deg, #fbbf24, var(--warn-bar)); }
+    .bar-fill.bad  { background: linear-gradient(90deg, #f87171, var(--bad-bar)); }
+
+    .bar-goal-line {
+      position: absolute;
+      top: -6px;
+      bottom: -6px;
+      width: 2.5px;
+      background: var(--green-950);
+      z-index: 3;
+      pointer-events: none;
+    }
+    .bar-goal-tag {
+      position: absolute;
+      top: -22px;
+      transform: translateX(-50%);
+      background: var(--green-950);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .bar-metrics {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+
+    /* ================= ETIQUETAS DE ESTADO (BADGES) ================= */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .badge.ok   { background: var(--ok-bg);   color: var(--ok-ink);   border-color: var(--ok-border); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: var(--warn-border); }
+    .badge.bad  { background: var(--bad-bg);  color: var(--bad-ink);  border-color: var(--bad-border); }
+    .badge.neutral { background: var(--sand-100); color: var(--ink-700); border-color: var(--line); }
+
+    /* ================= TABLAS Y CONTROLES EDITABLES ================= */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink-900);
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: background 0.15s, border-color 0.15s, transform 0.08s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--sand-100); border-color: var(--ink-500); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary {
+      background: var(--green-800);
+      border-color: var(--green-800);
+      color: #ffffff;
+    }
+    .btn.primary:hover { background: var(--green-900); }
+    .btn.crust {
+      background: var(--crust-500);
+      border-color: var(--crust-500);
+      color: #ffffff;
+    }
+    .btn.crust:hover { background: var(--crust-600); }
+    .btn.danger-outline {
+      color: var(--bad-ink);
+      border-color: var(--bad-border);
+      background: #fff5f5;
+    }
+    .btn.danger-outline:hover { background: var(--bad-bg); }
+    .btn.sm { padding: 5px 10px; font-size: 12.5px; border-radius: 7px; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.8px;
+    }
+    thead th {
+      background: var(--sand-100);
+      color: var(--ink-700);
+      font-size: 11.8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 11px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line-strong);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--surface-2); }
+    tfoot td {
+      background: var(--sand-100);
+      font-weight: 700;
+      padding: 11px 12px;
+      border-top: 2px solid var(--line-strong);
+    }
+    .num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    thead th.num { text-align: right; }
+
+    /* Inputs dentro de tablas */
+    .cell-input, .cell-select {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      background: #ffffff;
+      border-radius: 7px;
+      padding: 6px 9px;
+      font-size: 13.8px;
+      color: var(--ink-900);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .cell-input.num-in {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      width: 112px;
+    }
+    .cell-input:focus, .cell-select:focus {
+      outline: none;
+      border-color: var(--green-700);
+      box-shadow: 0 0 0 3px rgba(39, 105, 83, 0.16);
+    }
+    .search-input {
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      border-radius: 9px;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      min-width: 230px;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--green-700);
+      box-shadow: 0 0 0 3px rgba(39, 105, 83, 0.14);
+    }
+
+    .icon-del {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink-500);
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+    .icon-del:hover {
+      background: var(--bad-bg);
+      color: var(--bad-ink);
+      border-color: var(--bad-border);
+    }
+
+    /* ================= PESTAÑA 3: RECETAS ================= */
+    .recipe-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .recipe-pill {
+      border: 1px solid var(--line-strong);
+      background: var(--surface-2);
+      border-radius: 11px;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .recipe-pill:hover { border-color: var(--green-700); background: var(--green-50); }
+    .recipe-pill.active {
+      background: var(--green-900);
+      border-color: var(--green-900);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+    .recipe-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 1040px) {
+      .recipe-layout { grid-template-columns: 1fr; }
+    }
+    .recipe-meta-bar {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding: 14px;
+      background: var(--sand-100);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+    }
+    @media (max-width: 640px) {
+      .recipe-meta-bar { grid-template-columns: 1fr; }
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .field-group label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-700);
+    }
+    .share-mini-bar {
+      width: 72px;
+      height: 7px;
+      background: var(--sand-200);
+      border-radius: 99px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .share-mini-bar span {
+      display: block;
+      height: 100%;
+      background: var(--crust-500);
+      border-radius: 99px;
+    }
+
+    .summary-side-card {
+      background: linear-gradient(180deg, #ffffff 0%, var(--surface-2) 100%);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      position: sticky;
+      top: 94px;
+      box-shadow: var(--shadow-md);
+    }
+    .side-metric-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 14px;
+    }
+    .side-metric-row:last-of-type { border-bottom: none; }
+    .side-metric-val {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .suggested-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--green-50);
+      border: 1px solid #b7dfd0;
+    }
+    .suggested-price-big {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--green-900);
+      margin: 4px 0 8px;
+    }
+
+    /* ================= PESTAÑA 4: VENTAS E INVENTARIO ================= */
+    .sales-dishes-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 1050px) { .sales-dishes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 580px)  { .sales-dishes-grid { grid-template-columns: 1fr; } }
+
+    .dish-sale-card {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .dish-sale-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--green-950);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .loss-text { color: var(--bad-ink); font-weight: 700; }
+    .gain-text { color: var(--ok-ink); font-weight: 600; }
+    .row-loss td { background: rgba(254, 226, 226, 0.34); }
+    .row-loss:hover td { background: rgba(254, 226, 226, 0.55); }
+
+    /* ================= MODAL EXCEL Y TOAST ================= */
+    .toast-box {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 390px;
+    }
+    .toast {
+      background: var(--green-950);
+      color: #fff;
+      border-left: 4px solid var(--crust-500);
+      padding: 12px 16px;
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      font-size: 13.5px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .excel-hint {
+      font-size: 12.5px;
+      color: var(--ink-500);
+      background: var(--sand-100);
+      border: 1px dashed var(--line-strong);
+      border-radius: 9px;
+      padding: 9px 13px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .mode-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-700);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= ENCABEZADO VERDE CON BRANDING OH JALÁ ================= -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-cluster">
+        <div class="brand-logo" id="brandLogoBtn" title="Haz clic para cargar el logo de tu marca">
+          <img id="brandLogoImg" alt="Logo marca" style="display:none;" />
+          <!-- Emblema artesanal por defecto Oh Jalá (trenza dorada + espiga) -->
+          <svg id="brandLogoSvg" width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 22C7 14.5 12 10 18 10C24 10 29 14.5 29 22C29 25.3 26.5 27 23 27H13C9.5 27 7 25.3 7 22Z" fill="#C96B2C"/>
+            <path d="M11 21C13 15.5 16.5 13 18 13C19.5 13 23 15.5 25 21" stroke="#FFEED6" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M14.5 14.5L18 24.5L21.5 14.5" stroke="#FFEED6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="18" cy="7" r="2" fill="#E8803A"/>
+          </svg>
+        </div>
+        <input type="file" id="logoFileInput" accept="image/*" style="display:none;" />
+
+        <div class="brand-titles">
+          <div class="brand-kicker">
+            <input type="text" id="brandNameInput" class="brand-input-name" value="Oh Jalá" aria-label="Nombre de la marca" title="Editar nombre de la marca" />
+            <span class="brand-pill">Perú · S/ · IGV 18%</span>
+          </div>
+          <h1 class="app-main-title">Food Cost – Control de costos de ventas y operaciones</h1>
+          <input type="text" id="brandSubInput" class="brand-sub-input" value="Cocina Peruana &amp; Panadería Artesanal · Sede San Isidro" aria-label="Subtítulo o sede" title="Editar subtítulo o local" />
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="config-box" title="Periodo de costeo: el kardex y las ventas pertenecen al periodo">
+          <label for="periodoSelect">Periodo</label>
+          <select id="periodoSelect" class="periodo-select" aria-label="Periodo de costeo"></select>
+          <button type="button" class="hdr-btn" id="btnNuevoPeriodo" title="Crear un periodo nuevo (kardex y ventas en cero)">+ Nuevo</button>
+        </div>
+
+        <div class="config-box" title="Meta objetivo de Food Cost sobre ventas netas">
+          <label for="metaFcInput">Meta de Food Cost %</label>
+          <div class="meta-input-wrap">
+            <input type="number" id="metaFcInput" min="1" max="95" step="0.5" value="30" />
+            <span>%</span>
+          </div>
+        </div>
+
+        <div class="config-box">
+          <label class="igv-check" for="igvToggle">
+            <input type="checkbox" id="igvToggle" checked />
+            <span>Precios incluyen IGV (18%)</span>
+          </label>
+        </div>
+
+        <button type="button" class="hdr-btn accent" id="btnExportFullReport" title="Descargar reporte consolidado en Excel (.xlsx)">
+          📊 Exportar Reporte
+        </button>
+        <button type="button" class="hdr-btn" id="btnReloadCloud" title="Volver a leer los datos desde Supabase">
+          ↻ Recargar de la nube
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= BARRA DE 4 PESTAÑAS ================= -->
+  <nav class="tabs-bar" aria-label="Secciones de Food Cost">
+    <div class="tabs-inner">
+      <button type="button" class="tab-btn active" data-tab="resumen">
+        1. Resumen
+      </button>
+      <button type="button" class="tab-btn" data-tab="insumos">
+        2. Insumos <span class="tab-count" data-bind="count-insumos">16</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="recetas">
+        3. Recetas <span class="tab-count" data-bind="count-recetas">4</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="ventas">
+        4. Ventas y consumo real
+      </button>
+      <span class="periodo-chip">Periodo: <span data-bind="periodo-activo-txt">—</span></span>
+      <span class="save-status" id="saveStatusTxt">⟳ Conectando…</span>
+    </div>
+  </nav>
+
+  <!-- ================= CONTENIDO PRINCIPAL ================= -->
+  <main class="container">
+
+    <!-- ==================== PESTAÑA 1: RESUMEN ==================== -->
+    <section id="tab-resumen" class="tab-panel active">
+      <!-- Alerta inteligente de desvío (> 1 punto de FC) -->
+      <div id="summaryAlertBox" class="alert-banner danger"></div>
+
+      <!-- 5 KPIs Ejecutivos -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Ventas Netas</span>
+          <div class="kpi-value" data-bind="kpi-ventas-netas">S/ 0.00</div>
+          <div class="kpi-foot">
+            <span data-bind="kpi-unidades-vendidas">0 platos vendidos</span>
+            <span data-bind="kpi-igv-nota">Sin IGV (÷1.18)</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpiCardTeorico">
+          <span class="kpi-label">FC Teórico</span>
+          <div class="kpi-value" data-bind="kpi-fc-teorico">0.00%</div>
+          <div class="kpi-foot">
+            <span data-bind="kpi-costo-teorico">Costo: S/ 0.00</span>
+            <span data-bind="kpi-meta-ref">Meta: 30.0%</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpiCardReal">
+          <span class="kpi-label">FC Real</span>
+          <div class="kpi-value" data-bind="kpi-fc-real">0.00%</div>
+          <div class="kpi-foot">
+            <span data-bind="kpi-costo-real">Kardex: S/ 0.00</span>
+            <span id="kpiRealBadge"></span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpiCardDesvio">
+          <span class="kpi-label">Desviación Real vs Teórico</span>
+          <div class="kpi-value" data-bind="kpi-desvio-pp">+0.00 pp</div>
+          <div class="kpi-foot">
+            <span data-bind="kpi-desvio-soles">S/ 0.00</span>
+            <span data-bind="kpi-desvio-tag">Merma operativa</span>
+          </div>
+        </div>
+
+        <div class="kpi-card accent-crust">
+          <span class="kpi-label">Margen Bruto Real</span>
+          <div class="kpi-value" data-bind="kpi-margen-real">S/ 0.00</div>
+          <div class="kpi-foot">
+            <span data-bind="kpi-margen-pct">0.00% de ventas netas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico de Barras de FC por plato con línea de Meta -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Food Cost Teórico por Plato vs. Meta</h2>
+            <p class="card-subtitle">Comparación directa del % de costo por receta frente al objetivo configurado en el encabezado.</p>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><i class="legend-dot" style="background:var(--ok-bar)"></i> En meta (≤ <span data-bind="leg-meta-1">30%</span>)</span>
+            <span class="legend-item"><i class="legend-dot" style="background:var(--warn-bar)"></i> Atención (+0.1 a +3 pp)</span>
+            <span class="legend-item"><i class="legend-dot" style="background:var(--bad-bar)"></i> Crítico (&gt; +3 pp sobre meta)</span>
+            <span class="legend-item"><i class="legend-line"></i> Línea de Meta (<span data-bind="leg-meta-2">30.0%</span>)</span>
+          </div>
+        </div>
+        <div id="dishBarsContainer" class="bars-list" style="padding-top: 16px;"></div>
+      </div>
+
+      <!-- Tabla de detalle por plato con Precio Sugerido -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Detalle de Rentabilidad y Precio Sugerido por Plato</h2>
+            <p class="card-subtitle" data-bind="tabla-platos-sub">Precios expresados con IGV (18%) incluido según configuración actual.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Plato / Receta</th>
+                <th class="num">Unid. Vendidas</th>
+                <th class="num">Precio Venta</th>
+                <th class="num">Precio Neto</th>
+                <th class="num">Costo Porción</th>
+                <th class="num">Margen Unit.</th>
+                <th class="num">Food Cost %</th>
+                <th>Estado</th>
+                <th class="num">Precio Sugerido (Meta)</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="summaryDishesTbody"></tbody>
+            <tfoot id="summaryDishesTfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PESTAÑA 2: INSUMOS ==================== -->
+    <section id="tab-insumos" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Maestro de Insumos y Rendimiento (Merma)</h2>
+            <p class="card-subtitle">Fórmula aplicada al instante: <strong>Costo aprovechable = Costo de compra ÷ (1 − % Merma)</strong>.</p>
+          </div>
+          <div class="toolbar">
+            <input type="search" id="insumoSearchInput" class="search-input" placeholder="🔍 Buscar insumo..." />
+            <button type="button" class="btn" id="btnDownloadInsumosTpl">📥 Plantilla Excel</button>
+            <button type="button" class="btn crust" id="btnUploadInsumosXlsx">📤 Cargar Excel (.xlsx)</button>
+            <input type="file" id="fileInputInsumos" accept=".xlsx,.xls,.csv" style="display:none;" />
+            <button type="button" class="btn primary" id="btnAddInsumo">+ Agregar insumo</button>
+          </div>
+        </div>
+
+        <div class="excel-hint">
+          <span>💡 <strong>Carga masiva Excel:</strong> Columnas reconocidas: <code>Nombre</code> (o <code>Insumo</code>), <code>Unidad</code>, <code>Costo de compra</code>, <code>% Merma</code> (ej. <code>12</code> o <code>12%</code>).</span>
+          <label class="mode-switch">
+            Modo al importar Excel:
+            <select id="insumosImportMode" class="cell-select" style="width:auto; padding:4px 8px; font-size:12.5px;">
+              <option value="merge">Actualizar existentes y agregar nuevos</option>
+              <option value="replace">Reemplazar listado (conserva vínculos por nombre)</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px;">#</th>
+                <th>Nombre del Insumo</th>
+                <th style="width:120px;">Unidad</th>
+                <th class="num" style="width:145px;">Costo Compra (S/)</th>
+                <th class="num" style="width:130px;">% de Merma</th>
+                <th class="num" style="width:130px;">Aprovechamiento</th>
+                <th class="num" style="width:165px;">Costo Aprovechable</th>
+                <th class="num" style="width:110px;">En Recetas</th>
+                <th style="width:54px;"></th>
+              </tr>
+            </thead>
+            <tbody id="insumosTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PESTAÑA 3: RECETAS ==================== -->
+    <section id="tab-recetas" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Fichas Técnicas de Recetas (Estándar por Porción)</h2>
+            <p class="card-subtitle">Ingresa las cantidades netas limpias en el plato; el sistema costea automáticamente con el <strong>costo aprovechable</strong> de cada insumo.</p>
+          </div>
+          <div class="toolbar">
+            <select id="recipeSelectDropdown" class="cell-select" style="min-width: 220px; font-weight: 700;"></select>
+            <button type="button" class="btn primary" id="btnNewRecipe">+ Crear receta</button>
+            <button type="button" class="btn danger-outline" id="btnDeleteRecipe">Eliminar receta</button>
+          </div>
+        </div>
+
+        <!-- Selector visual rápido por tarjetas/píldoras -->
+        <div id="recipePillsBar" class="recipe-pills"></div>
+
+        <div class="recipe-layout" id="recipeWorkspace">
+          <!-- Columna izquierda: Datos de la receta e ingredientes -->
+          <div>
+            <div class="recipe-meta-bar">
+              <div class="field-group">
+                <label for="recNameInput">Nombre del Plato / Bebida</label>
+                <input type="text" id="recNameInput" class="cell-input" style="font-weight:700; font-size:15.5px;" />
+              </div>
+              <div class="field-group">
+                <label for="recPriceInput" id="recPriceLabel">Precio de Venta (S/ inc. IGV)</label>
+                <input type="number" id="recPriceInput" class="cell-input num-in" style="width:100%; font-size:15.5px;" min="0" step="0.1" />
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ingrediente (Insumo)</th>
+                    <th style="width:80px;">Unidad</th>
+                    <th class="num" style="width:135px;">Cant. Neta</th>
+                    <th class="num" style="width:130px;">Costo Aprov.</th>
+                    <th class="num" style="width:125px;">Costo (S/)</th>
+                    <th class="num" style="width:155px;">% del Costo</th>
+                    <th style="width:48px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="recipeIngsTbody"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="4">
+                      <button type="button" class="btn sm primary" id="btnAddRecipeIng">+ Agregar ingrediente</button>
+                    </td>
+                    <td class="num" data-bind="rec-foot-costo">S/ 0.00</td>
+                    <td class="num">100.0%</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- Columna derecha: Resultado por porción -->
+          <aside class="summary-side-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <h3 style="margin:0; font-family:var(--font-disp); font-size:18px; color:var(--green-950);">Resultado por Porción</h3>
+              <span id="recSideBadge"></span>
+            </div>
+            <p style="margin:0 0 12px; font-size:12.5px; color:var(--ink-500);">Evaluación instantánea contra la meta del <strong data-bind="rec-meta-txt">30.0%</strong>.</p>
+
+            <div class="side-metric-row">
+              <span>Costo por porción</span>
+              <span class="side-metric-val" data-bind="rec-res-costo">S/ 0.00</span>
+            </div>
+            <div class="side-metric-row">
+              <span>Precio de venta carta</span>
+              <span class="side-metric-val" data-bind="rec-res-pvp">S/ 0.00</span>
+            </div>
+            <div class="side-metric-row">
+              <span>Precio neto (sin IGV)</span>
+              <span class="side-metric-val" data-bind="rec-res-neto">S/ 0.00</span>
+            </div>
+            <div class="side-metric-row">
+              <span>Food Cost del plato</span>
+              <span class="side-metric-val" data-bind="rec-res-fc">0.00%</span>
+            </div>
+            <div class="side-metric-row">
+              <span>Margen bruto unitario</span>
+              <span class="side-metric-val" data-bind="rec-res-margen">S/ 0.00</span>
+            </div>
+
+            <div class="suggested-box">
+              <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--green-900);">
+                Precio sugerido para la meta (<span data-bind="rec-sug-igv-lbl">inc. IGV</span>)
+              </div>
+              <div class="suggested-price-big" data-bind="rec-res-sugerido">S/ 0.00</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:12px; color:var(--ink-700);" data-bind="rec-res-gap">Diferencia: S/ 0.00</span>
+                <button type="button" class="btn sm primary" id="btnApplySuggestedPrice">Aplicar precio</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PESTAÑA 4: VENTAS Y CONSUMO REAL ==================== -->
+    <section id="tab-ventas" class="tab-panel">
+      <!-- Bloque 1: Ventas por plato -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Unidades Vendidas por Plato en el Periodo</h2>
+            <p class="card-subtitle">Determina las ventas netas totales y dispara el requerimiento teórico bruto de almacén. Las cifras corresponden al periodo <strong data-bind="periodo-activo-txt">—</strong>.</p>
+          </div>
+          <div class="toolbar">
+            <button type="button" class="btn" id="btnDownloadVentasTpl">📥 Plantilla Excel (Ventas + Kardex)</button>
+            <button type="button" class="btn crust" id="btnUploadVentasXlsx">📤 Cargar Ventas / Inventario (.xlsx)</button>
+            <input type="file" id="fileInputVentas" accept=".xlsx,.xls,.csv" style="display:none;" />
+          </div>
+        </div>
+
+        <div class="excel-hint">
+          <span>💡 <strong>Carga flexible por Excel:</strong> Puedes subir un Excel con la hoja <code>Ventas_Platos</code> (Plato, Unidades Vendidas), la hoja <code>Inventario_Insumos</code> (Insumo, Inventario Inicial, Compras, Inventario Final), o ambas a la vez.</span>
+        </div>
+
+        <div id="salesDishesGrid" class="sales-dishes-grid"></div>
+      </div>
+
+      <!-- Bloque 2: Kardex por insumo (Consumo Real vs Consumo Teórico) -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Control de Inventario: Consumo Real vs. Consumo Teórico</h2>
+            <p class="card-subtitle">
+              <strong>Consumo real</strong> = Inicial + Compras − Final &nbsp;|&nbsp;
+              <strong>Consumo teórico almacén</strong> = ∑ (Ventas × Receta neta ÷ (1 − Merma)) &nbsp;|&nbsp;
+              En <span class="loss-text">rojo</span> cuando existe sobregasto / pérdida.
+            </p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Insumo</th>
+                <th>Und.</th>
+                <th class="num">Costo Compra</th>
+                <th class="num" style="width:125px;">Inv. Inicial</th>
+                <th class="num" style="width:125px;">Compras</th>
+                <th class="num" style="width:125px;">Inv. Final</th>
+                <th class="num">Consumo Real</th>
+                <th class="num">Consumo Teórico</th>
+                <th class="num">Dif. (Unid.)</th>
+                <th class="num">Dif. (S/)</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="kardexTbody"></tbody>
+            <tfoot id="kardexTfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast-box" id="toastContainer" aria-live="polite"></div>
+
+  <!-- ================= LÓGICA REACTIVA SIN PÉRDIDA DE FOCO ================= -->
+  <script>
+    (function () {
+      "use strict";
+
+      // ============================================================
+      // CONEXIÓN A SUPABASE
+      // La anon key es pública por diseño; la seguridad real vive en
+      // las políticas RLS de la base de datos.
+      // ============================================================
+      const SUPABASE_URL = "https://fqgwcyrmncxmnxyxydux.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_b2I75xOPa2wqffw4XJXMUw_lNoffxiw";
+      const IGV_RATE = 0.18;
+
+      let sb = null;
+      let online = false;
+
+      // ---------- Estado en memoria ----------
+      // Mantiene la misma forma que el MVP original para que el motor de
+      // cálculo y el render no cambien. La diferencia es de dónde viene.
+      let state = {
+        brand:  { name: "Oh Jalá", subtitle: "", logoDataUrl: "" },
+        config: { metaFc: 30, pricesIncludeIgv: true },
+        periodos: [],
+        periodoId: "",
+        activeTab: "resumen",
+        selectedRecipeId: "",
+        insumoSearch: "",
+        insumos: [],
+        recetas: []
+      };
+
+      // Copia de lo último confirmado en la base, para calcular qué cambió
+      let persisted = null;
+      let saveTimer = null;
+      let saving = false;
+      let pendingAgain = false;
+
+      function uid() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+        // Reserva para navegadores sin randomUUID
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          const v = c === "x" ? r : ((r & 0x3) | 0x8);
+          return v.toString(16);
+        });
+      }
+
+      // ============================================================
+      // INDICADOR DE ESTADO DE GUARDADO
+      // ============================================================
+      function setStatus(kind, text) {
+        const el = document.getElementById("saveStatusTxt");
+        if (!el) return;
+        const colors = {
+          saved:  "var(--ok-ink)",
+          saving: "var(--ink-500)",
+          error:  "var(--bad-ink)",
+          local:  "var(--warn-ink)"
+        };
+        el.style.color = colors[kind] || "var(--ink-500)";
+        el.style.fontWeight = kind === "error" ? "700" : "500";
+        el.textContent = text;
+      }
+
+      function nowHHMM() {
+        const d = new Date();
+        return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      }
+
+      // ============================================================
+      // CARGA DESDE SUPABASE
+      // ============================================================
+      async function loadAll() {
+        setStatus("saving", "⟳ Cargando de la nube…");
+
+        const [cfgRes, perRes, insRes, recRes, ringRes] = await Promise.all([
+          sb.from("config").select("*").eq("id", 1).maybeSingle(),
+          sb.from("periodos").select("*").order("fecha_inicio", { ascending: false }),
+          sb.from("insumos").select("*").order("orden", { ascending: true }),
+          sb.from("recetas").select("*").order("orden", { ascending: true }),
+          sb.from("receta_ingredientes").select("*").order("orden", { ascending: true })
+        ]);
+
+        const firstErr = [cfgRes, perRes, insRes, recRes, ringRes].find(r => r && r.error);
+        if (firstErr) throw firstErr.error;
+
+        const cfg = cfgRes.data || {};
+        state.brand.name        = cfg.marca_nombre     || "Oh Jalá";
+        state.brand.subtitle    = cfg.marca_subtitulo  || "";
+        state.brand.logoDataUrl = cfg.logo_url         || "";
+
+        state.periodos = (perRes.data || []).map(p => ({
+          id: p.id,
+          nombre: p.nombre,
+          fechaInicio: p.fecha_inicio,
+          fechaFin: p.fecha_fin,
+          metaFc: Number(p.meta_fc),
+          pricesIncludeIgv: !!p.precios_incluyen_igv
+        }));
+
+        if (!state.periodos.length) {
+          // Base vacía: creamos el primer periodo para poder trabajar
+          const nuevo = await crearPeriodoEnBD("Periodo inicial", 30, true);
+          if (nuevo) state.periodos = [nuevo];
+        }
+
+        if (!state.periodos.some(p => p.id === state.periodoId)) {
+          state.periodoId = state.periodos.length ? state.periodos[0].id : "";
+        }
+
+        state.insumos = (insRes.data || []).map((i, idx) => ({
+          id: i.id,
+          nombre: i.nombre,
+          unidad: i.unidad,
+          costo: Number(i.costo),
+          merma: Number(i.merma),
+          orden: i.orden != null ? i.orden : idx,
+          invIni: 0, compras: 0, invFin: 0
+        }));
+
+        const ingsByRec = new Map();
+        (ringRes.data || []).forEach(r => {
+          if (!ingsByRec.has(r.receta_id)) ingsByRec.set(r.receta_id, []);
+          ingsByRec.get(r.receta_id).push({
+            id: r.id,
+            insumoId: r.insumo_id,
+            cantidad: Number(r.cantidad)
+          });
+        });
+
+        state.recetas = (recRes.data || []).map((r, idx) => ({
+          id: r.id,
+          nombre: r.nombre,
+          precioVenta: Number(r.precio_venta),
+          orden: r.orden != null ? r.orden : idx,
+          unidadesVendidas: 0,
+          ingredientes: ingsByRec.get(r.id) || []
+        }));
+
+        if (!state.recetas.some(r => r.id === state.selectedRecipeId)) {
+          state.selectedRecipeId = state.recetas.length ? state.recetas[0].id : "";
+        }
+
+        await loadPeriodoData();
+        persisted = snapshot();
+        setStatus("saved", "✓ Sincronizado " + nowHHMM());
+      }
+
+      // Carga kardex + ventas + meta del periodo seleccionado
+      async function loadPeriodoData() {
+        const per = state.periodos.find(p => p.id === state.periodoId);
+        if (!per) return;
+
+        state.config.metaFc = per.metaFc;
+        state.config.pricesIncludeIgv = per.pricesIncludeIgv;
+
+        const [kdxRes, venRes] = await Promise.all([
+          sb.from("kardex").select("*").eq("periodo_id", state.periodoId),
+          sb.from("ventas").select("*").eq("periodo_id", state.periodoId)
+        ]);
+        if (kdxRes.error) throw kdxRes.error;
+        if (venRes.error) throw venRes.error;
+
+        const kdx = new Map((kdxRes.data || []).map(k => [k.insumo_id, k]));
+        state.insumos.forEach(ins => {
+          const k = kdx.get(ins.id);
+          ins.invIni  = k ? Number(k.inv_inicial) : 0;
+          ins.compras = k ? Number(k.compras)     : 0;
+          ins.invFin  = k ? Number(k.inv_final)   : 0;
+        });
+
+        const ven = new Map((venRes.data || []).map(v => [v.receta_id, Number(v.unidades)]));
+        state.recetas.forEach(rec => {
+          rec.unidadesVendidas = ven.has(rec.id) ? ven.get(rec.id) : 0;
+        });
+      }
+
+      async function crearPeriodoEnBD(nombre, metaFc, incIgv, fechaInicio, fechaFin) {
+        const row = {
+          id: uid(),
+          nombre: nombre,
+          meta_fc: metaFc,
+          precios_incluyen_igv: !!incIgv,
+          fecha_inicio: fechaInicio || null,
+          fecha_fin: fechaFin || null
+        };
+        const { data, error } = await sb.from("periodos").insert(row).select().single();
+        if (error) { toast("No se pudo crear el periodo: " + error.message); return null; }
+        return {
+          id: data.id,
+          nombre: data.nombre,
+          fechaInicio: data.fecha_inicio,
+          fechaFin: data.fecha_fin,
+          metaFc: Number(data.meta_fc),
+          pricesIncludeIgv: !!data.precios_incluyen_igv
+        };
+      }
+
+      // ============================================================
+      // PERSISTENCIA POR DIFERENCIAS
+      // saveState() no escribe: marca el cambio y agenda el envío.
+      // Así el resto del código sigue llamándola igual que antes.
+      // ============================================================
+      function snapshot() {
+        return {
+          brand: { ...state.brand },
+          metaFc: state.config.metaFc,
+          incIgv: state.config.pricesIncludeIgv,
+          periodoId: state.periodoId,
+          insumos: state.insumos.map(i => ({
+            id: i.id, nombre: i.nombre, unidad: i.unidad,
+            costo: i.costo, merma: i.merma, orden: i.orden
+          })),
+          recetas: state.recetas.map(r => ({
+            id: r.id, nombre: r.nombre, precioVenta: r.precioVenta, orden: r.orden
+          })),
+          ingredientes: state.recetas.flatMap(r =>
+            r.ingredientes.map((ing, idx) => ({
+              id: ing.id, recetaId: r.id, insumoId: ing.insumoId,
+              cantidad: ing.cantidad, orden: idx
+            }))
+          ),
+          kardex: state.insumos.map(i => ({
+            insumoId: i.id, ini: i.invIni, cmp: i.compras, fin: i.invFin
+          })),
+          ventas: state.recetas.map(r => ({
+            recetaId: r.id, unidades: r.unidadesVendidas
+          }))
+        };
+      }
+
+      function saveState() {
+        if (!online) {
+          setStatus("local", "⚠ Sin conexión: cambios no guardados");
+          return;
+        }
+        setStatus("saving", "⟳ Guardando…");
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => { flush(); }, 700);
+      }
+
+      async function flush() {
+        if (!online || !persisted) return;
+        if (saving) { pendingAgain = true; return; }
+        saving = true;
+
+        const prev = persisted;
+        const cur = snapshot();
+
+        try {
+          const ops = [];
+
+          // ---- Marca / config global ----
+          if (prev.brand.name !== cur.brand.name ||
+              prev.brand.subtitle !== cur.brand.subtitle ||
+              prev.brand.logoDataUrl !== cur.brand.logoDataUrl) {
+            ops.push(sb.from("config").update({
+              marca_nombre: cur.brand.name,
+              marca_subtitulo: cur.brand.subtitle,
+              logo_url: cur.brand.logoDataUrl || null,
+              updated_at: new Date().toISOString()
+            }).eq("id", 1));
+          }
+
+          // ---- Meta e IGV: pertenecen al periodo ----
+          if (cur.periodoId && (prev.metaFc !== cur.metaFc || prev.incIgv !== cur.incIgv)) {
+            ops.push(sb.from("periodos").update({
+              meta_fc: cur.metaFc,
+              precios_incluyen_igv: cur.incIgv
+            }).eq("id", cur.periodoId));
+            const per = state.periodos.find(p => p.id === cur.periodoId);
+            if (per) { per.metaFc = cur.metaFc; per.pricesIncludeIgv = cur.incIgv; }
+          }
+
+          // ---- Insumos ----
+          const prevIns = new Map(prev.insumos.map(i => [i.id, i]));
+          const curInsIds = new Set(cur.insumos.map(i => i.id));
+          const insInsert = [];
+          cur.insumos.forEach((i, idx) => {
+            const p = prevIns.get(i.id);
+            const row = {
+              id: i.id, nombre: i.nombre, unidad: i.unidad,
+              costo: i.costo, merma: i.merma, orden: idx
+            };
+            if (!p) {
+              insInsert.push(row);
+            } else if (p.nombre !== i.nombre || p.unidad !== i.unidad ||
+                       p.costo !== i.costo || p.merma !== i.merma || p.orden !== idx) {
+              ops.push(sb.from("insumos").update({
+                nombre: row.nombre, unidad: row.unidad, costo: row.costo,
+                merma: row.merma, orden: row.orden,
+                updated_at: new Date().toISOString()
+              }).eq("id", i.id));
+            }
+          });
+          const insDelete = prev.insumos.filter(i => !curInsIds.has(i.id)).map(i => i.id);
+
+          // ---- Recetas ----
+          const prevRec = new Map(prev.recetas.map(r => [r.id, r]));
+          const curRecIds = new Set(cur.recetas.map(r => r.id));
+          const recInsert = [];
+          cur.recetas.forEach((r, idx) => {
+            const p = prevRec.get(r.id);
+            const row = { id: r.id, nombre: r.nombre, precio_venta: r.precioVenta, orden: idx };
+            if (!p) {
+              recInsert.push(row);
+            } else if (p.nombre !== r.nombre || p.precioVenta !== r.precioVenta || p.orden !== idx) {
+              ops.push(sb.from("recetas").update({
+                nombre: row.nombre, precio_venta: row.precio_venta, orden: row.orden,
+                updated_at: new Date().toISOString()
+              }).eq("id", r.id));
+            }
+          });
+          const recDelete = prev.recetas.filter(r => !curRecIds.has(r.id)).map(r => r.id);
+
+          // Las altas de maestros van primero: los ingredientes y el
+          // kardex apuntan a ellos por llave foránea.
+          if (insInsert.length) {
+            const { error } = await sb.from("insumos").insert(insInsert);
+            if (error) throw error;
+          }
+          if (recInsert.length) {
+            const { error } = await sb.from("recetas").insert(recInsert);
+            if (error) throw error;
+          }
+
+          // ---- Ingredientes de receta ----
+          const prevIng = new Map(prev.ingredientes.map(x => [x.id, x]));
+          const curIngIds = new Set(cur.ingredientes.map(x => x.id));
+          const ingInsert = [];
+          cur.ingredientes.forEach(x => {
+            const p = prevIng.get(x.id);
+            if (!p) {
+              ingInsert.push({
+                id: x.id, receta_id: x.recetaId, insumo_id: x.insumoId,
+                cantidad: x.cantidad, orden: x.orden
+              });
+            } else if (p.insumoId !== x.insumoId || p.cantidad !== x.cantidad || p.orden !== x.orden) {
+              ops.push(sb.from("receta_ingredientes").update({
+                insumo_id: x.insumoId, cantidad: x.cantidad, orden: x.orden
+              }).eq("id", x.id));
+            }
+          });
+          const ingDelete = prev.ingredientes.filter(x => !curIngIds.has(x.id)).map(x => x.id);
+
+          if (ingInsert.length) {
+            const { error } = await sb.from("receta_ingredientes").insert(ingInsert);
+            if (error) throw error;
+          }
+          if (ingDelete.length) {
+            ops.push(sb.from("receta_ingredientes").delete().in("id", ingDelete));
+          }
+
+          // ---- Kardex del periodo (upsert por periodo+insumo) ----
+          if (cur.periodoId) {
+            const prevK = new Map(prev.kardex.map(k => [k.insumoId, k]));
+            const kUp = cur.kardex.filter(k => {
+              const p = prevK.get(k.insumoId);
+              return !p || p.ini !== k.ini || p.cmp !== k.cmp || p.fin !== k.fin;
+            }).map(k => ({
+              periodo_id: cur.periodoId, insumo_id: k.insumoId,
+              inv_inicial: k.ini, compras: k.cmp, inv_final: k.fin,
+              updated_at: new Date().toISOString()
+            }));
+            if (kUp.length) {
+              ops.push(sb.from("kardex").upsert(kUp, { onConflict: "periodo_id,insumo_id" }));
+            }
+
+            // ---- Ventas del periodo ----
+            const prevV = new Map(prev.ventas.map(v => [v.recetaId, v]));
+            const vUp = cur.ventas.filter(v => {
+              const p = prevV.get(v.recetaId);
+              return !p || p.unidades !== v.unidades;
+            }).map(v => ({
+              periodo_id: cur.periodoId, receta_id: v.recetaId, unidades: v.unidades,
+              updated_at: new Date().toISOString()
+            }));
+            if (vUp.length) {
+              ops.push(sb.from("ventas").upsert(vUp, { onConflict: "periodo_id,receta_id" }));
+            }
+          }
+
+          // ---- Bajas de maestros al final (la FK borra en cascada) ----
+          if (insDelete.length) ops.push(sb.from("insumos").delete().in("id", insDelete));
+          if (recDelete.length) ops.push(sb.from("recetas").delete().in("id", recDelete));
+
+          const results = await Promise.all(ops);
+          const bad = results.find(r => r && r.error);
+          if (bad) throw bad.error;
+
+          persisted = cur;
+          setStatus("saved", "✓ Guardado " + nowHHMM());
+        } catch (err) {
+          setStatus("error", "⚠ Error al guardar");
+          toast("No se pudo guardar en Supabase: " + (err.message || err));
+        } finally {
+          saving = false;
+          if (pendingAgain) { pendingAgain = false; saveState(); }
+        }
+      }
+
+      // Último intento de guardar si el usuario cierra la pestaña
+      window.addEventListener("beforeunload", e => {
+        if (saveTimer) {
+          clearTimeout(saveTimer);
+          flush();
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+
+      // ============================================================
+      // UTILIDADES DE FORMATO
+      // ============================================================
+      function esc(str) {
+        return String(str ?? "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      function fmtSoles(n) {
+        const val = Number.isFinite(n) ? n : 0;
+        const sign = val < -0.0005 ? "-" : "";
+        return sign + "S/ " + Math.abs(val).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function fmtSignedSoles(n) {
+        const val = Number.isFinite(n) ? n : 0;
+        if (Math.abs(val) < 0.005) return "S/ 0.00";
+        const sign = val > 0 ? "+" : "−";
+        return sign + "S/ " + Math.abs(val).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function fmtPct(n, decimals = 2) {
+        const val = Number.isFinite(n) ? n : 0;
+        return val.toFixed(decimals) + "%";
+      }
+
+      function fmtQty(n, decimals = 2) {
+        const val = Number.isFinite(n) ? n : 0;
+        return val.toLocaleString("es-PE", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+      }
+
+      function clampMerma(mermaPct) {
+        const m = Number(mermaPct);
+        if (!Number.isFinite(m) || m < 0) return 0;
+        if (m >= 99.9) return 99.9;
+        return m;
+      }
+
+      function toast(msg) {
+        const box = document.getElementById("toastContainer");
+        const item = document.createElement("div");
+        item.className = "toast";
+        item.textContent = msg;
+        box.appendChild(item);
+        setTimeout(() => {
+          item.style.opacity = "0";
+          item.style.transition = "opacity 0.25s";
+          setTimeout(() => item.remove(), 260);
+        }, 4200);
+      }
+
+      function classifyFcStatus(fcPct, metaPct) {
+        if (fcPct <= metaPct + 1e-6) return { key: "ok", label: "En meta" };
+        if (fcPct <= metaPct + 3.0 + 1e-6) return { key: "warn", label: "Atención" };
+        return { key: "bad", label: "Crítico" };
+      }
+
+      // ============================================================
+      // MOTOR DE CÁLCULO (idéntico al MVP: la matemática no cambia)
+      // ============================================================
+      function computeModel() {
+        const metaFc = Math.max(0.1, Number(state.config.metaFc) || 30);
+        const incIgv = !!state.config.pricesIncludeIgv;
+        const igvDivisor = incIgv ? (1 + IGV_RATE) : 1;
+
+        const insumoMap = new Map();
+        const recipeUsageCount = new Map();
+        state.insumos.forEach(ins => recipeUsageCount.set(ins.id, 0));
+        state.recetas.forEach(rec => {
+          const seen = new Set();
+          (rec.ingredientes || []).forEach(ing => {
+            if (ing.insumoId && !seen.has(ing.insumoId)) {
+              seen.add(ing.insumoId);
+              recipeUsageCount.set(ing.insumoId, (recipeUsageCount.get(ing.insumoId) || 0) + 1);
+            }
+          });
+        });
+
+        const insumosCalc = state.insumos.map(ins => {
+          const costo = Math.max(0, Number(ins.costo) || 0);
+          const merma = clampMerma(ins.merma);
+          const factorAprov = 1 - (merma / 100);
+          const costoAprovechable = factorAprov > 0 ? (costo / factorAprov) : costo;
+          const row = {
+            ...ins, costo, merma, factorAprov, costoAprovechable,
+            usedInRecipes: recipeUsageCount.get(ins.id) || 0,
+            consumoTeoricoBruto: 0
+          };
+          insumoMap.set(ins.id, row);
+          return row;
+        });
+
+        let totalVentasNetas = 0, totalCostoTeorico = 0, totalUnidadesVendidas = 0;
+
+        const recetasCalc = state.recetas.map(rec => {
+          const pvp = Math.max(0, Number(rec.precioVenta) || 0);
+          const precioNeto = pvp / igvDivisor;
+          const unidades = Math.max(0, Number(rec.unidadesVendidas) || 0);
+
+          let costoPorcion = 0;
+          const ingsDetailed = (rec.ingredientes || []).map((ing, idx) => {
+            const ins = insumoMap.get(ing.insumoId);
+            const cantidad = Math.max(0, Number(ing.cantidad) || 0);
+            const costoAprov = ins ? ins.costoAprovechable : 0;
+            const costoIng = cantidad * costoAprov;
+            costoPorcion += costoIng;
+
+            // Consumo teórico de almacén: la cantidad BRUTA que hay que
+            // sacar para obtener la cantidad neta del plato.
+            if (ins && unidades > 0 && cantidad > 0) {
+              const brutoPorPorcion = ins.factorAprov > 0 ? (cantidad / ins.factorAprov) : cantidad;
+              ins.consumoTeoricoBruto += unidades * brutoPorPorcion;
+            }
+
+            return {
+              idx, insumoId: ing.insumoId,
+              insumoNombre: ins ? ins.nombre : "(Insumo no encontrado)",
+              unidad: ins ? ins.unidad : "—",
+              merma: ins ? ins.merma : 0,
+              cantidad, costoAprov, costoIng, sharePct: 0
+            };
+          });
+
+          ingsDetailed.forEach(item => {
+            item.sharePct = costoPorcion > 0 ? (item.costoIng / costoPorcion) * 100 : 0;
+          });
+
+          const fcPlato = precioNeto > 0 ? (costoPorcion / precioNeto) * 100 : 0;
+          const margenUnit = precioNeto - costoPorcion;
+          const precioNetoSugerido = (metaFc > 0) ? (costoPorcion / (metaFc / 100)) : 0;
+          const precioSugerido = precioNetoSugerido * igvDivisor;
+          const status = classifyFcStatus(fcPlato, metaFc);
+
+          const ventaNetaPlato = unidades * precioNeto;
+          const costoTeoricoPlato = unidades * costoPorcion;
+
+          totalVentasNetas += ventaNetaPlato;
+          totalCostoTeorico += costoTeoricoPlato;
+          totalUnidadesVendidas += unidades;
+
+          return {
+            ...rec, pvp, precioNeto, unidades, costoPorcion, fcPlato,
+            margenUnit, precioSugerido, status, ventaNetaPlato,
+            costoTeoricoPlato, ingsDetailed
+          };
+        });
+
+        let totalCostoReal = 0, totalDifSoles = 0;
+
+        const kardexCalc = insumosCalc.map(ins => {
+          const invIni = Math.max(0, Number(ins.invIni) || 0);
+          const compras = Math.max(0, Number(ins.compras) || 0);
+          const invFin = Math.max(0, Number(ins.invFin) || 0);
+
+          const consumoReal = invIni + compras - invFin;
+          const consumoTeorico = ins.consumoTeoricoBruto;
+          const difUnidades = consumoReal - consumoTeorico;
+          const costoRealInsumo = consumoReal * ins.costo;
+          const costoTeoricoInsumo = consumoTeorico * ins.costo;
+          const difSoles = difUnidades * ins.costo;
+
+          totalCostoReal += costoRealInsumo;
+          totalDifSoles += difSoles;
+
+          let kardexState = { key: "ok", label: "Controlado" };
+          if (consumoReal < -1e-6)      kardexState = { key: "warn", label: "Revisar conteo" };
+          else if (difSoles > 0.50)     kardexState = { key: "bad",  label: "Pérdida / merma" };
+          else if (difSoles < -0.50)    kardexState = { key: "ok",   label: "Ahorro" };
+
+          return {
+            ...ins, invIni, compras, invFin, consumoReal, consumoTeorico,
+            difUnidades, costoRealInsumo, costoTeoricoInsumo, difSoles, kardexState
+          };
+        });
+
+        const fcTeoricoGlobal = totalVentasNetas > 0 ? (totalCostoTeorico / totalVentasNetas) * 100 : 0;
+        const fcRealGlobal = totalVentasNetas > 0 ? (totalCostoReal / totalVentasNetas) * 100 : 0;
+        const desvioPp = fcRealGlobal - fcTeoricoGlobal;
+        const margenBrutoReal = totalVentasNetas - totalCostoReal;
+        const margenBrutoPct = totalVentasNetas > 0 ? (margenBrutoReal / totalVentasNetas) * 100 : 0;
+
+        const top3Desvios = [...kardexCalc]
+          .filter(k => k.difSoles > 0.01)
+          .sort((a, b) => b.difSoles - a.difSoles)
+          .slice(0, 3);
+
+        return {
+          metaFc, incIgv, insumosCalc, recetasCalc, kardexCalc,
+          totalVentasNetas, totalCostoTeorico, totalCostoReal, totalDifSoles,
+          totalUnidadesVendidas, fcTeoricoGlobal, fcRealGlobal, desvioPp,
+          margenBrutoReal, margenBrutoPct, top3Desvios,
+          superaUnPunto: desvioPp > 1.0
+        };
+      }
+
+      // ============================================================
+      // CONSTRUCCIÓN DE ESTRUCTURA (solo al agregar/quitar filas)
+      // ============================================================
+      function renderAllStructure() {
+        syncHeaderInputs();
+        syncPeriodoSelect();
+        syncActiveTabUI();
+        buildInsumosTableStructure();
+        buildRecetasWorkspaceStructure();
+        buildVentasAndKardexStructure();
+        updateCalculatedDOM();
+      }
+
+      function syncHeaderInputs() {
+        const nameIn = document.getElementById("brandNameInput");
+        const subIn = document.getElementById("brandSubInput");
+        const metaIn = document.getElementById("metaFcInput");
+        const igvIn = document.getElementById("igvToggle");
+        const logoImg = document.getElementById("brandLogoImg");
+        const logoSvg = document.getElementById("brandLogoSvg");
+
+        if (document.activeElement !== nameIn) nameIn.value = state.brand.name;
+        if (document.activeElement !== subIn) subIn.value = state.brand.subtitle;
+        if (document.activeElement !== metaIn) metaIn.value = state.config.metaFc;
+        igvIn.checked = !!state.config.pricesIncludeIgv;
+
+        if (state.brand.logoDataUrl) {
+          logoImg.src = state.brand.logoDataUrl;
+          logoImg.style.display = "block";
+          logoSvg.style.display = "none";
+        } else {
+          logoImg.style.display = "none";
+          logoSvg.style.display = "block";
+        }
+      }
+
+      function syncPeriodoSelect() {
+        const sel = document.getElementById("periodoSelect");
+        if (!sel) return;
+        sel.innerHTML = state.periodos
+          .map(p => `<option value="${esc(p.id)}" ${p.id === state.periodoId ? "selected" : ""}>${esc(p.nombre)}</option>`)
+          .join("");
+      }
+
+      function syncActiveTabUI() {
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.tab === state.activeTab);
+        });
+        document.querySelectorAll(".tab-panel").forEach(panel => {
+          panel.classList.toggle("active", panel.id === "tab-" + state.activeTab);
+        });
+      }
+
+      function buildInsumosTableStructure() {
+        const tbody = document.getElementById("insumosTbody");
+        const q = (state.insumoSearch || "").trim().toLowerCase();
+        const units = ["kg", "g", "L", "ml", "und", "atado", "paq"];
+
+        const filtered = state.insumos.filter(ins => !q || ins.nombre.toLowerCase().includes(q));
+        if (!filtered.length) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:26px; color:var(--ink-500);">No se encontraron insumos con ese filtro.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map((ins, idx) => {
+          const unitOptions = Array.from(new Set([...units, ins.unidad]))
+            .map(u => `<option value="${esc(u)}" ${u === ins.unidad ? "selected" : ""}>${esc(u)}</option>`)
+            .join("");
+          return `
+            <tr data-ins-row="${esc(ins.id)}">
+              <td class="num" style="color:var(--ink-500);">${idx + 1}</td>
+              <td><input type="text" class="cell-input" data-ins-id="${esc(ins.id)}" data-ins-field="nombre" value="${esc(ins.nombre)}" /></td>
+              <td><select class="cell-select" data-ins-id="${esc(ins.id)}" data-ins-field="unidad">${unitOptions}</select></td>
+              <td class="num"><input type="number" class="cell-input num-in" min="0" step="0.01" data-ins-id="${esc(ins.id)}" data-ins-field="costo" value="${ins.costo}" /></td>
+              <td class="num"><input type="number" class="cell-input num-in" min="0" max="99.9" step="0.5" data-ins-id="${esc(ins.id)}" data-ins-field="merma" value="${ins.merma}" /></td>
+              <td class="num" data-ins-aprov-pct="${esc(ins.id)}">—</td>
+              <td class="num" style="font-weight:700; color:var(--green-900);" data-ins-costo-aprov="${esc(ins.id)}">—</td>
+              <td class="num" data-ins-usage="${esc(ins.id)}">0</td>
+              <td style="text-align:center;"><button type="button" class="icon-del" data-del-insumo="${esc(ins.id)}" title="Eliminar insumo">✕</button></td>
+            </tr>`;
+        }).join("");
+      }
+
+      function ensureValidSelectedRecipe() {
+        if (!state.recetas.length) { state.selectedRecipeId = ""; return null; }
+        let rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec) { rec = state.recetas[0]; state.selectedRecipeId = rec.id; }
+        return rec;
+      }
+
+      function buildRecetasWorkspaceStructure() {
+        const rec = ensureValidSelectedRecipe();
+        const selectEl = document.getElementById("recipeSelectDropdown");
+        const pillsBar = document.getElementById("recipePillsBar");
+        const workspace = document.getElementById("recipeWorkspace");
+
+        if (!rec) {
+          selectEl.innerHTML = `<option value="">Sin recetas</option>`;
+          pillsBar.innerHTML = "";
+          workspace.style.display = "none";
+          return;
+        }
+        workspace.style.display = "grid";
+
+        selectEl.innerHTML = state.recetas
+          .map(r => `<option value="${esc(r.id)}" ${r.id === rec.id ? "selected" : ""}>${esc(r.nombre)}</option>`)
+          .join("");
+
+        pillsBar.innerHTML = state.recetas.map(r => `
+          <button type="button" class="recipe-pill ${r.id === rec.id ? "active" : ""}" data-select-recipe="${esc(r.id)}">
+            <span data-pill-name="${esc(r.id)}">${esc(r.nombre)}</span>
+            <span class="badge neutral" data-pill-fc="${esc(r.id)}">0.0%</span>
+          </button>`).join("");
+
+        const nameInput = document.getElementById("recNameInput");
+        const priceInput = document.getElementById("recPriceInput");
+        if (document.activeElement !== nameInput) nameInput.value = rec.nombre;
+        if (document.activeElement !== priceInput) priceInput.value = rec.precioVenta;
+
+        const tbody = document.getElementById("recipeIngsTbody");
+        if (!rec.ingredientes.length) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--ink-500);">Esta receta aún no tiene ingredientes. Haz clic en <strong>+ Agregar ingrediente</strong>.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = rec.ingredientes.map((ing, idx) => {
+          const opts = state.insumos.map(ins =>
+            `<option value="${esc(ins.id)}" ${ins.id === ing.insumoId ? "selected" : ""}>${esc(ins.nombre)} (merma ${ins.merma}%)</option>`
+          ).join("");
+          return `
+            <tr data-rec-ing-idx="${idx}">
+              <td><select class="cell-select" data-ing-idx="${idx}" data-ing-field="insumoId">${opts}</select></td>
+              <td data-ing-unit="${idx}" style="color:var(--ink-500); font-family:var(--font-mono);">—</td>
+              <td class="num"><input type="number" class="cell-input num-in" min="0" step="0.005" data-ing-idx="${idx}" data-ing-field="cantidad" value="${ing.cantidad}" /></td>
+              <td class="num" data-ing-caprov="${idx}" style="color:var(--ink-500);">—</td>
+              <td class="num" data-ing-costo="${idx}" style="font-weight:700;">—</td>
+              <td class="num" data-ing-share="${idx}">—</td>
+              <td style="text-align:center;"><button type="button" class="icon-del" data-del-ing="${idx}" title="Quitar ingrediente">✕</button></td>
+            </tr>`;
+        }).join("");
+      }
+
+      function buildVentasAndKardexStructure() {
+        const salesGrid = document.getElementById("salesDishesGrid");
+        salesGrid.innerHTML = state.recetas.map(rec => `
+          <div class="dish-sale-card" data-sale-card="${esc(rec.id)}">
+            <div class="dish-sale-title">
+              <span data-sale-name="${esc(rec.id)}">${esc(rec.nombre)}</span>
+              <span data-sale-badge="${esc(rec.id)}"></span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <label style="font-size:12.5px; color:var(--ink-700); font-weight:600;">Unidades vendidas</label>
+              <input type="number" class="cell-input num-in" min="0" step="1" data-sale-rec-id="${esc(rec.id)}" value="${rec.unidadesVendidas}" />
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-500); border-top:1px dashed var(--line); padding-top:8px;">
+              <span data-sale-neta="${esc(rec.id)}">Venta neta: S/ 0.00</span>
+              <span data-sale-cteo="${esc(rec.id)}" style="font-weight:600; color:var(--ink-700);">Costo teór.: S/ 0.00</span>
+            </div>
+          </div>`).join("");
+
+        const kardexTbody = document.getElementById("kardexTbody");
+        kardexTbody.innerHTML = state.insumos.map(ins => `
+          <tr data-kardex-row="${esc(ins.id)}">
+            <td style="font-weight:600;" data-kdx-name="${esc(ins.id)}">${esc(ins.nombre)}</td>
+            <td style="font-family:var(--font-mono); color:var(--ink-500);" data-kdx-unit="${esc(ins.id)}">${esc(ins.unidad)}</td>
+            <td class="num" data-kdx-costo="${esc(ins.id)}">S/ 0.00</td>
+            <td class="num"><input type="number" class="cell-input num-in" min="0" step="0.1" data-kdx-id="${esc(ins.id)}" data-kdx-field="invIni" value="${ins.invIni}" /></td>
+            <td class="num"><input type="number" class="cell-input num-in" min="0" step="0.1" data-kdx-id="${esc(ins.id)}" data-kdx-field="compras" value="${ins.compras}" /></td>
+            <td class="num"><input type="number" class="cell-input num-in" min="0" step="0.1" data-kdx-id="${esc(ins.id)}" data-kdx-field="invFin" value="${ins.invFin}" /></td>
+            <td class="num" style="font-weight:700;" data-kdx-real="${esc(ins.id)}">0.00</td>
+            <td class="num" data-kdx-teo="${esc(ins.id)}">0.00</td>
+            <td class="num" data-kdx-difu="${esc(ins.id)}">0.00</td>
+            <td class="num" data-kdx-difs="${esc(ins.id)}">S/ 0.00</td>
+            <td data-kdx-state="${esc(ins.id)}"></td>
+          </tr>`).join("");
+      }
+
+      // ============================================================
+      // ACTUALIZACIÓN DE RESULTADOS (no destruye inputs, no roba foco)
+      // ============================================================
+      function setBindText(key, text) {
+        document.querySelectorAll(`[data-bind="${key}"]`).forEach(el => { el.textContent = text; });
+      }
+
+      function updateCalculatedDOM() {
+        const m = computeModel();
+
+        setBindText("count-insumos", String(state.insumos.length));
+        setBindText("count-recetas", String(state.recetas.length));
+
+        const perActivo = state.periodos.find(p => p.id === state.periodoId);
+        setBindText("periodo-activo-txt", perActivo ? perActivo.nombre : "—");
+
+        // ---- Alerta de desvío ----
+        const alertBox = document.getElementById("summaryAlertBox");
+        const top3Html = m.top3Desvios.length
+          ? `<div class="top-deviations">
+              ${m.top3Desvios.map((item, idx) => `
+                <div class="dev-pill">
+                  <span class="dev-rank">${idx + 1}</span>
+                  <div>
+                    <strong>${esc(item.nombre)}</strong><br/>
+                    <span style="font-family:var(--font-mono); font-size:12px;">
+                      +${fmtQty(item.difUnidades, 2)} ${esc(item.unidad)} · <strong class="loss-text">${fmtSignedSoles(item.difSoles)}</strong>
+                    </span>
+                  </div>
+                </div>`).join("")}
+            </div>`
+          : `<div style="margin-top:8px; font-size:13px;">Ningún insumo presenta pérdida monetaria sobre el estándar teórico.</div>`;
+
+        if (m.superaUnPunto) {
+          alertBox.className = "alert-banner danger";
+          alertBox.innerHTML = `
+            <div class="alert-main">
+              <div class="alert-heading">
+                <span>⚠️ Alerta de Desviación Operativa: el consumo real supera al teórico en +${m.desvioPp.toFixed(2)} puntos de Food Cost</span>
+              </div>
+              <p class="alert-desc">
+                El Food Cost real (<strong>${fmtPct(m.fcRealGlobal)}</strong>) excede en más de 1.00 pp al Food Cost teórico de tus recetas (<strong>${fmtPct(m.fcTeoricoGlobal)}</strong>), generando una merma no explicada de <strong>${fmtSoles(m.totalCostoReal - m.totalCostoTeorico)}</strong>. Los <strong>3 insumos con mayor desvío</strong> son:
+              </p>
+              ${top3Html}
+            </div>
+            <button type="button" class="btn danger-outline" data-goto-tab="ventas">Auditar consumo real →</button>`;
+        } else {
+          alertBox.className = "alert-banner ok";
+          const sign = m.desvioPp > 0 ? "+" : "";
+          alertBox.innerHTML = `
+            <div class="alert-main">
+              <div class="alert-heading">
+                <span>✅ Control Operativo Saludable: desvío real vs. teórico dentro de tolerancia (${sign}${m.desvioPp.toFixed(2)} pp ≤ 1.00 pp)</span>
+              </div>
+              <p class="alert-desc">
+                El consumo físico de almacén (FC real <strong>${fmtPct(m.fcRealGlobal)}</strong>) guarda consistencia con la venta teórica de recetas (FC teórico <strong>${fmtPct(m.fcTeoricoGlobal)}</strong>). ${m.top3Desvios.length ? "Principales variaciones individuales detectadas:" : ""}
+              </p>
+              ${m.top3Desvios.length ? top3Html : ""}
+            </div>
+            <button type="button" class="btn" data-goto-tab="ventas">Ver kardex de insumos →</button>`;
+        }
+
+        // ---- KPIs ----
+        setBindText("kpi-ventas-netas", fmtSoles(m.totalVentasNetas));
+        setBindText("kpi-unidades-vendidas", `${m.totalUnidadesVendidas} porciones vendidas`);
+        setBindText("kpi-igv-nota", m.incIgv ? "Neto (PVP ÷ 1.18)" : "Precios ya sin IGV");
+
+        setBindText("kpi-fc-teorico", fmtPct(m.fcTeoricoGlobal));
+        setBindText("kpi-costo-teorico", "Costo: " + fmtSoles(m.totalCostoTeorico));
+        setBindText("kpi-meta-ref", "Meta: " + fmtPct(m.metaFc, 1));
+
+        setBindText("kpi-fc-real", fmtPct(m.fcRealGlobal));
+        setBindText("kpi-costo-real", "Real: " + fmtSoles(m.totalCostoReal));
+
+        const realStatus = classifyFcStatus(m.fcRealGlobal, m.metaFc);
+        document.getElementById("kpiCardReal").className = "kpi-card state-" + realStatus.key;
+        document.getElementById("kpiRealBadge").innerHTML = `<span class="badge ${realStatus.key}">${realStatus.label}</span>`;
+
+        const teoStatus = classifyFcStatus(m.fcTeoricoGlobal, m.metaFc);
+        document.getElementById("kpiCardTeorico").className = "kpi-card state-" + teoStatus.key;
+
+        const desvioSign = m.desvioPp > 0.005 ? "+" : (m.desvioPp < -0.005 ? "−" : "");
+        setBindText("kpi-desvio-pp", desvioSign + Math.abs(m.desvioPp).toFixed(2) + " pp");
+        setBindText("kpi-desvio-soles", fmtSignedSoles(m.totalCostoReal - m.totalCostoTeorico));
+        setBindText("kpi-desvio-tag", m.superaUnPunto ? "Supera +1.0 pp" : "En rango (≤ 1.0 pp)");
+        document.getElementById("kpiCardDesvio").className = "kpi-card state-" + (m.superaUnPunto ? "bad" : (m.desvioPp > 0.2 ? "warn" : "ok"));
+
+        setBindText("kpi-margen-real", fmtSoles(m.margenBrutoReal));
+        setBindText("kpi-margen-pct", fmtPct(m.margenBrutoPct) + " sobre venta neta");
+
+        // ---- Barras por plato con línea de meta ----
+        setBindText("leg-meta-1", fmtPct(m.metaFc, 1));
+        setBindText("leg-meta-2", fmtPct(m.metaFc, 1));
+        const maxScale = Math.max(50, m.metaFc * 1.6, ...m.recetasCalc.map(r => r.fcPlato * 1.15));
+        const goalLeftPct = Math.min(98, Math.max(2, (m.metaFc / maxScale) * 100));
+
+        const barsContainer = document.getElementById("dishBarsContainer");
+        barsContainer.innerHTML = m.recetasCalc.map((r, idx) => {
+          const widthPct = Math.min(100, Math.max(0, (r.fcPlato / maxScale) * 100));
+          return `
+            <div class="bar-row">
+              <div class="bar-dish-name">
+                <span>${esc(r.nombre)}</span>
+                <span class="bar-dish-sub">Costo ${fmtSoles(r.costoPorcion)} · Neto ${fmtSoles(r.precioNeto)}</span>
+              </div>
+              <div class="bar-track-wrap">
+                <div class="bar-fill ${r.status.key}" style="width:${widthPct.toFixed(2)}%;"></div>
+                <div class="bar-goal-line" style="left:${goalLeftPct.toFixed(2)}%;">
+                  ${idx === 0 ? `<span class="bar-goal-tag">Meta ${m.metaFc.toFixed(1)}%</span>` : ""}
+                </div>
+              </div>
+              <div class="bar-metrics">
+                <span>${fmtPct(r.fcPlato, 1)}</span>
+                <span class="badge ${r.status.key}">${r.status.label}</span>
+              </div>
+            </div>`;
+        }).join("");
+
+        setBindText("tabla-platos-sub", m.incIgv
+          ? "Precios de venta y precios sugeridos incluyen IGV (18%). El Food Cost se calcula siempre sobre el Precio Neto."
+          : "Precios de venta y precios sugeridos expresados en valor neto (sin IGV).");
+
+        const sumTbody = document.getElementById("summaryDishesTbody");
+        sumTbody.innerHTML = m.recetasCalc.map(r => {
+          const diffSug = r.precioSugerido - r.pvp;
+          const sugHint = diffSug > 0.05
+            ? `<div style="font-size:11.5px; color:var(--bad-ink);">Subir +${fmtSoles(diffSug)}</div>`
+            : `<div style="font-size:11.5px; color:var(--ok-ink);">Cumple precio actual</div>`;
+          return `
+            <tr>
+              <td style="font-weight:700;">${esc(r.nombre)}</td>
+              <td class="num">${r.unidades}</td>
+              <td class="num">${fmtSoles(r.pvp)}</td>
+              <td class="num">${fmtSoles(r.precioNeto)}</td>
+              <td class="num">${fmtSoles(r.costoPorcion)}</td>
+              <td class="num">${fmtSoles(r.margenUnit)}</td>
+              <td class="num" style="font-weight:700;">${fmtPct(r.fcPlato)}</td>
+              <td><span class="badge ${r.status.key}">${r.status.label}</span></td>
+              <td class="num" style="font-weight:700; color:var(--green-900);">${fmtSoles(r.precioSugerido)}${sugHint}</td>
+              <td><button type="button" class="btn sm" data-open-recipe="${esc(r.id)}">Ver receta</button></td>
+            </tr>`;
+        }).join("");
+
+        document.getElementById("summaryDishesTfoot").innerHTML = `
+          <tr>
+            <td>TOTAL PONDERADO CARTA</td>
+            <td class="num">${m.totalUnidadesVendidas}</td>
+            <td class="num">—</td>
+            <td class="num">${fmtSoles(m.totalVentasNetas)}</td>
+            <td class="num">${fmtSoles(m.totalCostoTeorico)}</td>
+            <td class="num">${fmtSoles(m.totalVentasNetas - m.totalCostoTeorico)}</td>
+            <td class="num">${fmtPct(m.fcTeoricoGlobal)}</td>
+            <td><span class="badge ${teoStatus.key}">${teoStatus.label}</span></td>
+            <td class="num" colspan="2" style="font-family:var(--font-sans); font-size:12.5px; color:var(--ink-500);">
+              Meta global configurada: ${fmtPct(m.metaFc, 1)}
+            </td>
+          </tr>`;
+
+        // ---- Celdas calculadas de insumos ----
+        m.insumosCalc.forEach(ins => {
+          const pctEl = document.querySelector(`[data-ins-aprov-pct="${CSS.escape(ins.id)}"]`);
+          const capEl = document.querySelector(`[data-ins-costo-aprov="${CSS.escape(ins.id)}"]`);
+          const useEl = document.querySelector(`[data-ins-usage="${CSS.escape(ins.id)}"]`);
+          if (pctEl) pctEl.textContent = fmtPct(ins.factorAprov * 100, 1);
+          if (capEl) capEl.textContent = fmtSoles(ins.costoAprovechable) + " / " + ins.unidad;
+          if (useEl) useEl.innerHTML = ins.usedInRecipes > 0
+            ? `<span class="badge neutral">${ins.usedInRecipes} plato${ins.usedInRecipes > 1 ? "s" : ""}</span>`
+            : `<span style="color:var(--ink-500); font-size:12px;">Sin uso</span>`;
+        });
+
+        // ---- Receta activa ----
+        document.getElementById("recPriceLabel").textContent = m.incIgv
+          ? "Precio de Venta (S/ inc. IGV 18%)"
+          : "Precio de Venta Neto (S/ sin IGV)";
+        setBindText("rec-sug-igv-lbl", m.incIgv ? "inc. IGV 18%" : "sin IGV");
+        setBindText("rec-meta-txt", fmtPct(m.metaFc, 1));
+
+        m.recetasCalc.forEach(r => {
+          const pillName = document.querySelector(`[data-pill-name="${CSS.escape(r.id)}"]`);
+          const pillFc = document.querySelector(`[data-pill-fc="${CSS.escape(r.id)}"]`);
+          if (pillName) pillName.textContent = r.nombre;
+          if (pillFc) {
+            pillFc.className = "badge " + r.status.key;
+            pillFc.textContent = fmtPct(r.fcPlato, 1);
+          }
+          const opt = document.querySelector(`#recipeSelectDropdown option[value="${CSS.escape(r.id)}"]`);
+          if (opt) opt.textContent = `${r.nombre} (${fmtPct(r.fcPlato, 1)})`;
+        });
+
+        const activeRec = m.recetasCalc.find(r => r.id === state.selectedRecipeId);
+        if (activeRec) {
+          activeRec.ingsDetailed.forEach(ing => {
+            const uEl = document.querySelector(`[data-ing-unit="${ing.idx}"]`);
+            const caEl = document.querySelector(`[data-ing-caprov="${ing.idx}"]`);
+            const coEl = document.querySelector(`[data-ing-costo="${ing.idx}"]`);
+            const shEl = document.querySelector(`[data-ing-share="${ing.idx}"]`);
+            if (uEl) uEl.textContent = ing.unidad;
+            if (caEl) caEl.textContent = fmtSoles(ing.costoAprov);
+            if (coEl) coEl.textContent = fmtSoles(ing.costoIng);
+            if (shEl) {
+              const w = Math.min(100, Math.max(0, ing.sharePct));
+              shEl.innerHTML = `<span class="share-mini-bar"><span style="width:${w.toFixed(1)}%"></span></span>${fmtPct(ing.sharePct, 1)}`;
+            }
+          });
+
+          setBindText("rec-foot-costo", fmtSoles(activeRec.costoPorcion));
+          setBindText("rec-res-costo", fmtSoles(activeRec.costoPorcion));
+          setBindText("rec-res-pvp", fmtSoles(activeRec.pvp));
+          setBindText("rec-res-neto", fmtSoles(activeRec.precioNeto));
+          setBindText("rec-res-fc", fmtPct(activeRec.fcPlato));
+          setBindText("rec-res-margen", `${fmtSoles(activeRec.margenUnit)} (${activeRec.precioNeto > 0 ? fmtPct((activeRec.margenUnit / activeRec.precioNeto) * 100, 1) : "0.0%"})`);
+          setBindText("rec-res-sugerido", fmtSoles(activeRec.precioSugerido));
+
+          const gap = activeRec.precioSugerido - activeRec.pvp;
+          setBindText("rec-res-gap", gap > 0.01
+            ? `Ajuste sugerido: +${fmtSoles(gap)}`
+            : `Holgura actual: ${fmtSoles(Math.abs(gap))} a favor`);
+          document.getElementById("recSideBadge").innerHTML = `<span class="badge ${activeRec.status.key}">${activeRec.status.label}</span>`;
+        }
+
+        // ---- Ventas y kardex ----
+        m.recetasCalc.forEach(r => {
+          const nEl = document.querySelector(`[data-sale-name="${CSS.escape(r.id)}"]`);
+          const bEl = document.querySelector(`[data-sale-badge="${CSS.escape(r.id)}"]`);
+          const vEl = document.querySelector(`[data-sale-neta="${CSS.escape(r.id)}"]`);
+          const cEl = document.querySelector(`[data-sale-cteo="${CSS.escape(r.id)}"]`);
+          if (nEl) nEl.textContent = r.nombre;
+          if (bEl) bEl.innerHTML = `<span class="badge ${r.status.key}">FC ${fmtPct(r.fcPlato, 1)}</span>`;
+          if (vEl) vEl.textContent = "Venta neta: " + fmtSoles(r.ventaNetaPlato);
+          if (cEl) cEl.textContent = "Costo teór.: " + fmtSoles(r.costoTeoricoPlato);
+        });
+
+        m.kardexCalc.forEach(k => {
+          const rowEl = document.querySelector(`[data-kardex-row="${CSS.escape(k.id)}"]`);
+          const nmEl = document.querySelector(`[data-kdx-name="${CSS.escape(k.id)}"]`);
+          const unEl = document.querySelector(`[data-kdx-unit="${CSS.escape(k.id)}"]`);
+          const csEl = document.querySelector(`[data-kdx-costo="${CSS.escape(k.id)}"]`);
+          const reEl = document.querySelector(`[data-kdx-real="${CSS.escape(k.id)}"]`);
+          const teEl = document.querySelector(`[data-kdx-teo="${CSS.escape(k.id)}"]`);
+          const duEl = document.querySelector(`[data-kdx-difu="${CSS.escape(k.id)}"]`);
+          const dsEl = document.querySelector(`[data-kdx-difs="${CSS.escape(k.id)}"]`);
+          const stEl = document.querySelector(`[data-kdx-state="${CSS.escape(k.id)}"]`);
+
+          const isLoss = k.difSoles > 0.01 && k.consumoReal >= 0;
+          if (rowEl) rowEl.classList.toggle("row-loss", isLoss);
+          if (nmEl) nmEl.textContent = k.nombre;
+          if (unEl) unEl.textContent = k.unidad;
+          if (csEl) csEl.textContent = fmtSoles(k.costo);
+          if (reEl) {
+            reEl.textContent = fmtQty(k.consumoReal, 2);
+            reEl.className = "num " + (k.consumoReal < 0 ? "loss-text" : "");
+          }
+          if (teEl) teEl.textContent = fmtQty(k.consumoTeorico, 2);
+          if (duEl) {
+            const signU = k.difUnidades > 0.005 ? "+" : (k.difUnidades < -0.005 ? "−" : "");
+            duEl.textContent = signU + fmtQty(Math.abs(k.difUnidades), 2);
+            duEl.className = "num " + (isLoss ? "loss-text" : (k.difUnidades < -0.005 ? "gain-text" : ""));
+          }
+          if (dsEl) {
+            dsEl.textContent = fmtSignedSoles(k.difSoles);
+            dsEl.className = "num " + (isLoss ? "loss-text" : (k.difSoles < -0.01 ? "gain-text" : ""));
+          }
+          if (stEl) stEl.innerHTML = `<span class="badge ${k.kardexState.key}">${k.kardexState.label}</span>`;
+        });
+
+        const totalDiffClass = m.totalDifSoles > 0.01 ? "loss-text" : (m.totalDifSoles < -0.01 ? "gain-text" : "");
+        document.getElementById("kardexTfoot").innerHTML = `
+          <tr>
+            <td colspan="6">TOTALES VALORIZADOS DEL PERIODO</td>
+            <td class="num">${fmtSoles(m.totalCostoReal)}</td>
+            <td class="num">${fmtSoles(m.totalCostoTeorico)}</td>
+            <td class="num">—</td>
+            <td class="num ${totalDiffClass}">${fmtSignedSoles(m.totalDifSoles)}</td>
+            <td>
+              <span class="badge ${m.totalDifSoles > 0.5 ? "bad" : "ok"}">
+                ${m.totalDifSoles > 0.5 ? "Sobregasto real" : "En control"}
+              </span>
+            </td>
+          </tr>`;
+      }
+
+      // ============================================================
+      // EVENTOS
+      // ============================================================
+      document.getElementById("brandNameInput").addEventListener("input", e => {
+        state.brand.name = e.target.value;
+        saveState();
+      });
+      document.getElementById("brandSubInput").addEventListener("input", e => {
+        state.brand.subtitle = e.target.value;
+        saveState();
+      });
+      document.getElementById("metaFcInput").addEventListener("input", e => {
+        const v = parseFloat(e.target.value);
+        if (Number.isFinite(v) && v > 0) {
+          state.config.metaFc = Math.min(99, Math.max(1, v));
+          saveState();
+          updateCalculatedDOM();
+        }
+      });
+      document.getElementById("igvToggle").addEventListener("change", e => {
+        state.config.pricesIncludeIgv = e.target.checked;
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      // ---- Selector de periodo ----
+      document.getElementById("periodoSelect").addEventListener("change", async e => {
+        const nuevoId = e.target.value;
+        clearTimeout(saveTimer);
+        await flush();                       // no perder lo escrito en el periodo anterior
+        state.periodoId = nuevoId;
+        try {
+          setStatus("saving", "⟳ Cargando periodo…");
+          await loadPeriodoData();
+          persisted = snapshot();
+          renderAllStructure();
+          setStatus("saved", "✓ Periodo cargado " + nowHHMM());
+        } catch (err) {
+          setStatus("error", "⚠ Error al cargar el periodo");
+          toast("No se pudo cargar el periodo: " + (err.message || err));
+        }
+      });
+
+      document.getElementById("btnNuevoPeriodo").addEventListener("click", async () => {
+        const nombre = prompt("Nombre del nuevo periodo (ej. Diciembre 2026):");
+        if (!nombre || !nombre.trim()) return;
+        clearTimeout(saveTimer);
+        await flush();
+        setStatus("saving", "⟳ Creando periodo…");
+        const per = await crearPeriodoEnBD(nombre.trim(), state.config.metaFc, state.config.pricesIncludeIgv);
+        if (!per) { setStatus("error", "⚠ No se creó el periodo"); return; }
+        state.periodos.unshift(per);
+        state.periodoId = per.id;
+        try {
+          await loadPeriodoData();           // arranca con kardex y ventas en cero
+          persisted = snapshot();
+          renderAllStructure();
+          toast(`Periodo "${per.nombre}" creado. El kardex y las ventas arrancan en cero.`);
+          setStatus("saved", "✓ Guardado " + nowHHMM());
+        } catch (err) {
+          setStatus("error", "⚠ Error al abrir el periodo");
+        }
+      });
+
+      document.getElementById("brandLogoBtn").addEventListener("click", () => {
+        document.getElementById("logoFileInput").click();
+      });
+      document.getElementById("logoFileInput").addEventListener("change", e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (file.size > 300 * 1024) {
+          toast("El logo pesa más de 300 KB. Usa una imagen más liviana para no cargar la base de datos.");
+          e.target.value = "";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = ev => {
+          state.brand.logoDataUrl = String(ev.target.result || "");
+          saveState();
+          syncHeaderInputs();
+          toast("Logo de marca actualizado.");
+        };
+        reader.readAsDataURL(file);
+        e.target.value = "";
+      });
+
+      document.querySelector(".tabs-bar").addEventListener("click", e => {
+        const btn = e.target.closest(".tab-btn");
+        if (!btn) return;
+        state.activeTab = btn.dataset.tab;
+        syncActiveTabUI();
+      });
+
+      document.body.addEventListener("click", e => {
+        const gotoBtn = e.target.closest("[data-goto-tab]");
+        if (gotoBtn) {
+          state.activeTab = gotoBtn.dataset.gotoTab;
+          syncActiveTabUI();
+          return;
+        }
+        const openRecBtn = e.target.closest("[data-open-recipe]");
+        if (openRecBtn) {
+          state.selectedRecipeId = openRecBtn.dataset.openRecipe;
+          state.activeTab = "recetas";
+          syncActiveTabUI();
+          buildRecetasWorkspaceStructure();
+          updateCalculatedDOM();
+        }
+      });
+
+      // ---- Insumos ----
+      document.getElementById("insumoSearchInput").addEventListener("input", e => {
+        state.insumoSearch = e.target.value;
+        buildInsumosTableStructure();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("insumosTbody").addEventListener("input", e => {
+        const el = e.target;
+        const id = el.dataset.insId;
+        const field = el.dataset.insField;
+        if (!id || !field) return;
+        const ins = state.insumos.find(x => x.id === id);
+        if (!ins) return;
+
+        if (field === "nombre" || field === "unidad") {
+          ins[field] = el.value;
+          document.querySelectorAll(`#recipeIngsTbody select option[value="${CSS.escape(id)}"]`).forEach(opt => {
+            opt.textContent = `${ins.nombre} (merma ${ins.merma}%)`;
+          });
+        } else if (field === "costo") {
+          const v = parseFloat(el.value);
+          ins.costo = Number.isFinite(v) && v >= 0 ? v : 0;
+        } else if (field === "merma") {
+          const v = parseFloat(el.value);
+          ins.merma = Number.isFinite(v) ? clampMerma(v) : 0;
+          document.querySelectorAll(`#recipeIngsTbody select option[value="${CSS.escape(id)}"]`).forEach(opt => {
+            opt.textContent = `${ins.nombre} (merma ${ins.merma}%)`;
+          });
+        }
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("insumosTbody").addEventListener("click", e => {
+        const delBtn = e.target.closest("[data-del-insumo]");
+        if (!delBtn) return;
+        const id = delBtn.dataset.delInsumo;
+        const ins = state.insumos.find(x => x.id === id);
+        if (!ins) return;
+        const usedIn = state.recetas.filter(r => r.ingredientes.some(i => i.insumoId === id));
+        if (usedIn.length > 0) {
+          const ok = confirm(`"${ins.nombre}" se usa en ${usedIn.length} receta(s) (${usedIn.map(r => r.nombre).join(", ")}). ¿Deseas eliminarlo también de esas recetas? Esto borra el insumo y su kardex en TODOS los periodos.`);
+          if (!ok) return;
+          state.recetas.forEach(r => { r.ingredientes = r.ingredientes.filter(i => i.insumoId !== id); });
+        } else if (!confirm(`¿Eliminar "${ins.nombre}"? Se borra también su kardex en todos los periodos.`)) {
+          return;
+        }
+        state.insumos = state.insumos.filter(x => x.id !== id);
+        saveState();
+        buildInsumosTableStructure();
+        buildRecetasWorkspaceStructure();
+        buildVentasAndKardexStructure();
+        updateCalculatedDOM();
+        toast(`Insumo "${ins.nombre}" eliminado.`);
+      });
+
+      document.getElementById("btnAddInsumo").addEventListener("click", () => {
+        state.insumoSearch = "";
+        document.getElementById("insumoSearchInput").value = "";
+        const nuevo = {
+          id: uid(), nombre: "Nuevo insumo", unidad: "kg",
+          costo: 10.00, merma: 10, orden: state.insumos.length,
+          invIni: 0, compras: 0, invFin: 0
+        };
+        state.insumos.push(nuevo);
+        saveState();
+        buildInsumosTableStructure();
+        buildRecetasWorkspaceStructure();
+        buildVentasAndKardexStructure();
+        updateCalculatedDOM();
+        const input = document.querySelector(`[data-ins-id="${CSS.escape(nuevo.id)}"][data-ins-field="nombre"]`);
+        if (input) { input.focus(); input.select(); }
+      });
+
+      // ---- Recetas ----
+      document.getElementById("recipeSelectDropdown").addEventListener("change", e => {
+        state.selectedRecipeId = e.target.value;
+        buildRecetasWorkspaceStructure();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("recipePillsBar").addEventListener("click", e => {
+        const btn = e.target.closest("[data-select-recipe]");
+        if (!btn) return;
+        state.selectedRecipeId = btn.dataset.selectRecipe;
+        buildRecetasWorkspaceStructure();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("recNameInput").addEventListener("input", e => {
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec) return;
+        rec.nombre = e.target.value;
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("recPriceInput").addEventListener("input", e => {
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec) return;
+        const v = parseFloat(e.target.value);
+        rec.precioVenta = Number.isFinite(v) && v >= 0 ? v : 0;
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("recipeIngsTbody").addEventListener("input", e => {
+        const el = e.target;
+        const idx = Number(el.dataset.ingIdx);
+        const field = el.dataset.ingField;
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec || !Number.isInteger(idx) || !rec.ingredientes[idx]) return;
+
+        if (field === "insumoId") {
+          rec.ingredientes[idx].insumoId = el.value;
+        } else if (field === "cantidad") {
+          const v = parseFloat(el.value);
+          rec.ingredientes[idx].cantidad = Number.isFinite(v) && v >= 0 ? v : 0;
+        }
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("recipeIngsTbody").addEventListener("click", e => {
+        const btn = e.target.closest("[data-del-ing]");
+        if (!btn) return;
+        const idx = Number(btn.dataset.delIng);
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec || !Number.isInteger(idx)) return;
+        rec.ingredientes.splice(idx, 1);
+        saveState();
+        buildRecetasWorkspaceStructure();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("btnAddRecipeIng").addEventListener("click", () => {
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec) return;
+        if (!state.insumos.length) {
+          toast("Primero agrega al menos un insumo en la pestaña Insumos.");
+          return;
+        }
+        const usedIds = new Set(rec.ingredientes.map(i => i.insumoId));
+        const candidate = state.insumos.find(i => !usedIds.has(i.id)) || state.insumos[0];
+        rec.ingredientes.push({ id: uid(), insumoId: candidate.id, cantidad: 0.050 });
+        saveState();
+        buildRecetasWorkspaceStructure();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("btnNewRecipe").addEventListener("click", () => {
+        const nueva = {
+          id: uid(), nombre: "Nuevo plato de carta", precioVenta: 28.00,
+          orden: state.recetas.length, unidadesVendidas: 0,
+          ingredientes: state.insumos.length
+            ? [{ id: uid(), insumoId: state.insumos[0].id, cantidad: 0.150 }]
+            : []
+        };
+        state.recetas.push(nueva);
+        state.selectedRecipeId = nueva.id;
+        saveState();
+        buildRecetasWorkspaceStructure();
+        buildVentasAndKardexStructure();
+        updateCalculatedDOM();
+        const nameInput = document.getElementById("recNameInput");
+        if (nameInput) { nameInput.focus(); nameInput.select(); }
+      });
+
+      document.getElementById("btnDeleteRecipe").addEventListener("click", () => {
+        if (state.recetas.length <= 1) {
+          toast("Debe existir al menos 1 receta activa en el sistema.");
+          return;
+        }
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!rec) return;
+        if (!confirm(`¿Seguro que deseas eliminar la receta "${rec.nombre}"? Se borran también sus ventas en todos los periodos.`)) return;
+        state.recetas = state.recetas.filter(r => r.id !== rec.id);
+        state.selectedRecipeId = state.recetas[0].id;
+        saveState();
+        buildRecetasWorkspaceStructure();
+        buildVentasAndKardexStructure();
+        updateCalculatedDOM();
+        toast(`Receta "${rec.nombre}" eliminada.`);
+      });
+
+      document.getElementById("btnApplySuggestedPrice").addEventListener("click", () => {
+        const m = computeModel();
+        const activeRec = m.recetasCalc.find(r => r.id === state.selectedRecipeId);
+        const rec = state.recetas.find(r => r.id === state.selectedRecipeId);
+        if (!activeRec || !rec) return;
+        rec.precioVenta = Math.round(activeRec.precioSugerido * 100) / 100;
+        document.getElementById("recPriceInput").value = rec.precioVenta;
+        saveState();
+        updateCalculatedDOM();
+        toast(`Precio de "${rec.nombre}" actualizado a ${fmtSoles(rec.precioVenta)}.`);
+      });
+
+      // ---- Ventas y kardex ----
+      document.getElementById("salesDishesGrid").addEventListener("input", e => {
+        const el = e.target;
+        const recId = el.dataset.saleRecId;
+        if (!recId) return;
+        const rec = state.recetas.find(r => r.id === recId);
+        if (!rec) return;
+        const v = parseFloat(el.value);
+        rec.unidadesVendidas = Number.isFinite(v) && v >= 0 ? v : 0;
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      document.getElementById("kardexTbody").addEventListener("input", e => {
+        const el = e.target;
+        const id = el.dataset.kdxId;
+        const field = el.dataset.kdxField;
+        if (!id || !field) return;
+        const ins = state.insumos.find(x => x.id === id);
+        if (!ins) return;
+        const v = parseFloat(el.value);
+        ins[field] = Number.isFinite(v) && v >= 0 ? v : 0;
+        saveState();
+        updateCalculatedDOM();
+      });
+
+      // Recargar desde la nube (descarta cambios locales sin guardar)
+      document.getElementById("btnReloadCloud").addEventListener("click", async () => {
+        if (saveTimer) {
+          if (!confirm("Hay cambios sin guardar. ¿Recargar de todas formas y descartarlos?")) return;
+          clearTimeout(saveTimer);
+          saveTimer = null;
+        }
+        try {
+          await loadAll();
+          renderAllStructure();
+          toast("Datos recargados desde Supabase.");
+        } catch (err) {
+          setStatus("error", "⚠ Error al recargar");
+          toast("No se pudo recargar: " + (err.message || err));
+        }
+      });
+
+      // ============================================================
+      // INTEGRACIÓN EXCEL (.XLSX)
+      // ============================================================
+      function normKey(str) {
+        return String(str ?? "").toLowerCase().normalize("NFD")
+          .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+      }
+
+      function parseExcelNumber(rawVal, formattedVal, isPercentField) {
+        if (rawVal == null || rawVal === "") return null;
+        if (typeof rawVal === "number" && Number.isFinite(rawVal)) {
+          if (isPercentField && formattedVal && String(formattedVal).includes("%")) {
+            return rawVal * 100;
+          }
+          return rawVal;
+        }
+        const str = String(rawVal).trim();
+        if (!str) return null;
+        const clean = str.replace(/[^\d.,-]/g, "").replace(",", ".");
+        const num = parseFloat(clean);
+        return Number.isFinite(num) ? num : null;
+      }
+
+      function readSheetWithFormatted(sheet) {
+        const rowsRaw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const rowsFmt = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: "" });
+        return rowsRaw.map((r, idx) => ({ raw: r, fmt: rowsFmt[idx] || {} }));
+      }
+
+      function findColValue(rowObj, aliases) {
+        for (const [k, val] of Object.entries(rowObj.raw)) {
+          const nk = normKey(k);
+          if (aliases.some(a => nk === a || nk.includes(a))) {
+            return { raw: val, fmt: rowObj.fmt[k] };
+          }
+        }
+        return { raw: "", fmt: "" };
+      }
+
+      function checkXlsxReady() {
+        if (typeof XLSX === "undefined") {
+          alert("La librería Excel (SheetJS) aún no está disponible. Verifica tu conexión a internet y recarga la página.");
+          return false;
+        }
+        return true;
+      }
+
+      document.getElementById("btnDownloadInsumosTpl").addEventListener("click", () => {
+        if (!checkXlsxReady()) return;
+        const data = state.insumos.map(ins => ({
+          "Nombre": ins.nombre, "Unidad": ins.unidad,
+          "Costo de compra (S/)": ins.costo, "% Merma": ins.merma
+        }));
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        ws["!cols"] = [{ wch: 32 }, { wch: 10 }, { wch: 20 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Insumos");
+        XLSX.writeFile(wb, "Plantilla_Insumos_OhJala.xlsx");
+        toast("Plantilla de Insumos descargada (.xlsx).");
+      });
+
+      document.getElementById("btnUploadInsumosXlsx").addEventListener("click", () => {
+        if (!checkXlsxReady()) return;
+        document.getElementById("fileInputInsumos").click();
+      });
+
+      document.getElementById("fileInputInsumos").addEventListener("change", e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const mode = document.getElementById("insumosImportMode").value;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const wb = XLSX.read(ev.target.result, { type: "array" });
+            const sheetName = wb.SheetNames.find(n => normKey(n).includes("insumo")) || wb.SheetNames[0];
+            const rows = readSheetWithFormatted(wb.Sheets[sheetName]);
+            if (!rows.length) { toast("El archivo Excel no contiene filas de datos."); return; }
+
+            const existingByName = new Map();
+            state.insumos.forEach(ins => existingByName.set(normKey(ins.nombre), ins));
+
+            let updated = 0, added = 0;
+            const importedList = [];
+
+            rows.forEach(row => {
+              const nombreCell = findColValue(row, ["nombre", "insumo", "ingrediente", "producto", "descripcion"]);
+              const nombre = String(nombreCell.raw || "").trim();
+              if (!nombre) return;
+
+              const unidadCell = findColValue(row, ["unidad", "und", "umed", "um"]);
+              const costoCell = findColValue(row, ["costodecompra", "costocompra", "costo", "precio"]);
+              const mermaCell = findColValue(row, ["merma", "porcentajemerma", "pctmerma"]);
+
+              const unidad = String(unidadCell.raw || "kg").trim() || "kg";
+              const costoParsed = parseExcelNumber(costoCell.raw, costoCell.fmt, false);
+              const mermaParsed = parseExcelNumber(mermaCell.raw, mermaCell.fmt, true);
+
+              const key = normKey(nombre);
+              const match = existingByName.get(key);
+
+              if (match) {
+                match.nombre = nombre;
+                match.unidad = unidad;
+                if (costoParsed != null && costoParsed >= 0) match.costo = costoParsed;
+                if (mermaParsed != null && mermaParsed >= 0) match.merma = clampMerma(mermaParsed);
+                importedList.push(match);
+                updated++;
+              } else {
+                const nuevo = {
+                  id: uid(), nombre, unidad,
+                  costo: costoParsed != null && costoParsed >= 0 ? costoParsed : 0,
+                  merma: mermaParsed != null && mermaParsed >= 0 ? clampMerma(mermaParsed) : 0,
+                  orden: 0, invIni: 0, compras: 0, invFin: 0
+                };
+                existingByName.set(key, nuevo);
+                importedList.push(nuevo);
+                added++;
+              }
+            });
+
+            if (updated === 0 && added === 0) {
+              toast("No se detectaron columnas válidas de insumos (usa Nombre, Unidad, Costo de compra, % Merma).");
+              return;
+            }
+
+            if (mode === "replace") {
+              state.insumos = importedList;
+              const validIds = new Set(state.insumos.map(i => i.id));
+              state.recetas.forEach(r => {
+                r.ingredientes = r.ingredientes.filter(ing => validIds.has(ing.insumoId));
+              });
+            } else {
+              importedList.forEach(item => {
+                if (!state.insumos.some(x => x.id === item.id)) state.insumos.push(item);
+              });
+            }
+            state.insumos.forEach((ins, idx) => { ins.orden = idx; });
+
+            saveState();
+            renderAllStructure();
+            toast(`Excel de Insumos cargado: ${updated} actualizados y ${added} nuevos.`);
+          } catch (err) {
+            toast("Error al leer el archivo Excel: " + (err.message || err));
+          }
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = "";
+      });
+
+      document.getElementById("btnDownloadVentasTpl").addEventListener("click", () => {
+        if (!checkXlsxReady()) return;
+        const wb = XLSX.utils.book_new();
+
+        const ventasRows = state.recetas.map(r => ({
+          "Plato": r.nombre, "Unidades Vendidas": r.unidadesVendidas,
+          "Precio de Venta (S/)": r.precioVenta
+        }));
+        const wsVentas = XLSX.utils.json_to_sheet(ventasRows);
+        wsVentas["!cols"] = [{ wch: 28 }, { wch: 20 }, { wch: 20 }];
+        XLSX.utils.book_append_sheet(wb, wsVentas, "Ventas_Platos");
+
+        const invRows = state.insumos.map(ins => ({
+          "Insumo": ins.nombre, "Unidad": ins.unidad,
+          "Inventario Inicial": ins.invIni, "Compras": ins.compras,
+          "Inventario Final": ins.invFin
+        }));
+        const wsInv = XLSX.utils.json_to_sheet(invRows);
+        wsInv["!cols"] = [{ wch: 32 }, { wch: 10 }, { wch: 18 }, { wch: 14 }, { wch: 18 }];
+        XLSX.utils.book_append_sheet(wb, wsInv, "Inventario_Insumos");
+
+        XLSX.writeFile(wb, "Plantilla_Ventas_Inventario_OhJala.xlsx");
+        toast("Plantilla de Ventas e Inventario descargada (.xlsx).");
+      });
+
+      document.getElementById("btnUploadVentasXlsx").addEventListener("click", () => {
+        if (!checkXlsxReady()) return;
+        document.getElementById("fileInputVentas").click();
+      });
+
+      document.getElementById("fileInputVentas").addEventListener("change", e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const wb = XLSX.read(ev.target.result, { type: "array" });
+            let updatedSales = 0, updatedInv = 0;
+
+            const recByName = new Map();
+            state.recetas.forEach(r => recByName.set(normKey(r.nombre), r));
+            const insByName = new Map();
+            state.insumos.forEach(i => insByName.set(normKey(i.nombre), i));
+
+            wb.SheetNames.forEach(sName => {
+              const rows = readSheetWithFormatted(wb.Sheets[sName]);
+              if (!rows.length) return;
+              const sampleKeys = Object.keys(rows[0].raw).map(normKey);
+
+              const looksLikeInventory = sampleKeys.some(k => k.includes("inicial") || k.includes("final") || k.includes("compras"));
+              const looksLikeSales = sampleKeys.some(k => k.includes("plato") || k.includes("receta") || k.includes("vendid") || k.includes("venta") || k.includes("unidades"));
+
+              if (looksLikeInventory) {
+                rows.forEach(row => {
+                  const nameCell = findColValue(row, ["insumo", "nombre", "ingrediente", "producto"]);
+                  const ins = insByName.get(normKey(nameCell.raw));
+                  if (!ins) return;
+                  const ini = parseExcelNumber(findColValue(row, ["inventarioinicial", "invinicial", "inicial"]).raw, "", false);
+                  const cmp = parseExcelNumber(findColValue(row, ["compras", "compra", "ingresos", "entradas"]).raw, "", false);
+                  const fin = parseExcelNumber(findColValue(row, ["inventariofinal", "invfinal", "final"]).raw, "", false);
+                  if (ini != null && ini >= 0) ins.invIni = ini;
+                  if (cmp != null && cmp >= 0) ins.compras = cmp;
+                  if (fin != null && fin >= 0) ins.invFin = fin;
+                  updatedInv++;
+                });
+              } else if (looksLikeSales) {
+                rows.forEach(row => {
+                  const dishCell = findColValue(row, ["plato", "receta", "producto", "nombre"]);
+                  const rec = recByName.get(normKey(dishCell.raw));
+                  if (!rec) return;
+                  const units = parseExcelNumber(findColValue(row, ["unidadesvendidas", "unidades", "vendidas", "cantidad", "ventas"]).raw, "", false);
+                  const price = parseExcelNumber(findColValue(row, ["preciodeventa", "precioventa", "pvp", "precio"]).raw, "", false);
+                  if (units != null && units >= 0) rec.unidadesVendidas = units;
+                  if (price != null && price > 0) rec.precioVenta = price;
+                  updatedSales++;
+                });
+              }
+            });
+
+            if (updatedSales === 0 && updatedInv === 0) {
+              toast("No se encontraron coincidencias por nombre de plato o insumo en el Excel subido.");
+              return;
+            }
+
+            saveState();
+            renderAllStructure();
+            const perNom = (state.periodos.find(p => p.id === state.periodoId) || {}).nombre || "el periodo activo";
+            toast(`Excel procesado en ${perNom}: ${updatedSales} platos y ${updatedInv} insumos actualizados.`);
+          } catch (err) {
+            toast("Error al procesar Excel de ventas: " + (err.message || err));
+          }
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = "";
+      });
+
+      document.getElementById("btnExportFullReport").addEventListener("click", () => {
+        if (!checkXlsxReady()) return;
+        const m = computeModel();
+        const per = state.periodos.find(p => p.id === state.periodoId);
+        const wb = XLSX.utils.book_new();
+
+        const kpiRows = [
+          { "Indicador": "Marca", "Valor": state.brand.name },
+          { "Indicador": "Periodo", "Valor": per ? per.nombre : "—" },
+          { "Indicador": "Meta Food Cost %", "Valor": m.metaFc.toFixed(2) + "%" },
+          { "Indicador": "Precios incluyen IGV (18%)", "Valor": m.incIgv ? "Sí" : "No" },
+          { "Indicador": "Ventas Netas Totales (S/)", "Valor": Number(m.totalVentasNetas.toFixed(2)) },
+          { "Indicador": "Food Cost Teórico %", "Valor": Number(m.fcTeoricoGlobal.toFixed(2)) },
+          { "Indicador": "Food Cost Real %", "Valor": Number(m.fcRealGlobal.toFixed(2)) },
+          { "Indicador": "Desviación (pp)", "Valor": Number(m.desvioPp.toFixed(2)) },
+          { "Indicador": "Margen Bruto Real (S/)", "Valor": Number(m.margenBrutoReal.toFixed(2)) }
+        ];
+        const wsKpi = XLSX.utils.json_to_sheet(kpiRows);
+        wsKpi["!cols"] = [{ wch: 30 }, { wch: 26 }];
+        XLSX.utils.book_append_sheet(wb, wsKpi, "KPIs_Resumen");
+
+        const dishRows = m.recetasCalc.map(r => ({
+          "Plato": r.nombre, "Unidades Vendidas": r.unidades,
+          "Precio Venta (S/)": Number(r.pvp.toFixed(2)),
+          "Precio Neto (S/)": Number(r.precioNeto.toFixed(2)),
+          "Costo Porción (S/)": Number(r.costoPorcion.toFixed(2)),
+          "Margen Unitario (S/)": Number(r.margenUnit.toFixed(2)),
+          "Food Cost %": Number(r.fcPlato.toFixed(2)),
+          "Estado": r.status.label,
+          "Precio Sugerido Meta (S/)": Number(r.precioSugerido.toFixed(2))
+        }));
+        const wsDishes = XLSX.utils.json_to_sheet(dishRows);
+        wsDishes["!cols"] = [{ wch: 24 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 22 }];
+        XLSX.utils.book_append_sheet(wb, wsDishes, "Platos_FoodCost");
+
+        const kdxRows = m.kardexCalc.map(k => ({
+          "Insumo": k.nombre, "Unidad": k.unidad,
+          "Costo Compra (S/)": Number(k.costo.toFixed(2)),
+          "% Merma": Number(k.merma.toFixed(2)),
+          "Costo Aprovechable (S/)": Number(k.costoAprovechable.toFixed(2)),
+          "Inv. Inicial": Number(k.invIni.toFixed(2)),
+          "Compras": Number(k.compras.toFixed(2)),
+          "Inv. Final": Number(k.invFin.toFixed(2)),
+          "Consumo Real": Number(k.consumoReal.toFixed(3)),
+          "Consumo Teórico": Number(k.consumoTeorico.toFixed(3)),
+          "Diferencia (Unid.)": Number(k.difUnidades.toFixed(3)),
+          "Diferencia (S/)": Number(k.difSoles.toFixed(2)),
+          "Estado": k.kardexState.label
+        }));
+        const wsKdx = XLSX.utils.json_to_sheet(kdxRows);
+        wsKdx["!cols"] = [{ wch: 28 }, { wch: 8 }, { wch: 16 }, { wch: 10 }, { wch: 20 }, { wch: 13 }, { wch: 12 }, { wch: 13 }, { wch: 15 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+        XLSX.utils.book_append_sheet(wb, wsKdx, "Consumo_Real_vs_Teorico");
+
+        const nombreArchivo = "Reporte_FoodCost_OhJala_" +
+          ((per ? per.nombre : "periodo").replace(/[^\w\dáéíóúñÁÉÍÓÚÑ]+/g, "_")) + ".xlsx";
+        XLSX.writeFile(wb, nombreArchivo);
+        toast("Reporte del periodo exportado a Excel (.xlsx).");
+      });
+
+      // ============================================================
+      // ARRANQUE
+      // ============================================================
+      async function init() {
+        if (typeof window.supabase === "undefined" || !window.supabase.createClient) {
+          setStatus("error", "⚠ No se pudo cargar supabase-js");
+          toast("No se pudo cargar la librería de Supabase. Revisa tu conexión a internet y recarga.");
+          return;
+        }
+        if (SUPABASE_URL.indexOf("__SUPABASE") === 0) {
+          setStatus("error", "⚠ Falta configurar Supabase");
+          toast("Edita SUPABASE_URL y SUPABASE_ANON_KEY al inicio del script.");
+          return;
+        }
+
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        online = true;
+
+        try {
+          await loadAll();
+          renderAllStructure();
+        } catch (err) {
+          online = false;
+          setStatus("error", "⚠ Sin conexión a la base");
+          toast("No se pudo conectar a Supabase: " + (err.message || err));
+          renderAllStructure();
+        }
+      }
+
+      init();
+    })();
+  </script>
+
+</body>
+</html>
