@@ -1576,7 +1576,9 @@ function abrirEst(cid){
 }
 
 /* ---------------- INSUMOS ---------------- */
+let RECE=null;
 function vIns(){
+  if(!RECE) RECE=(D.productos.find(p=>(p.receta||[]).length)||{}).id;
   const usados={};
   D.productos.forEach(p=>p.receta.forEach(r=>{usados[r.nombre]=(usados[r.nombre]||0)+1}));
   const fam={}; D.insumos.forEach(i=>{(fam[i.familia]=fam[i.familia]||[]).push(i)});
@@ -1633,6 +1635,89 @@ function vIns(){
    <div class="note" style="margin:12px 0 0">La <b>masa base</b> la comparten cinco productos. Si la harina sube,
     esos cinco se mueven a la vez, cada uno según cuántos gramos de masa lleva. Esa es la cascada: insumo → masa → producto.</div>
   </div>
+
+  <div class="card"><div class="ch"><div><h2 class="ct">Recetario</h2>
+    <p class="cs">La receta completa de cada producto, por niveles: primero la masa o el relleno con su propia lista
+     de insumos, después lo que se le pone encima, y el empaque. En gramos por unidad y por tanda.</p></div>
+   <div class="cfg" style="background:var(--s100);border-color:var(--line)">
+    <label style="color:var(--ink7)">Producto</label>
+    <select id="recSel">${D.productos.filter(p=>(p.receta||[]).length).map(p=>
+      `<option value="${p.id}" ${RECE===p.id?"selected":""}>${esc(p.nombre)}</option>`).join("")}</select></div></div>
+   ${(()=>{
+     const p=D.productos.find(x=>x.id===RECE)||D.productos.find(x=>(x.receta||[]).length);
+     if(!p) return "";
+     const L=p.niveles||{}, lote=p.unidades_lote||1;
+     const semi=L.semielaborado?(D.semielaborados||[]).find(s=>s.id===L.semielaborado.id):null;
+     const bloque=(tit,sub,filas,total,badge)=>`<div class="niv">
+       <div class="nivh"><span class="nivn">${badge}</span><b style="font-size:15px">${esc(tit)}</b>
+        <span style="font-size:12px;color:var(--ink5)">${sub}</span>
+        <span style="margin-left:auto;font-family:var(--fm);font-weight:700">${S(total)} / unidad</span></div>
+       <div class="tw"><table><thead><tr><th>Insumo</th><th class="n">Por tanda</th><th class="n">Por unidad</th>
+         <th class="n">S/ por unidad de insumo</th><th class="n">Costo por unidad</th><th class="n">% de la línea</th></tr></thead>
+        <tbody>${filas.map(f=>`<tr><td style="font-weight:600">${esc(f.n)}${f.extra?`<div style="font-size:11px;color:var(--ink5);font-weight:400">${f.extra}</div>`:""}</td>
+         <td class="n">${f.lote!=null?N(f.lote,1)+" "+esc(f.u||""):"—"}</td>
+         <td class="n" style="font-weight:600">${N(f.unid,2)} ${esc(f.u||"")}</td>
+         <td class="n" style="color:var(--ink5)">${f.cu!=null?S3(f.cu):"—"}</td>
+         <td class="n" style="font-weight:700">${S(f.c)}</td>
+         <td class="n">${total?P(100*f.c/total,1):"—"}</td></tr>`).join("")}</tbody></table></div></div>`;
+     let html="";
+     const st=L.subtotales||{};
+     // nivel 1: la masa, con su receta propia
+     if(semi){
+       const g=(L.semielaborado.gramos_por_unidad||0);
+       const harina=(semi.receta||[]).reduce((s,r)=>s+(/harina/i.test(r.nombre)?r.cant_lote:0),0)||1;
+       html+=bloque(semi.nombre, `${N(g,1)} g de masa por unidad · la tanda rinde ${N(semi.rinde_g)} g y cuesta ${S(semi.costo_tanda)}`,
+         (semi.receta||[]).map(r=>({n:r.nombre, lote:r.gramos, u:"g",
+            unid:(r.gramos||0)*g/(semi.rinde_g||1), cu:r.costo_unit,
+            c:(r.costo||0)*g/(semi.rinde_g||1),
+            extra:r.pct_panadero!=null?N(r.pct_panadero,1)+"% panadero":""})),
+         st.semielaborado||0,"Nivel 1 · masa");
+       if((semi.usado_por||[]).length>1)
+         html+=`<div class="note" style="margin:-4px 0 11px"><b>Esta misma masa la usan ${semi.usado_por.length} productos.</b>
+           ${semi.usado_por.map(x=>esc((D.productos.find(q=>q.id===x)||{}).nombre||x)).join(" · ")}.
+           Cambiar un insumo de acá los mueve a todos.</div>`;
+     }
+     // nivel 1: rellenos, con su receta propia
+     (L.rellenos||[]).forEach(rl=>{
+       const R=D.rellenos.find(x=>x.id===rl.id||x.nombre===rl.nombre);
+       const g=rl.gramos_por_unidad||0;
+       if(R) html+=bloque(R.nombre, `${N(g,1)} g por unidad · la tanda rinde ${N(R.rinde_g)} g y cuesta ${S(R.costo_tanda)}`+
+         (R.min_mano_obra?` · ${N(R.min_mano_obra)} min de preparación por tanda`:""),
+         (R.insumos||[]).map(r=>{const I=D.insumos.find(x=>x.id===r.insumo_id)||{};
+           return {n:I.nombre||r.insumo_id, lote:r.gramos, u:I.unidad_receta||"g",
+            unid:(r.gramos||0)*g/(R.rinde_g||1), cu:I.costo_efectivo,
+            c:(r.costo||0)*g/(R.rinde_g||1)};}),
+         rl.costo_por_unidad||0,"Nivel 1 · relleno")
+         +(R.min_mano_obra?`<div class="note warn" style="margin:-4px 0 11px"><b>Ojo con estos ${N(R.min_mano_obra)} minutos.</b>
+           ${esc(R.nota||"")}</div>`:"");
+       else html+=bloque(rl.nombre||"Relleno", `${N(g,1)} g por unidad`, [], rl.costo_por_unidad||0,"Nivel 1 · relleno");
+     });
+     // nivel 2: lo que se le pone encima y el empaque
+     if((L.directos||[]).length)
+       html+=bloque("Insumos directos","Lo que se le pone al producto ya formado, fuera de la masa",
+         L.directos.map(x=>({n:x.nombre, lote:(x.gramos_por_unidad||0)*lote, u:"g",
+           unid:x.gramos_por_unidad||0, cu:null, c:x.costo_por_unidad||0,
+           extra:x.uso?esc(x.uso):""})), st.directos||0,"Nivel 2 · directos");
+     if((L.empaque||[]).length)
+       html+=bloque("Empaque","Lo que se lleva el cliente",
+         L.empaque.map(x=>({n:x.nombre, lote:(x.cantidad||0)*lote, u:"und",
+           unid:x.cantidad||0, cu:null, c:x.costo_por_unidad||0})), st.empaque||0,"Nivel 2 · empaque");
+     const totMP=(st.semielaborado||0)+(st.rellenos||0)+(st.directos||0)+(st.empaque||0);
+     // si el producto no tiene cascada, se muestra la receta plana
+     if(!html) html=bloque(p.nombre,`Receta directa · tanda de ${N(lote)} unidades`,
+       (p.receta||[]).map(r=>({n:r.nombre, lote:r.cant_lote, u:r.unidad||"g",
+         unid:(r.cant_lote||0)/lote, cu:r.costo_unit_ins, c:r.costo_por_unidad||0,
+         extra:r.tipo!=="masa"?esc(r.tipo):""})), p.mp,"Receta");
+     return html+`
+      <div class="tw"><table><tfoot><tr><td>TOTAL MATERIA PRIMA POR UNIDAD</td>
+        <td class="n" style="font-weight:700">${S(totMP||p.mp)}</td>
+        <td class="n">${P(100*(totMP||p.mp)/p.neto,1)} del precio neto</td></tr></tfoot></table></div>
+      <div class="note" style="margin:12px 0 0"><b>Qué falta acá y dónde está.</b>
+       Esta es la materia prima. Los <b>minutos</b> de cada paso están en la ficha del producto
+       (pestaña Productos, clic en el producto) y el resumen por estación en Mano de obra.
+       ${p.pasos&&p.pasos.length?`${esc(p.nombre)} lleva ${p.pasos.length} pasos y ${N(p.min_hombre,2)} minutos de persona por unidad.`:""}</div>`;
+   })()}
+  </div>
   <div class="card"><div class="ch"><div><h2 class="ct">Rellenos <span class="cnt">${D.rellenos.length}</span></h2>
     <p class="cs">Sub-recetas con su propio rendimiento. El producto paga por los gramos que usa.</p></div></div>
    <div class="tw"><table><thead><tr><th>Relleno</th><th class="n">Rinde</th><th class="n">Costo tanda</th>
@@ -1651,6 +1736,7 @@ function vIns(){
     window._ti=setTimeout(()=>{save();vIns();vRes();vProd();vUtil();vAlertas();pintarBadge();setTimeout(()=>tablasFiltrables(),30);},300);
   });
   $("#bInsReset").onclick=()=>{FAMILIAS.forEach(f=>ST.insumos[f]=0);save();render();};
+  if($("#recSel")) $("#recSel").onchange=e=>{RECE=e.target.value;vIns();setTimeout(()=>tablasFiltrables($("#p-ins")),20);};
   $("#qIns").oninput=e=>{const q=e.target.value.toLowerCase();
     $$("#tbIns tr").forEach(t=>t.style.display=!q||t.dataset.q.includes(q)?"":"none");};
 }
