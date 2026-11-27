@@ -522,6 +522,135 @@ function canales(pid,anio,mes){
   const v=D.ventas[pid]?.[anio]?.[mes]||{}; return v;
 }
 
+/* ---------------- RECARGO AL CONSUMO ----------------
+   DL 25988, 5a disp. complementaria: hasta 13% del valor del servicio, acordado con los
+   trabajadores. No es remuneracion, no es base del IGV y no es ingreso de la empresa:
+   se recauda del cliente y se reparte entre el personal. Lo que SI mueve la utilidad es
+   (a) la demanda, porque el cliente paga mas, (b) la planilla de atencion que se puede
+   financiar con el recargo, y (c) la comision del POS, que cobra sobre el total cargado. */
+let RCG={pct:0, canales:{tienda:true,pedidos:false,rappi:false}, cobertura:0, elast:-0.6};
+const ATENCION=["vendedora_mostrador_1","vendedora_mostrador_2","barista_barra"];
+
+function calcRC(){
+  const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)}));
+  const V0=ps.reduce((s,p)=>s+p.neto*p.u,0), U0=ps.reduce((s,p)=>s+p.u,0);
+  const UB0=ps.reduce((s,p)=>s+p.ub*p.u,0);
+  const G=D.gastos.reduce((s,g)=>s+g.monto_mensual,0)*12;
+  const rc=RCG.pct/100;
+  // el recargo sube el precio final en rc/(1+igv): no paga IGV
+  const dPrecio=rc/(1+ST.igv/100);
+  const plAt=(D.planilla.puestos||[]).filter(q=>ATENCION.indexOf(q.id)>=0)
+    .reduce((s,q)=>s+q.costo_cargado_mes,0)*12;
+
+  const cs=D.canales.map(c=>{
+    const R=(D.rentabilidad_canal[ST.anio]||{})[c.id]||{};
+    const aplica=!!RCG.canales[c.id];
+    const v0=R.venta||0, u0=R.u||0, ub0=R.ub||0;
+    const caida=aplica?RCG.elast*dPrecio:0;          // negativo
+    const u1=u0*(1+caida), v1=v0*(1+caida), ub1=ub0*(1+caida);
+    const recaudado=aplica?v1*rc:0;
+    const posExtra=aplica?recaudado*(c.pct_con_tarjeta/100)*((c.comision_pos_pct||0)/100):0;
+    return {id:c.id, nombre:c.nombre, aplica, v0, u0, ub0, v1, u1, ub1,
+      ticket0:R.ticket||0, ticketCliente:(R.ticket||0)*(1+ST.igv/100)*(1+(aplica?rc/(1+ST.igv/100)*(1+ST.igv/100)/(1+ST.igv/100):0)),
+      recaudado, posExtra, caida};
+  });
+  const V1=cs.reduce((s,c)=>s+c.v1,0), U1=cs.reduce((s,c)=>s+c.u1,0);
+  const UB1=cs.reduce((s,c)=>s+c.ub1,0);
+  const recaudado=cs.reduce((s,c)=>s+c.recaudado,0);
+  const posExtra=cs.reduce((s,c)=>s+c.posExtra,0);
+  const ahorro=Math.min(recaudado, plAt*RCG.cobertura/100);
+  const UO0=UB0-G, UO1=UB1-G+ahorro-posExtra;
+  return {ps,cs,V0,V1,U0,U1,UB0,UB1,UO0,UO1,G,rc,dPrecio,recaudado,posExtra,ahorro,plAt};
+}
+
+function vRC(){
+  const K=calcRC(), r=K.rc;
+  const dUO=K.UO1-K.UO0, dV=K.V1-K.V0;
+  const sl=(k,lb,min,max,step,fmt)=>`<div class="fg"><label>${lb}: <span style="font-family:var(--fm);color:var(--c600)">${fmt(RCG[k])}</span></label>
+    <input class="sl" type="range" min="${min}" max="${max}" step="${step}" value="${RCG[k]}" data-rc="${k}"/></div>`;
+  $("#cardRC").innerHTML=`
+  <div class="ch"><div><h2 class="ct">Recargo al consumo</h2>
+    <p class="cs">Hasta 13% del valor del servicio, acordado con los trabajadores (DL 25988, 5.ª disp. compl.).
+     No es ingreso de la empresa ni base del IGV: se cobra al cliente y se reparte al personal.
+     Lo que mueve tu utilidad es otra cosa — está abajo.</p></div>
+   <button class="btn" id="bRC0">Volver a cero</button></div>
+
+  <div class="simg">
+   ${sl("pct","1 · Recargo sobre el valor del servicio",0,13,0.5,v=>v+"%")}
+   ${sl("cobertura","2 · Planilla de atención que financia",0,100,5,v=>v+"%")}
+   ${sl("elast","3 · Elasticidad (cuánto cae la demanda)",-1.5,0,0.1,v=>v.toFixed(1))}
+   <div class="fg"><label>4 · Canales donde se cobra</label>
+    <div style="display:flex;gap:13px;flex-wrap:wrap;padding-top:4px">
+     ${D.canales.map(c=>`<label style="display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600;cursor:pointer">
+      <input type="checkbox" data-rcc="${c.id}" ${RCG.canales[c.id]?"checked":""}/> ${esc(c.nombre)}</label>`).join("")}</div></div>
+  </div>
+
+  ${RCG.pct>0?`
+  <div class="kpis" style="margin:17px 0 0">
+   <div class="kpi"><span class="kl">Sube el precio final</span><div class="kv">${P(100*K.dPrecio,1)}</div>
+     <div class="kf"><span>el recargo no paga IGV, por eso no es ${P(RCG.pct,1)}</span></div></div>
+   <div class="kpi c"><span class="kl">Se recauda al año</span><div class="kv">${S0(K.recaudado)}</div>
+     <div class="kf"><span>${S0(K.recaudado/12)} al mes · va al personal</span></div></div>
+   <div class="kpi ${K.U1<K.U0*0.99?'wa':'ok'}"><span class="kl">Unidades</span>
+     <div class="kv">${K.U1<K.U0?"−":"+"}${N(Math.abs(K.U1-K.U0))}</div>
+     <div class="kf"><span>${P(100*(K.U1/K.U0-1),1)} por el precio más alto</span></div></div>
+   <div class="kpi ${dV<0?'ba':'ok'}"><span class="kl">Venta neta propia</span>
+     <div class="kv">${dV<0?"−":"+"}${S0(Math.abs(dV))}</div>
+     <div class="kf"><span>${P(100*(K.V1/K.V0-1),1)} · el recargo no entra acá</span></div></div>
+   <div class="kpi ${dUO<0?'ba':dUO>0?'ok':''}"><span class="kl">Utilidad operativa</span>
+     <div class="kv">${dUO<0?"−":"+"}${S0(Math.abs(dUO))}</div>
+     <div class="kf"><span>${P(100*K.UO1/K.V1,1)} de la venta (antes ${P(100*K.UO0/K.V0,1)})</span></div></div>
+  </div>
+
+  <div class="tw" style="margin-top:15px"><table><thead><tr><th>Canal</th><th class="n">Ticket hoy</th>
+    <th class="n">Ticket con recargo</th><th class="n">Unidades</th><th class="n">Venta propia</th>
+    <th class="n">Recargo recaudado</th><th class="n">POS extra</th></tr></thead>
+   <tbody>${K.cs.map(c=>`<tr${c.aplica?' style="background:var(--g50)"':''}>
+    <td style="font-weight:600">${esc(c.nombre)} ${c.aplica?'<span class="bd ok">se cobra</span>':'<span class="bd nt">no se cobra</span>'}</td>
+    <td class="n">${S(c.ticket0*(1+ST.igv/100))}</td>
+    <td class="n" style="font-weight:700">${S(c.ticket0*(1+ST.igv/100)+(c.aplica?c.ticket0*r:0))}</td>
+    <td class="n">${N(c.u1)} ${c.aplica&&c.caida?`<span style="color:var(--ba);font-size:11px">${P(100*c.caida,1)}</span>`:""}</td>
+    <td class="n">${S0(c.v1)}</td>
+    <td class="n" style="color:var(--c600);font-weight:600">${c.recaudado?S0(c.recaudado):"—"}</td>
+    <td class="n">${c.posExtra?"−"+S0(c.posExtra):"—"}</td></tr>`).join("")}</tbody>
+   <tfoot><tr><td>TOTAL</td><td class="n">—</td><td class="n">—</td><td class="n">${N(K.U1)}</td>
+     <td class="n">${S0(K.V1)}</td><td class="n">${S0(K.recaudado)}</td><td class="n">−${S0(K.posExtra)}</td></tr></tfoot></table></div>
+
+  <div class="tw" style="margin-top:15px"><table><thead><tr><th>De dónde sale el efecto en tu utilidad</th>
+    <th class="n">S/ al año</th><th>Por qué</th></tr></thead>
+   <tbody>
+    <tr><td style="font-weight:600">Utilidad operativa hoy</td><td class="n">${S0(K.UO0)}</td><td>Sin recargo.</td></tr>
+    <tr><td>Menos utilidad bruta por menos volumen</td>
+     <td class="n" style="color:${K.UB1<K.UB0?'var(--ba)':'var(--ink5)'}">${K.UB1-K.UB0?(K.UB1<K.UB0?"−":"+")+S0(Math.abs(K.UB1-K.UB0)):"—"}</td>
+     <td>El cliente paga ${P(100*K.dPrecio,1)} más y compra ${P(Math.abs(100*(K.U1/K.U0-1)),1)} menos, con elasticidad ${RCG.elast.toFixed(1)}.</td></tr>
+    <tr><td>Planilla de atención que ya no pagas</td>
+     <td class="n" style="color:${K.ahorro?'var(--ok)':'var(--ink5)'}">${K.ahorro?"+"+S0(K.ahorro):"—"}</td>
+     <td>De ${S0(K.plAt)} al año en mostrador y barra, financias ${P(RCG.cobertura,0)}${K.ahorro<K.plAt*RCG.cobertura/100?" (topado por lo recaudado)":""}.</td></tr>
+    <tr><td>Comisión del POS sobre el recargo</td>
+     <td class="n" style="color:${K.posExtra?'var(--ba)':'var(--ink5)'}">${K.posExtra?"−"+S0(K.posExtra):"—"}</td>
+     <td>El POS cobra sobre el total cargado, recargo incluido. Eso sí sale de tu bolsillo.</td></tr>
+   </tbody>
+   <tfoot><tr><td>UTILIDAD OPERATIVA CON RECARGO</td><td class="n">${S0(K.UO1)}</td>
+     <td>${dUO>0?`Gana ${S0(dUO)} al año`:dUO<0?`Pierde ${S0(-dUO)} al año`:"Igual"}</td></tr></tfoot></table></div>
+
+  ${RCG.cobertura>0?`<div class="note warn" style="margin:15px 0 0"><b>Cuidado con la segunda palanca.</b>
+   Financiar ${P(RCG.cobertura,0)} de la planilla de atención con el recargo no es un ahorro gratis: convierte sueldo fijo
+   en ingreso variable del personal. Un enero flojo les baja la paga ${P(100*Math.abs(K.U1/K.U0-1)+15,0)} sin que nadie decida nada,
+   y el recargo no cuenta para CTS, gratificación ni vacaciones. Si la rotación sube, el costo de reemplazar y entrenar
+   se come el ahorro. El número de arriba es aritmética; esta decisión es de gente.</div>`:""}
+
+  ${RCG.pct>0&&RCG.canales.rappi?`<div class="note bad" style="margin:15px 0 0"><b>Rappi marcado.</b>
+   En delivery por plataforma el recargo al consumo no se cobra: la plataforma fija el precio al cliente
+   y no hay servicio de mesa que justificarlo. Si lo dejas marcado, el modelo te da un número que no vas a poder cobrar.</div>`:""}
+  `:`<div class="note" style="margin:17px 0 0">Mueve el primer deslizador para ver el efecto. En cero, nada cambia.
+   Y el punto que importa: el recargo <b>no es venta tuya</b>. Si lo prendes esperando que suba tu utilidad,
+   el único camino real es que financie planilla de atención — y eso tiene un costo que no está en la hoja.</div>`}`;
+
+  $$("#cardRC input[data-rc]").forEach(el=>el.oninput=e=>{RCG[e.target.dataset.rc]=+e.target.value;vRC();});
+  $$("#cardRC input[data-rcc]").forEach(el=>el.onchange=e=>{RCG.canales[e.target.dataset.rcc]=e.target.checked;vRC();});
+  $("#bRC0").onclick=()=>{RCG={pct:0,canales:{tienda:true,pedidos:false,rappi:false},cobertura:0,elast:-0.6};vRC();};
+}
+
 /* ---------------- RESUMEN ---------------- */
 function vRes(){
   const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)})).sort((a,b)=>b.u*b.neto-a.u*a.neto);
@@ -531,6 +660,7 @@ function vRes(){
   let ac=0;
   $("#p-res").innerHTML=`
   <div class="note">${esc(D.meta.aviso)} Año <b>${ST.anio}</b>, 12 meses.</div>
+  <div class="card" id="cardRC"></div>
   <div class="kpis">
    <div class="kpi"><span class="kl">Venta neta del año</span><div class="kv">${S0(V)}</div>
      <div class="kf"><span>${N(ps.reduce((s,p)=>s+p.u,0))} unidades</span></div></div>
@@ -570,6 +700,7 @@ function vRes(){
      <td class="n">${S0(MP+MO+CI)}</td><td class="n">${S0(UB)}</td><td class="n">${P(100*UB/V,1)}</td></tr></tfoot>
    </table></div></div>`;
   $$("#p-res .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
+  vRC();   // vRes reescribe el panel, asi que la tarjeta se repinta despues
 }
 
 /* ---------------- PRODUCTOS ---------------- */
