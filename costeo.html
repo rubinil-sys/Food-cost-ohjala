@@ -1709,12 +1709,12 @@ function vPron(){
   // de dónde sale el punto de partida
   function baseUnid(pid){
     switch(PR.base){
-      case "mes":      return und(pid,ST.anio,null,String(mesSel));
+      case "mes":      return und(pid,ST.anio,String(mesSel));
       case "promedio": return und(pid,ST.anio)/12;
-      case "trim":     { let s=0,n=0; for(let k=0;k<3;k++){const m=mesSel-k; if(m>=1){s+=und(pid,ST.anio,null,String(m));n++;} }
+      case "trim":     { let s=0,n=0; for(let k=0;k<3;k++){const m=mesSel-k; if(m>=1){s+=und(pid,ST.anio,String(m));n++;} }
                          return n?s/n:0; }
-      case "anterior": return und(pid,prev,null,String(mesSel));
-      default:         return und(pid,ST.anio,null,String(mesSel));
+      case "anterior": return und(pid,prev,String(mesSel));
+      default:         return und(pid,ST.anio,String(mesSel));
     }
   }
   const BASES={mes:`${MES[mesSel]} de ${ST.anio}`, promedio:`promedio mensual de ${ST.anio}`,
@@ -1750,10 +1750,10 @@ function vPron(){
   <div class="note">Elige de dónde partir y qué supuestos aplicar. De ahí sale cuánto producir <b>cada día y cada semana</b>,
    si la cocina da abasto y qué queda después de comisiones y del costo de esperar la plata.</div>
   ${(()=>{const otras=Object.keys(BASES).filter(k=>k!==PR.base);
-    const val=k=>{let t=0; ps.forEach(p=>{const u=(k==="mes"?und(p.id,ST.anio,null,String(mesSel)):
+    const val=k=>{let t=0; ps.forEach(p=>{const u=(k==="mes"?und(p.id,ST.anio,String(mesSel)):
       k==="promedio"?und(p.id,ST.anio)/12:
-      k==="trim"?(()=>{let s=0,n=0;for(let j=0;j<3;j++){const m=mesSel-j;if(m>=1){s+=und(p.id,ST.anio,null,String(m));n++;}}return n?s/n:0;})():
-      und(p.id,prev,null,String(mesSel))); t+=p.neto*u;}); return t;};
+      k==="trim"?(()=>{let s=0,n=0;for(let j=0;j<3;j++){const m=mesSel-j;if(m>=1){s+=und(p.id,ST.anio,String(m));n++;}}return n?s/n:0;})():
+      und(p.id,prev,String(mesSel))); t+=p.neto*u;}); return t;};
     const actual=val(PR.base);
     return `<div class="note"><b>Comparación de bases.</b> Con <b>${esc(BASES[PR.base])}</b> partes de ${S0(actual)}.
       ${otras.map(k=>`Con ${esc(BASES[k])}: ${S0(val(k))} (${val(k)>actual?"+":""}${P(100*(val(k)/actual-1),1)})`).join(" · ")}.
@@ -1885,9 +1885,9 @@ function basePron(pid){
   const mesSel=+ST.mes, prev=ST.anio==="2026"?"2025":"2026";
   switch(PR.base){
     case "promedio": return und(pid,ST.anio)/12;
-    case "trim":{let s=0,n=0;for(let k=0;k<3;k++){const m=mesSel-k;if(m>=1){s+=und(pid,ST.anio,null,String(m));n++;}}return n?s/n:0;}
-    case "anterior": return und(pid,prev,null,String(mesSel));
-    default: return und(pid,ST.anio,null,String(mesSel));
+    case "trim":{let s=0,n=0;for(let k=0;k<3;k++){const m=mesSel-k;if(m>=1){s+=und(pid,ST.anio,String(m));n++;}}return n?s/n:0;}
+    case "anterior": return und(pid,prev,String(mesSel));
+    default: return und(pid,ST.anio,String(mesSel));
   }
 }
 function calcPlan(){
