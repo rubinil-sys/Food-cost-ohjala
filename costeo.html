@@ -460,19 +460,22 @@ const MES=["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Set","Oct","Nov",
 const INS={}; D.insumos.forEach(i=>INS[i.id]=i);
 
 let ST={anio:"2026", mes:"12", igv:D.meta.igv, aj:{}, esc:[], abierto:null};
-D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0});
+D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});
 try{const g=localStorage.getItem("ohjala_v2");if(g){const o=JSON.parse(g);
   if(o.esc)ST.esc=o.esc; if(o.aj)Object.assign(ST.aj,o.aj); if(o.igv)ST.igv=o.igv;}}catch(e){}
 const save=()=>{try{localStorage.setItem("ohjala_v2",JSON.stringify({esc:ST.esc,aj:ST.aj,igv:ST.igv}))}catch(e){}};
 
 function calc(p){
-  const a=ST.aj[p.id]||{precio:0,mp:0,mod:0};
-  const neto=p.neto*(1+a.precio/100), mp=p.mp*(1+a.mp/100), mod=p.mod*(1+a.mod/100), cif=p.cif;
+  const a=ST.aj[p.id]||{precio:0,mp:0,mod:0,manual:null};
+  // si hay precio escrito a mano, ese manda sobre el deslizador
+  const neto = (a.manual!=null && a.manual>0) ? a.manual/(1+ST.igv/100) : p.neto*(1+a.precio/100);
+  const mp=p.mp*(1+a.mp/100), mod=p.mod*(1+a.mod/100), cif=p.cif;
   const cuf=mp+mod+cif;
   return {...p, neto, mp, mod, cif, cuf, ub:neto-cuf,
     ub_pct:neto?100*(neto-cuf)/neto:0, fc_pct:neto?100*mp/neto:0,
     mod_pct:neto?100*mod/neto:0, cif_pct:neto?100*cif/neto:0,
-    precio:neto*(1+ST.igv/100)};
+    precio:neto*(1+ST.igv/100),
+    sugerido:(mp+mod+cif)/(1-UMB.ub_min/100)*(1+ST.igv/100)};
 }
 const TODOS=()=>D.productos.map(calc);
 function und(pid,anio,mes){
@@ -555,7 +558,21 @@ function vProd(){
      <div class="stk"><i data-k="bmp" style="width:${w(p.mp)}%;background:linear-gradient(90deg,#f0a868,#c96b2c)"></i>
       <i data-k="bmod" style="width:${w(p.mod)}%;background:linear-gradient(90deg,#7fa8a0,#4a7f73)"></i>
       <i data-k="bcif" style="width:${w(p.cif)}%;background:#b9a37e"></i><i style="flex:1;background:var(--g100)"></i></div>
-     <div class="mrow"><span>Precio vitrina</span><b data-k="precio">${S(p.precio)}</b></div>
+     <div style="background:var(--s100);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin:2px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+       <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink7)">Precio vitrina</span>
+       <div style="display:inline-flex;align-items:center;background:#fff;border:1px solid var(--lineS);border-radius:7px;padding:2px 7px">
+        <span style="font-size:12.5px;color:var(--ink5)">S/</span>
+        <input type="number" step="0.1" min="0" data-precio="${p.id}" value="${p.precio.toFixed(2)}"
+         style="width:66px;border:none;outline:none;text-align:right;font-family:var(--fm);font-weight:700;font-size:14px"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+       <span style="font-size:11.5px;color:var(--ink5)">Sugerido para ${P(UMB.ub_min,0)} de margen:
+        <b data-k="sug" style="color:var(--g900);font-family:var(--fm)">${S(p.sugerido)}</b></span>
+       <button class="btn sm" data-aplicar="${p.id}">Aplicar</button></div>
+      <div data-k="dif" style="font-size:11px;margin-top:4px;color:${p.precio<p.sugerido?'var(--ba)':'var(--ok)'}">
+       ${p.precio<p.sugerido?`Está ${S(p.sugerido-p.precio)} por debajo (${P(100*(p.sugerido/p.precio-1),1)})`
+         :`Tiene ${S(p.precio-p.sugerido)} de holgura sobre el objetivo`}</div>
+     </div>
      <div class="mrow"><span>Materia prima</span><b data-k="mp">${S(p.mp)} · ${P(p.fc_pct,1)}</b></div>
      <div class="mrow"><span>Mano de obra</span><b data-k="mod">${S(p.mod)} · ${p.min_hombre?N(p.min_hombre,1)+" min":"—"}</b></div>
      <div class="mrow"><span>CIF</span><b>${S(p.cif)}</b></div>
@@ -575,8 +592,24 @@ function vProd(){
     clearTimeout(window._tref);
     window._tref=setTimeout(()=>{ save(); vRes(); vUtil(); vAlertas(); pintarBadge(); }, 260);
   });
+  $$("#p-prod input[data-precio]").forEach(el=>{
+    el.onchange=e=>{
+      const pid=e.target.dataset.precio, v=parseFloat(e.target.value);
+      ST.aj[pid].manual = (Number.isFinite(v)&&v>0)?v:null;
+      ST.aj[pid].precio = 0;
+      refrescarTarjeta(pid); save(); vRes(); vUtil(); vAlertas(); pintarBadge();
+    };
+    el.onkeydown=e=>{ if(e.key==="Enter") e.target.blur(); };
+  });
+  $$("#p-prod [data-aplicar]").forEach(b=>b.onclick=()=>{
+    const pid=b.dataset.aplicar, p=calc(D.productos.find(x=>x.id===pid));
+    ST.aj[pid].manual=Math.round(p.sugerido*10)/10; ST.aj[pid].precio=0;
+    const inp=document.querySelector(`input[data-precio="${pid}"]`);
+    if(inp) inp.value=ST.aj[pid].manual.toFixed(2);
+    refrescarTarjeta(pid); save(); vRes(); vUtil(); vAlertas(); pintarBadge();
+  });
   $$("#p-prod .clic").forEach(el=>el.onclick=()=>abrir(el.dataset.p));
-  $("#bReset").onclick=()=>{D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0});save();render();};
+  $("#bReset").onclick=()=>{D.productos.forEach(p=>ST.aj[p.id]={precio:0,mp:0,mod:0,manual:null});save();render();};
 }
 
 function refrescarTarjeta(pid){
@@ -592,6 +625,14 @@ function refrescarTarjeta(pid){
   if(b1)b1.style.width=w(p.mp)+"%"; if(b2)b2.style.width=w(p.mod)+"%"; if(b3)b3.style.width=w(p.cif)+"%";
   ["precio","mp","mod"].forEach(k=>{const e=c.querySelector(`[data-sl="${k}"]`);
     if(e) e.textContent=(a[k]>0?"+":"")+a[k]+"%";});
+  set("sug",S(p.sugerido));
+  const d=c.querySelector('[data-k="dif"]');
+  if(d){ const bajo=p.precio<p.sugerido;
+    d.style.color=bajo?"var(--ba)":"var(--ok)";
+    d.textContent=bajo?`Está ${S(p.sugerido-p.precio)} por debajo (${P(100*(p.sugerido/p.precio-1),1)})`
+                      :`Tiene ${S(p.precio-p.sugerido)} de holgura sobre el objetivo`; }
+  const ip=c.querySelector('input[data-precio]');
+  if(ip && document.activeElement!==ip) ip.value=p.precio.toFixed(2);
 }
 
 /* ---------------- DETALLE: receta + pasos ---------------- */
