@@ -1421,7 +1421,6 @@ $("#inIgv").oninput=e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v)
 $("#mClose").onclick=cerrar;
 $("#modal").onclick=e=>{if(e.target.id==="modal")cerrar();};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ST.abierto)cerrar();});
-render();
 
 /* ============================================================
    ACCESO: sesión, roles y administración de usuarios
@@ -1506,17 +1505,26 @@ async function registrar(){
 async function salir(){ await sb.auth.signOut(); PERFIL=null; SESION=null; vLogin(); }
 
 async function arrancarSesion(){
-  const {data:{session}}=await sb.auth.getSession();
-  SESION=session;
-  if(!session) return vLogin();
-  const {data,error}=await sb.from("perfiles").select("*").eq("id",session.user.id).maybeSingle();
-  if(error) return vLogin("No se pudo leer tu perfil: "+error.message);
-  PERFIL=data;
-  if(!PERFIL) return vPendiente();
-  if(PERFIL.estado==="bloqueado") return vBloqueado();
-  if(PERFIL.estado!=="aprobado") return vPendiente();
-  entrar(); pintarSesion(); await cargarEscenarios(); render();
+  const limite=(p,ms,q)=>Promise.race([p,new Promise((_,x)=>setTimeout(()=>x(new Error("La base no respondió ("+q+")")),ms))]);
+  try{
+    const {data:{session}}=await limite(sb.auth.getSession(),12000,"sesión");
+    SESION=session;
+    if(!session) return vLogin();
+    const {data,error}=await limite(
+      sb.from("perfiles").select("*").eq("id",session.user.id).maybeSingle(),12000,"perfil");
+    if(error) return vLogin("No se pudo leer tu perfil: "+error.message);
+    PERFIL=data;
+    if(!PERFIL) return vPendiente();
+    if(PERFIL.estado==="bloqueado") return vBloqueado();
+    if(PERFIL.estado!=="aprobado") return vPendiente();
+    entrar(); pintarSesion();
+    try{ await limite(cargarEscenarios(),12000,"escenarios"); }catch(e){ ST.esc=[]; }
+    render();
+  }catch(e){
+    vLogin((e&&e.message)||"No se pudo conectar. Revisa tu internet y vuelve a intentar.");
+  }
 }
+
 function pintarSesion(){
   const r={lectura:"Lectura",edicion:"Edición",admin:"Administrador"}[PERFIL.rol]||PERFIL.rol;
   $("#usrBox").innerHTML=`<div class="usr">
@@ -1602,7 +1610,12 @@ async function cambiarUsuario(id,campos){
     `<p class="gtxt">No se pudo cargar la librería de acceso. Revisa tu internet y recarga.</p>`)); return; }
   sb=window.supabase.createClient(SB_URL,SB_KEY);
   sb.auth.onAuthStateChange((ev)=>{ if(ev==="SIGNED_OUT"){PERFIL=null;vLogin();} });
-  await arrancarSesion();
+  const reloj=setTimeout(()=>{
+    const g=$("#gate"), ap=$("#app");
+    if(g && !g.classList.contains("on") && (!ap || ap.style.display==="none"))
+      vLogin("La conexión tardó demasiado. Intenta de nuevo.");
+  },15000);
+  try{ await arrancarSesion(); } finally { clearTimeout(reloj); }
 })();
 
 </script>
