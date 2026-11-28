@@ -10,9 +10,9 @@
 | Precio neto | S/ 3.8136 |
 | Materia prima | S/ 1.6318 |
 | Mano de obra directa | S/ 0.6704 |
-| CIF de producción | S/ 0.5698 |
-| **Costo unitario (CUF)** | **S/ 2.8720** |
-| Utilidad bruta | S/ 0.9416 (24.7%) |
+| CIF de producción | S/ 0.5864 |
+| **Costo unitario (CUF)** | **S/ 2.8886** |
+| Utilidad bruta | S/ 0.9250 (24.3%) |
 | Minutos de persona por unidad | 1.675 |
 | Tandas por semana | 5.3 |
 

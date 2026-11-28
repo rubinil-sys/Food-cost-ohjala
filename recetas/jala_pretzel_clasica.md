@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 15.50 |
 | Precio neto | S/ 13.1356 |
-| Materia prima | S/ 3.4566 |
+| Materia prima | S/ 3.4563 |
 | Mano de obra directa | S/ 2.0951 |
-| CIF de producción | S/ 1.7250 |
-| **Costo unitario (CUF)** | **S/ 7.2767** |
-| Utilidad bruta | S/ 5.8589 (44.6%) |
+| CIF de producción | S/ 1.8681 |
+| **Costo unitario (CUF)** | **S/ 7.4195** |
+| Utilidad bruta | S/ 5.7161 (43.5%) |
 | Minutos de persona por unidad | 5.071 |
 | Tandas por semana | 5.7 |
 
@@ -39,7 +39,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Sal marina fina yodada | 144 g | 1.8 | S/ 0.40 |
 | | | | **S/ 69.45 por tanda** |
 
-Costo heredado por unidad: **S/ 2.4803** (505 g × S/ 0.004910 por g).
+Costo heredado por unidad: **S/ 2.4800** (505 g × S/ 0.004910 por g).
 
 ### L1 · Baño — Bano alcalino para pretzel
 
@@ -72,7 +72,7 @@ Costo heredado por unidad: **S/ 0.1326**.
 | Bolsa de papel kraft con ventana | 28 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 28 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 2.4803 + rellenos S/ 0.1326 + directos S/ 0.1737 + empaque S/ 0.6700 = **S/ 3.4566**
+**Materia prima por unidad:** masa S/ 2.4800 + rellenos S/ 0.1326 + directos S/ 0.1737 + empaque S/ 0.6700 = **S/ 3.4563**
 
 ## 2 · Proceso paso a paso
 

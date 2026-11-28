@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 28.50 |
 | Precio neto | S/ 24.1525 |
-| Materia prima | S/ 8.4721 |
+| Materia prima | S/ 8.4720 |
 | Mano de obra directa | S/ 3.0784 |
-| CIF de producción | S/ 2.5384 |
-| **Costo unitario (CUF)** | **S/ 14.0889** |
-| Utilidad bruta | S/ 10.0636 (41.7%) |
+| CIF de producción | S/ 2.6969 |
+| **Costo unitario (CUF)** | **S/ 14.2473** |
+| Utilidad bruta | S/ 9.9052 (41.0%) |
 | Minutos de persona por unidad | 7.463 |
 | Tandas por semana | 9.4 |
 
@@ -40,7 +40,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Sal marina fina yodada | 158 g | 1.8 | S/ 0.44 |
 | | | | **S/ 99.37 por tanda** |
 
-Costo heredado por unidad: **S/ 3.4442** (600 g × S/ 0.005738 por g).
+Costo heredado por unidad: **S/ 3.4439** (600 g × S/ 0.005738 por g).
 
 ### L1 · Relleno — Relleno de avellana y cacao
 
@@ -72,7 +72,7 @@ Costo heredado por unidad: **S/ 4.2120**.
 | Bolsa de papel kraft con ventana | 20 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 20 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 3.4442 + rellenos S/ 4.2120 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 8.4723**
+**Materia prima por unidad:** masa S/ 3.4439 + rellenos S/ 4.2120 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 8.4720**
 
 ## 2 · Proceso paso a paso
 

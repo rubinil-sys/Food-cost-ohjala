@@ -9,10 +9,10 @@
 | Precio de lista (con IGV) | S/ 12.00 |
 | Precio neto | S/ 10.1695 |
 | Materia prima | S/ 2.7834 |
-| Mano de obra directa | S/ 0.7253 |
-| CIF de producción | S/ 0.9864 |
-| **Costo unitario (CUF)** | **S/ 4.4951** |
-| Utilidad bruta | S/ 5.6744 (55.8%) |
+| Mano de obra directa | S/ 0.7254 |
+| CIF de producción | S/ 0.6528 |
+| **Costo unitario (CUF)** | **S/ 4.1616** |
+| Utilidad bruta | S/ 6.0079 (59.1%) |
 | Minutos de persona por unidad | 2.900 |
 | Tandas por semana | 138.5 |
 
@@ -58,7 +58,7 @@ Minutos de persona por tanda de producto: **2.9**.
 | Nivel | Min persona por unidad | % | Costo por unidad |
 |---|---|---|---|
 | Pasos propios | 2.900 | 100.0% | S/ 0.7254 |
-| **Total** | **2.900** | 100% | **S/ 0.7253** |
+| **Total** | **2.900** | 100% | **S/ 0.7254** |
 
 De la tanda propia, **0.3 minutos son preparación**: no cambian si se hornea media tanda. Por eso la tanda chica sale más cara por unidad.
 

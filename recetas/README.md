@@ -6,25 +6,25 @@ Una ficha por producto: qué lleva, en qué orden se hace y cuánto tarda cada p
 
 | Producto | Tanda | Min persona / unidad | Materia prima | CUF | Ficha |
 |---|---|---|---|---|---|
-| Bagels x4 | 17 u | 5.471 | S/ 2.9590 | S/ 7.2132 | [ver](bagels_x4.md) |
-| Agua Mineral 600ml | 1 u | 0.400 | S/ 1.4500 | S/ 1.6862 | [ver](agua_600.md) |
-| Cafe Latte | 1 u | 2.700 | S/ 2.9724 | S/ 4.5661 | [ver](cafe_latte.md) |
-| Capuccino | 1 u | 2.900 | S/ 2.7834 | S/ 4.4951 | [ver](cafe_capuccino.md) |
-| Jugo de Fresa 400ml | 12 u | 1.667 | S/ 3.5116 | S/ 4.4954 | [ver](jugo_fresa.md) |
-| Jugo de Pina 400ml | 12 u | 2.083 | S/ 2.4804 | S/ 3.7101 | [ver](jugo_pina.md) |
-| Cafe Americano | 1 u | 2.500 | S/ 2.0784 | S/ 3.5541 | [ver](cafe_americano.md) |
-| Planchado de Jamon y Queso | 20 u | 5.350 | S/ 3.4684 | S/ 6.9643 | [ver](planchado_jamon_queso.md) |
-| Jala Canela Clasica | 24 u | 6.229 | S/ 5.7752 | S/ 10.4645 | [ver](jala_canela_clasica.md) |
-| Jala Integral Clasica | 20 u | 6.900 | S/ 5.6362 | S/ 10.8347 | [ver](jala_integral_clasica.md) |
-| Jala Nutella Clasica | 20 u | 7.463 | S/ 8.4721 | S/ 14.0889 | [ver](jala_nutella_clasica.md) |
-| Jala Parmesano Clasica | 22 u | 6.864 | S/ 8.9069 | S/ 14.0752 | [ver](jala_parmesano_clasica.md) |
-| Jala Plain Clasica | 24 u | 5.396 | S/ 4.8624 | S/ 8.9293 | [ver](jala_plain_clasica.md) |
-| Jala Plain Mediana | 42 u | 3.238 | S/ 3.1820 | S/ 5.6218 | [ver](jala_plain_mediana.md) |
-| Jala Pretzel Clasica | 28 u | 5.071 | S/ 3.4566 | S/ 7.2767 | [ver](jala_pretzel_clasica.md) |
-| Jala Shabat Clasica | 18 u | 12.069 | S/ 5.3804 | S/ 14.4497 | [ver](jala_shabat_clasica.md) |
-| Keke de Naranja (porcion) | 24 u | 2.333 | S/ 2.6664 | S/ 4.3369 | [ver](keke_naranja.md) |
-| Nudito de Canela | 40 u | 1.650 | S/ 1.3817 | S/ 2.6037 | [ver](nudito_canela.md) |
-| Nudito de Pizza | 40 u | 1.675 | S/ 1.6318 | S/ 2.8720 | [ver](nudito_pizza.md) |
+| Bagels x4 | 17 u | 5.471 | S/ 2.9590 | S/ 7.6397 | [ver](bagels_x4.md) |
+| Agua Mineral 600ml | 1 u | 0.400 | S/ 1.4500 | S/ 1.6400 | [ver](agua_600.md) |
+| Cafe Latte | 1 u | 2.700 | S/ 2.9724 | S/ 4.2554 | [ver](cafe_latte.md) |
+| Capuccino | 1 u | 2.900 | S/ 2.7834 | S/ 4.1616 | [ver](cafe_capuccino.md) |
+| Jugo de Fresa 400ml | 12 u | 1.667 | S/ 3.5116 | S/ 4.3037 | [ver](jugo_fresa.md) |
+| Jugo de Pina 400ml | 12 u | 2.083 | S/ 2.4804 | S/ 3.4704 | [ver](jugo_pina.md) |
+| Cafe Americano | 1 u | 2.500 | S/ 2.0785 | S/ 3.2665 | [ver](cafe_americano.md) |
+| Planchado de Jamon y Queso | 20 u | 5.350 | S/ 3.4684 | S/ 6.6180 | [ver](planchado_jamon_queso.md) |
+| Jala Canela Clasica | 24 u | 6.417 | S/ 6.1286 | S/ 11.0677 | [ver](jala_canela_clasica.md) |
+| Jala Integral Clasica | 20 u | 6.900 | S/ 5.6360 | S/ 11.0578 | [ver](jala_integral_clasica.md) |
+| Jala Nutella Clasica | 20 u | 7.463 | S/ 8.4720 | S/ 14.2473 | [ver](jala_nutella_clasica.md) |
+| Jala Parmesano Clasica | 22 u | 6.915 | S/ 9.1431 | S/ 14.4788 | [ver](jala_parmesano_clasica.md) |
+| Jala Plain Clasica | 24 u | 5.396 | S/ 4.8625 | S/ 9.1562 | [ver](jala_plain_clasica.md) |
+| Jala Plain Mediana | 42 u | 3.238 | S/ 3.1819 | S/ 5.7335 | [ver](jala_plain_mediana.md) |
+| Jala Pretzel Clasica | 28 u | 5.071 | S/ 3.4563 | S/ 7.4195 | [ver](jala_pretzel_clasica.md) |
+| Jala Shabat Clasica | 18 u | 12.069 | S/ 5.3805 | S/ 14.1913 | [ver](jala_shabat_clasica.md) |
+| Keke de Naranja (porcion) | 24 u | 2.333 | S/ 2.6664 | S/ 5.1155 | [ver](keke_naranja.md) |
+| Nudito de Canela | 40 u | 1.650 | S/ 1.3817 | S/ 2.6083 | [ver](nudito_canela.md) |
+| Nudito de Pizza | 40 u | 1.675 | S/ 1.6318 | S/ 2.8886 | [ver](nudito_pizza.md) |
 
 ## Cómo leer los tiempos
 

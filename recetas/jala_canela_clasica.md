@@ -8,12 +8,12 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 23.50 |
 | Precio neto | S/ 19.9153 |
-| Materia prima | S/ 5.7752 |
-| Mano de obra directa | S/ 2.5704 |
-| CIF de producción | S/ 2.1189 |
-| **Costo unitario (CUF)** | **S/ 10.4645** |
-| Utilidad bruta | S/ 9.4508 (47.5%) |
-| Minutos de persona por unidad | 6.229 |
+| Materia prima | S/ 6.1286 |
+| Mano de obra directa | S/ 2.6470 |
+| CIF de producción | S/ 2.2921 |
+| **Costo unitario (CUF)** | **S/ 11.0677** |
+| Utilidad bruta | S/ 8.8476 (44.4%) |
+| Minutos de persona por unidad | 6.417 |
 | Tandas por semana | 15.1 |
 
 ## 1 · Qué lleva
@@ -44,7 +44,7 @@ Costo heredado por unidad: **S/ 3.2936** (574 g × S/ 0.005738 por g).
 
 ### L1 · Relleno — Relleno de canela y azucar rubia
 
-**118 g por unidad.** La tanda rinde 2,400 g.
+**118 g por unidad.** La tanda rinde 1,980 g.
 
 Se crema la mantequilla con el azúcar y se integran los secos.
 
@@ -58,7 +58,7 @@ Se crema la mantequilla con el azúcar y se integran los secos.
 | Sal marina fina yodada | 10 g | S/ 0.03 |
 | | | **S/ 33.88 por tanda** |
 
-Costo heredado por unidad: **S/ 1.6656**.
+Costo heredado por unidad: **S/ 2.0189**.
 
 ### L2 · Directos del producto
 
@@ -73,7 +73,7 @@ Costo heredado por unidad: **S/ 1.6656**.
 | Bolsa de papel kraft con ventana | 24 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 24 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 3.2936 + rellenos S/ 1.6656 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 5.7753**
+**Materia prima por unidad:** masa S/ 3.2936 + rellenos S/ 2.0189 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 6.1286**
 
 ## 2 · Proceso paso a paso
 
@@ -119,10 +119,10 @@ Minutos de persona por tanda de producto: **110.8**.
 
 | Nivel | Min persona por unidad | % | Costo por unidad |
 |---|---|---|---|
-| Masa heredada | 0.729 | 11.7% | S/ 0.3038 |
-| Relleno heredado | 0.885 | 14.2% | S/ 0.3614 |
-| Pasos propios | 4.615 | 74.1% | S/ 1.9052 |
-| **Total** | **6.229** | 100% | **S/ 2.5704** |
+| Masa heredada | 0.729 | 11.4% | S/ 0.3038 |
+| Relleno heredado | 1.073 | 16.7% | S/ 0.4380 |
+| Pasos propios | 4.615 | 71.9% | S/ 1.9052 |
+| **Total** | **6.417** | 100% | **S/ 2.6470** |
 
 De la tanda propia, **19.8 minutos son preparación**: no cambian si se hornea media tanda. Por eso la tanda chica sale más cara por unidad.
 

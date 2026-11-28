@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 21.00 |
 | Precio neto | S/ 17.7966 |
-| Materia prima | S/ 5.6362 |
+| Materia prima | S/ 5.6360 |
 | Mano de obra directa | S/ 2.8515 |
-| CIF de producción | S/ 2.3470 |
-| **Costo unitario (CUF)** | **S/ 10.8347** |
-| Utilidad bruta | S/ 6.9619 (39.1%) |
+| CIF de producción | S/ 2.5703 |
+| **Costo unitario (CUF)** | **S/ 11.0578** |
+| Utilidad bruta | S/ 6.7388 (37.9%) |
 | Minutos de persona por unidad | 6.900 |
 | Tandas por semana | 7.6 |
 
@@ -41,7 +41,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Sal marina fina yodada | 119 g | 1.8 | S/ 0.33 |
 | | | | **S/ 82.63 por tanda** |
 
-Costo heredado por unidad: **S/ 4.1314** (640 g × S/ 0.006460 por g).
+Costo heredado por unidad: **S/ 4.1312** (640 g × S/ 0.006460 por g).
 
 ### L1 · Mezcla seca — Mezcla de semillas para integral
 
@@ -72,7 +72,7 @@ Costo heredado por unidad: **S/ 0.6887**.
 | Bolsa de papel kraft con ventana | 20 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 20 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 4.1314 + rellenos S/ 0.6887 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 5.6362**
+**Materia prima por unidad:** masa S/ 4.1312 + rellenos S/ 0.6887 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 5.6360**
 
 ## 2 · Proceso paso a paso
 

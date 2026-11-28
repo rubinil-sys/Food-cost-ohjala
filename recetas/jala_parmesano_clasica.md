@@ -8,12 +8,12 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 32.00 |
 | Precio neto | S/ 27.1186 |
-| Materia prima | S/ 8.9069 |
-| Mano de obra directa | S/ 2.8336 |
-| CIF de producción | S/ 2.3347 |
-| **Costo unitario (CUF)** | **S/ 14.0752** |
-| Utilidad bruta | S/ 13.0434 (48.1%) |
-| Minutos de persona por unidad | 6.864 |
+| Materia prima | S/ 9.1431 |
+| Mano de obra directa | S/ 2.8545 |
+| CIF de producción | S/ 2.4812 |
+| **Costo unitario (CUF)** | **S/ 14.4788** |
+| Utilidad bruta | S/ 12.6398 (46.6%) |
+| Minutos de persona por unidad | 6.915 |
 | Tandas por semana | 7.6 |
 
 ## 1 · Qué lleva
@@ -45,7 +45,7 @@ Costo heredado por unidad: **S/ 4.1557** (587 g × S/ 0.007082 por g).
 
 ### L1 · Relleno — Relleno salado de parmesano, edam y ajo
 
-**96 g por unidad.** La tanda rinde 1,800 g.
+**96 g por unidad.** La tanda rinde 1,698 g.
 
 Se ralla el edam, se crema la mantequilla con ajo y se integran los quesos.
 
@@ -58,7 +58,7 @@ Se ralla el edam, se crema la mantequilla con ajo y se integran los quesos.
 | Sal marina fina yodada | 18 g | S/ 0.05 |
 | | | **S/ 73.78 por tanda** |
 
-Costo heredado por unidad: **S/ 3.9350**.
+Costo heredado por unidad: **S/ 4.1713**.
 
 ### L2 · Directos del producto
 
@@ -73,7 +73,7 @@ Costo heredado por unidad: **S/ 3.9350**.
 | Bolsa de papel kraft con ventana | 22 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 22 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 4.1557 + rellenos S/ 3.9350 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 8.9068**
+**Materia prima por unidad:** masa S/ 4.1557 + rellenos S/ 4.1713 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 9.1431**
 
 ## 2 · Proceso paso a paso
 
@@ -119,10 +119,10 @@ Minutos de persona por tanda de producto: **110.2**.
 
 | Nivel | Min persona por unidad | % | Costo por unidad |
 |---|---|---|---|
-| Masa heredada | 1.000 | 14.6% | S/ 0.4166 |
-| Relleno heredado | 0.853 | 12.4% | S/ 0.3484 |
-| Pasos propios | 5.010 | 73.0% | S/ 2.0685 |
-| **Total** | **6.864** | 100% | **S/ 2.8336** |
+| Masa heredada | 1.000 | 14.5% | S/ 0.4166 |
+| Relleno heredado | 0.905 | 13.1% | S/ 0.3694 |
+| Pasos propios | 5.010 | 72.5% | S/ 2.0685 |
+| **Total** | **6.915** | 100% | **S/ 2.8545** |
 
 De la tanda propia, **19.7 minutos son preparación**: no cambian si se hornea media tanda. Por eso la tanda chica sale más cara por unidad.
 

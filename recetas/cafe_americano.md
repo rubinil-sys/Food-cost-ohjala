@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 8.00 |
 | Precio neto | S/ 6.7797 |
-| Materia prima | S/ 2.0784 |
+| Materia prima | S/ 2.0785 |
 | Mano de obra directa | S/ 0.6253 |
-| CIF de producción | S/ 0.8504 |
-| **Costo unitario (CUF)** | **S/ 3.5541** |
-| Utilidad bruta | S/ 3.2256 (47.6%) |
+| CIF de producción | S/ 0.5627 |
+| **Costo unitario (CUF)** | **S/ 3.2665** |
+| Utilidad bruta | S/ 3.5132 (51.8%) |
 | Minutos de persona por unidad | 2.500 |
 | Tandas por semana | 567.1 |
 
