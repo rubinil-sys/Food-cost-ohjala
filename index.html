@@ -227,10 +227,16 @@ details summary::marker{color:var(--c600)}
 .tcount{font-family:var(--fm);font-size:11.5px;color:var(--ink5);margin-left:auto}
 th.ord{color:var(--c600)}
 th.ord::after{content:" \2195";font-size:10px}
-.gi{display:flex;gap:6px;padding:0 0 9px;flex-wrap:wrap}
-.gb{background:transparent;border:1.5px solid var(--lineS);color:var(--ink7);padding:6px 15px;border-radius:999px;
- font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s}
-.gb:hover{border-color:var(--c500);color:var(--ink)}
+.gi{display:flex;gap:7px;padding:0 0 10px;flex-wrap:wrap;align-items:stretch}
+.gb{background:transparent;border:1.5px solid var(--lineS);padding:7px 17px 8px;border-radius:17px;
+ font-family:inherit;cursor:pointer;transition:all .12s;display:flex;flex-direction:column;
+ align-items:flex-start;gap:1px;text-align:left;line-height:1.25}
+.gbn{font-size:13px;font-weight:700;color:var(--ink7)}
+.gbd{font-size:10.5px;font-weight:400;color:var(--ink5);opacity:.8}
+.gb.on .gbn,.gb.on .gbd{color:#fff} .gb.on .gbd{opacity:.78}
+.gb:hover .gbn{color:var(--ink)}
+@media(max-width:760px){.gbd{display:none} .gb{border-radius:999px;padding:6px 15px}}
+.gb:hover{border-color:var(--c500)}
 .gb.on{background:var(--g900);border-color:var(--g900);color:#fff}
 .flujo{display:flex;align-items:stretch;gap:5px;flex-wrap:wrap;margin-top:6px}
 .fcaja{flex:1 1 140px;min-width:132px;text-align:left;background:#fff;border:1.5px solid var(--lineS);border-radius:11px;
@@ -600,11 +606,11 @@ th.ord::after{content:" \2195";font-size:10px}
  </div></div></header>
 <nav class="tabs">
  <div class="gi" id="grupos">
-  <button class="gb" data-g="ventas">Ventas</button>
-  <button class="gb" data-g="productos">Productos</button>
-  <button class="gb on" data-g="negocio">Negocio</button>
-  <button class="gb" data-g="operacion">Operación</button>
-  <button class="gb" data-g="equipo">Equipo</button>
+  <button class="gb" data-g="ventas"><span class="gbn">Ventas</span><span class="gbd">Lo que entra, por dónde y qué viene</span></button>
+  <button class="gb" data-g="productos"><span class="gbn">Productos</span><span class="gbd">De qué está hecho cada pan</span></button>
+  <button class="gb on" data-g="negocio"><span class="gbn">Negocio</span><span class="gbd">La foto completa y qué atender</span></button>
+  <button class="gb" data-g="operacion"><span class="gbn">Operación</span><span class="gbd">Qué hornear y qué comprar</span></button>
+  <button class="gb" data-g="equipo"><span class="gbn">Equipo</span><span class="gbd">La gente y los accesos</span></button>
  </div>
  <div class="ti">
  <button class="tb" data-g="ventas" data-t="ventas"><span class="tbn">Ventas</span><span class="tbd">Transacciones, ticket, meta y hora</span></button>
