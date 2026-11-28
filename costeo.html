@@ -595,20 +595,20 @@ th.ord::after{content:" \2195";font-size:10px}
  </div></div></header>
 <nav class="tabs">
  <div class="gi" id="grupos">
-  <button class="gb on" data-g="negocio">Negocio</button>
   <button class="gb" data-g="ventas">Ventas</button>
+  <button class="gb on" data-g="negocio">Negocio</button>
   <button class="gb" data-g="productos">Productos</button>
   <button class="gb" data-g="operacion">Operación</button>
   <button class="gb" data-g="equipo">Equipo</button>
  </div>
  <div class="ti">
+ <button class="tb" data-g="ventas" data-t="ventas">Ventas</button>
+ <button class="tb" data-g="ventas" data-t="can">Canales</button>
+ <button class="tb" data-g="ventas" data-t="pron">Pronóstico</button>
  <button class="tb on" data-g="negocio" data-t="res">Resumen</button>
  <button class="tb" data-g="negocio" data-t="util">Del costo al EBITDA</button>
  <button class="tb" data-g="negocio" data-t="ale">Alertas <span class="cnt" id="cAle">0</span></button>
  <button class="tb" data-g="negocio" data-t="esc">Escenarios <span class="cnt" id="cEsc">0</span></button>
- <button class="tb" data-g="ventas" data-t="ventas">Ventas</button>
- <button class="tb" data-g="ventas" data-t="can">Canales</button>
- <button class="tb" data-g="ventas" data-t="pron">Pronóstico</button>
  <button class="tb" data-g="productos" data-t="prod">Productos <span class="cnt" id="cProd">19</span></button>
  <button class="tb" data-g="productos" data-t="ins">Insumos y recetas</button>
  <button class="tb" data-g="productos" data-t="mo">Mano de obra</button>
@@ -1131,15 +1131,15 @@ function vPlanilla(){
    Quince pestañas en cinco grupos es mucho para adivinar. Esto dice
    que responde cada una y por donde pasar para resolver una pregunta. */
 const MAPA_GRUPOS=[
+ {g:"ventas", n:"Ventas", d:"Lo que entra por caja, por canal y lo que viene.",
+  t:[["ventas","Ventas","Transacciones, ticket, meta contra real, margen por canal y curva horaria."],
+     ["can","Canales","Economía de tienda, pedidos, Rappi y corporativo. Clientes B2B y simulador."],
+     ["pron","Pronóstico","Proyección por base elegible, con supuestos y capacidad."]]},
  {g:"negocio", n:"Negocio", d:"La foto completa y lo que hay que atender.",
   t:[["res","Resumen","Cuánto se vende, cuánto deja cada producto y el recargo al consumo."],
      ["util","Del costo al EBITDA","El P&L línea por línea, los cuatro pisos del costo, el peaje y el impuesto."],
      ["ale","Alertas","Lo que está mal hoy: márgenes bajos, estaciones saturadas, precios desfasados."],
      ["esc","Escenarios","Guardar un estado de los deslizadores y compararlo después."]]},
- {g:"ventas", n:"Ventas", d:"Lo que entra por caja, por canal y lo que viene.",
-  t:[["ventas","Ventas","Transacciones, ticket, meta contra real, margen por canal y curva horaria."],
-     ["can","Canales","Economía de tienda, pedidos, Rappi y corporativo. Clientes B2B y simulador."],
-     ["pron","Pronóstico","Proyección por base elegible, con supuestos y capacidad."]]},
  {g:"productos", n:"Productos", d:"De qué está hecho cada pan y cuánto trabajo lleva.",
   t:[["prod","Productos","Ficha de cada uno: receta en cascada, pasos, márgenes y precio sugerido."],
      ["ins","Insumos y recetas","Precios de compra, mermas, masas compartidas y rellenos."],
