@@ -1919,11 +1919,35 @@ const CUAD={
   perro:       {n:"Perro",             i:"✕", c:"ba",
     q:"Vende poco y deja poco.", a:"Candidato a salir de la carta, salvo que esté por una razón que no es la plata: completar la vitrina, un cliente fiel, una temporada."}
 };
+/* El nombre entero no entra al lado de la burbuja; se recorta en un limite de
+   palabra y se quitan las coletillas que no distinguen nada. */
+function cortoNom(s){
+  let n=String(s||"").replace(/\s*\(porcion\)/i,"").replace(/\s*cl[aá]sic[ao]\b/i,"")
+        .replace(/\s*\d+\s*(ml|g|oz)\b/i,"").trim();
+  if(n.length<=21) return n;
+  const p=n.slice(0,21).lastIndexOf(" ");
+  return (p>10?n.slice(0,p):n.slice(0,20))+"…";
+}
+/* Las etiquetas se separan por columnas: dentro de cada mitad del grafico se
+   ordenan por altura y se empujan hacia abajo lo justo para no superponerse. */
+function separaEtiquetas(pts,alto,sep){
+  const porLado={izq:[],der:[]};
+  pts.forEach(p=>porLado[p.lado].push(p));
+  Object.values(porLado).forEach(g=>{
+    g.sort((a,b)=>a.y-b.y);
+    let ult=-1e9;
+    g.forEach(p=>{ p.ly=Math.max(p.y, ult+sep); ult=p.ly; });
+    const exceso=(g.length?g[g.length-1].ly:0)-(alto-8);
+    if(exceso>0){ const k=exceso/g.length; g.forEach((p,i)=>{ p.ly-=k*(g.length-i)/g.length*g.length; }); 
+      let u=-1e9; g.forEach(p=>{ p.ly=Math.max(14,Math.max(p.ly,u+sep)); u=p.ly; }); }
+  });
+  return pts;
+}
 function cardMenu(){
   const M=menuIngenieria(); if(!M) return "";
   const {filas,mcProm,popEsper,CB}=M;
   const cuenta=k=>filas.filter(x=>x.cuad===k).length;
-  const W=760,H=430,PAD=62;
+  const W=900,H=470,PAD=86;
   const maxPop=Math.max(...filas.map(x=>x.pop))*1.12;
   const maxMC=Math.max(...filas.map(x=>x.mcU))*1.12;
   const px=v=>PAD+(v/maxPop)*(W-PAD-28);
@@ -1948,9 +1972,28 @@ function cardMenu(){
      <text x="${PAD+8}" y="40" font-size="13" font-weight="700" fill="var(--c600)">? Rompecabezas</text>
      <text x="${W-34}" y="${H-PAD-9}" text-anchor="end" font-size="13" font-weight="700" fill="var(--wa)">◆ Caballo de batalla</text>
      <text x="${PAD+8}" y="${H-PAD-9}" font-size="13" font-weight="700" fill="var(--ba)">✕ Perro</text>
-     ${filas.map(x=>`<g><circle cx="${px(x.pop).toFixed(1)}" cy="${py(x.mcU).toFixed(1)}"
-       r="${Math.max(5,Math.min(19,Math.sqrt(x.mc)/9)).toFixed(1)}" fill="${COLOR[x.cuad]}" opacity=".78"
-       stroke="#fff" stroke-width="1.5"><title>${esc(x.p.nombre)} · ${N(x.u)} u · ${S(x.mcU)} por unidad</title></circle></g>`).join("")}
+     ${(()=>{
+       const pts=filas.map((x,i)=>{
+         const cx=px(x.pop), cy=py(x.mcU);
+         return {x:cx, y:cy, r:Math.max(7,Math.min(17,Math.sqrt(x.mc)/10)),
+                 lado:cx>(PAD+W-28)/2?"izq":"der", f:x, n:i+1};
+       });
+       separaEtiquetas(pts,H-PAD,13.5);
+       return pts.map(p=>{
+         const lx = p.lado==="der" ? p.x+p.r+5 : p.x-p.r-5;
+         const anc= p.lado==="der" ? "start" : "end";
+         return `<g>
+          ${Math.abs(p.ly-p.y)>3?`<line x1="${(p.lado==="der"?p.x+p.r:p.x-p.r).toFixed(1)}" y1="${p.y.toFixed(1)}"
+            x2="${lx.toFixed(1)}" y2="${(p.ly-3.5).toFixed(1)}" stroke="var(--ink5)" stroke-width=".7" opacity=".45"/>`:""}
+          <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}"
+            fill="${COLOR[p.f.cuad]}" opacity=".80" stroke="#fff" stroke-width="1.5">
+           <title>${esc(p.f.p.nombre)} · ${N(p.f.u)} u · ${S(p.f.mcU)} por unidad · ${CUAD[p.f.cuad].n}</title></circle>
+          <text x="${p.x.toFixed(1)}" y="${(p.y+3.4).toFixed(1)}" text-anchor="middle" font-size="10"
+            font-weight="700" fill="#fff" style="pointer-events:none">${p.n}</text>
+          <text x="${lx.toFixed(1)}" y="${p.ly.toFixed(1)}" text-anchor="${anc}" font-size="10.5"
+            fill="var(--ink7)">${esc(cortoNom(p.f.p.nombre))}</text>
+         </g>`;}).join("");
+     })()}
      <text x="${(PAD+W)/2}" y="${H-16}" text-anchor="middle" font-size="12" fill="var(--ink5)">Popularidad: participación en las unidades vendidas →</text>
      <text x="16" y="${H/2}" text-anchor="middle" font-size="12" fill="var(--ink5)" transform="rotate(-90 16 ${H/2})">Margen de contribución por unidad →</text>
     </svg>
@@ -1962,11 +2005,12 @@ function cardMenu(){
     </div>
    </div>
 
-   <div class="tw" style="margin-top:18px"><table><thead><tr><th>Producto</th><th>Cuadrante</th>
+   <div class="tw" style="margin-top:18px"><table><thead><tr><th class="n">#</th><th>Producto</th><th>Cuadrante</th>
      <th class="n">Unidades</th><th class="n">% de las unidades</th><th class="n">Neto real</th>
      <th class="n">Materia prima</th><th class="n">Margen por unidad</th><th class="n">Margen total</th>
      ${CB?`<th class="n">S/ por minuto de ${esc(CB.nombre)}</th>`:""}</tr></thead>
-    <tbody>${filas.slice().sort((a,b)=>b.mc-a.mc).map(x=>`<tr class="clic" data-p="${x.p.id}">
+    <tbody>${filas.map((x,i)=>({x,n:i+1})).sort((a,b)=>b.x.mc-a.x.mc).map(({x,n})=>`<tr class="clic" data-p="${x.p.id}">
+      <td class="n" style="font-family:var(--fm);font-weight:700;color:var(--ink5)">${n}</td>
       <td style="font-weight:600">${esc(x.p.nombre)}</td>
       <td><span class="bd ${CUAD[x.cuad].c}">${CUAD[x.cuad].i} ${CUAD[x.cuad].n}</span></td>
       <td class="n">${N(x.u)}</td>
@@ -1976,7 +2020,7 @@ function cardMenu(){
       <td class="n" style="font-weight:600">${S(x.mcU)}</td>
       <td class="n">${S0(x.mc)}</td>
       ${CB?`<td class="n">${x.porMin!=null?S(x.porMin):'<span style="color:var(--ink5)">no la usa</span>'}</td>`:""}</tr>`).join("")}</tbody>
-    <tfoot><tr><td>TOTAL</td><td></td><td class="n">${N(M.U)}</td><td class="n">100%</td>
+    <tfoot><tr><td></td><td>TOTAL</td><td></td><td class="n">${N(M.U)}</td><td class="n">100%</td>
      <td class="n"></td><td class="n"></td><td class="n">${S(mcProm)}</td><td class="n">${S0(M.MC)}</td>
      ${CB?`<td class="n"></td>`:""}</tr></tfoot></table></div>
 
