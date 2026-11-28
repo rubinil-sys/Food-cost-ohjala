@@ -1972,8 +1972,21 @@ function cardDecisiones(){
   const pal=[
     {n:"Juntar tandas: dejar de hornear a medio llenar", g:setup/2*prom, c:0,
      cap:"+"+N(setup/2)+" min", nota:"La preparación es el "+P(100*setup/(setup+proceso),1)+" del trabajo y no produce nada. Hacer la mitad de arranques libera esos minutos sin contratar a nadie. El límite es la vida útil: se agrupan días contiguos, no la semana."},
-    rap?{n:"Lista de precios propia para "+rap.nombre+" (+25%)", g:palancaRappi(0.25,0.10), c:0,
-     cap:"libera minutos", nota:rap.nombre+" cobra hoy el mismo precio que la vitrina y la panadería paga el "+P(rap.comision_pct,0)+" de comisión. Si cae el volumen, esos minutos los vende la vitrina con mejor margen: se gana igual."}:null,
+    rap?(()=>{
+      /* La elasticidad de la demanda no la sabe nadie acá, asi que no se inventa:
+         se busca el punto donde la decision se da vuelta. Es la pregunta que si
+         tiene respuesta — "cuanto volumen puedo perder antes de que deje de
+         convenir" — y se contesta con la misma aritmetica. */
+      let lo=0, hi=0.95;
+      for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(palancaRappi(0.25,m)>0) lo=m; else hi=m; }
+      return {n:"Lista de precios propia para "+rap.nombre+" (+25%)", g:palancaRappi(0.25,0), c:0,
+       cap:"libera minutos",
+       nota:rap.nombre+" cobra hoy el mismo precio que la vitrina y la panadería paga el "+P(rap.comision_pct,0)+
+        " de comisión. Lo que gana depende de cuánto volumen se pierda, y eso no está medido: "+
+        "la cifra de al lado supone que no se pierde nada. Lo que sí se puede calcular es el punto de quiebre — "+
+        "conviene mientras el volumen no caiga más de "+P(100*lo,1)+" — y además, si cae, esos minutos los vende "+
+        "la vitrina con mejor margen."};
+    })():null,
     {n:"Bajar 10% la estructura", g:ESTRa*0.10, c:0, cap:"—",
      nota:"La estructura es "+P(100*ESTRa/V,2)+" de la venta. La línea más grande es la planilla de administración."},
     ...peores.map(x=>({n:"Subir 15% el precio de "+x.p.nombre, g:alzaPrecio(x,0.15), c:0, cap:"—",
