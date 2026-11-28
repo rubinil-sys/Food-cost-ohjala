@@ -609,7 +609,6 @@ th.ord::after{content:" \2195";font-size:10px}
  <button class="tb" data-g="productos" data-t="ins">Insumos y recetas</button>
  <button class="tb" data-g="productos" data-t="mo">Mano de obra</button>
  <button class="tb" data-g="ventas" data-t="ventas">Ventas</button>
- <button class="tb" data-g="ventas" data-t="tab">Tablero</button>
  <button class="tb" data-g="ventas" data-t="can">Canales</button>
  <button class="tb" data-g="ventas" data-t="pron">Pronóstico</button>
  <button class="tb" data-g="operacion" data-t="plan">Plan de producción</button>
@@ -626,7 +625,6 @@ th.ord::after{content:" \2195";font-size:10px}
  <section id="p-ins" class="pane"></section>
  <section id="p-mo" class="pane"></section>
  <section id="p-util" class="pane"></section>
- <section id="p-tab" class="pane"></section>
  <section id="p-can" class="pane"></section>
  <section id="p-pron" class="pane"></section>
  <section id="p-ventas" class="pane"></section>
@@ -1121,7 +1119,6 @@ const MAPA_GRUPOS=[
      ["mo","Mano de obra","Minutos por estación, tarifas, capacidad y quién satura qué."]]},
  {g:"ventas", n:"Ventas", d:"Lo que entra por caja, por canal y lo que viene.",
   t:[["ventas","Ventas","Transacciones, ticket, meta contra real, margen por canal y curva horaria."],
-     ["tab","Tablero","Venta por mes y canal, 2025 contra 2026, en soles o en unidades."],
      ["can","Canales","Economía de tienda, pedidos, Rappi y corporativo. Clientes B2B y simulador."],
      ["pron","Pronóstico","Proyección por base elegible, con supuestos y capacidad."]]},
  {g:"operacion", n:"Operación", d:"Qué hornear y qué comprar.",
@@ -2947,21 +2944,23 @@ function vTablero(){
   const ant=D.rentabilidad_canal[ST.anio==="2026"?"2025":"2026"]||{};
   const Vant=D.canales.reduce((s,c)=>s+(ant[c.id]?.venta||0),0);
   const dif=Vant?100*(V-Vant)/Vant:0;
-  $("#p-tab").innerHTML=`
-  <div class="note">Tablero de ventas de ${ST.anio}. Mide el negocio por canal, por mes y por ticket, antes de entrar al costo.</div>
+  const dest=$("#histVentas")||$("#p-tab"); if(!dest) return;
+  dest.innerHTML=`
+  <h3 style="font-family:var(--fd);font-size:17px;margin:26px 0 3px">El año completo</h3>
+  <p class="cs" style="margin:0 0 13px">Arriba está la calidad de la venta de un mes. Acá abajo, la serie de los doce
+   meses y la comparación contra el año anterior: para qué mes es bueno y para cuál hay que prepararse.</p>
   <div class="kpis">
-   <div class="kpi"><span class="kl">Venta neta del año</span><div class="kv">${S0(V)}</div>
-     <div class="kf"><span>${N(U)} unidades</span><span class="bd ${dif>0?'ok':'ba'}">${dif>0?"+":""}${P(dif,1)} vs ${ST.anio==="2026"?"2025":"2026"}</span></div></div>
-   <div class="kpi c"><span class="kl">Ticket promedio</span><div class="kv">${S(V/U)}</div>
-     <div class="kf"><span>por unidad vendida</span></div></div>
    <div class="kpi ok"><span class="kl">Mejor mes</span><div class="kv">${MES[+mejor[0]]}</div>
      <div class="kf"><span>${S0(mejor[1])}</span><span>${P(100*mejor[1]/V,1)} del año</span></div></div>
    <div class="kpi wa"><span class="kl">Mes más flojo</span><div class="kv">${MES[+peor[0]]}</div>
      <div class="kf"><span>${S0(peor[1])}</span><span>${P(100*peor[1]/V,1)}</span></div></div>
    <div class="kpi"><span class="kl">Venta promedio/mes</span><div class="kv">${S0(V/12)}</div>
      <div class="kf"><span>${N(U/12)} unidades</span></div></div>
+   <div class="kpi c"><span class="kl">Contra ${ST.anio==="2026"?"2025":"2026"}</span>
+     <div class="kv">${dif>0?"+":""}${P(dif,1)}</div>
+     <div class="kf"><span>${S0(V)} en el año</span></div></div>
   </div>
-  <div class="card"><div class="ch"><div><h2 class="ct">Venta por mes y canal</h2>
+  <div class="card"><div class="ch"><div><h2 class="ct">5 · Venta por mes y canal</h2>
     <p class="cs">Cada barra apilada muestra de dónde vino ${uni?"el volumen":"la venta"} de ese mes.
      ${uni?"En unidades: así se ve la carga real de la panadería, que no sube igual que la plata."
           :"En soles. Cambia a unidades para ver el volumen que hay detrás."}</p></div>
@@ -3008,7 +3007,7 @@ function vTablero(){
       Para programar la panadería manda la columna de unidades, no la de soles.</div>`})()}
   </div>
 
-  <div class="card"><div class="ch"><div><h2 class="ct">2025 contra 2026, mes a mes</h2>
+  <div class="card"><div class="ch"><div><h2 class="ct">6 · Este año contra el anterior, mes a mes</h2>
     <p class="cs">Las dos barras de cada mes son el mismo mes de cada año. Lo que importa no es que el total suba,
      sino en qué meses sube y si sube por volumen o por precio.</p></div>
    <div class="lg"><span><i style="background:var(--ink5)"></i>2025</span><span><i style="background:var(--g700)"></i>2026</span></div></div>
@@ -3065,7 +3064,7 @@ function vTablero(){
       y el que más empuja es <b>${MES[peores[11].m]}</b> (${peores[11].d>0?"+":""}${P(peores[11].d,1)}).
       Un crecimiento concentrado en los meses que ya estaban llenos es el que revienta la planta.</div>`})()}
   </div>
-  <div class="card"><div class="ch"><div><h2 class="ct">Productos por canal</h2>
+  <div class="card"><div class="ch"><div><h2 class="ct">7 · Qué se vende en cada canal</h2>
     <p class="cs">Dónde se vende cada cosa, en unidades, y cuánta plata representa. Hay productos que viven del delivery
      y otros que son de vitrina.</p></div></div>
    <div class="tw"><table><thead><tr><th>Producto</th>
@@ -3081,7 +3080,7 @@ function vTablero(){
       <td><div class="stk" style="width:92px">${D.canales.map(c=>{const u=und(p.id,ST.anio,c.id);
         return `<i style="width:${tot?100*u/tot:0}%;background:${c.id==='tienda'?'var(--g700)':c.id==='pedidos'?'var(--teal)':c.id==='corporativo'?'#7c5cbf':'var(--c500)'}"></i>`}).join("")}</div></td></tr>`}).join("")}</tbody>
    </table></div></div>`;
-  $("#tbMet").onchange=e=>{TB.met=e.target.value;vTablero();};
+  if($("#tbMet")) $("#tbMet").onchange=e=>{TB.met=e.target.value;vTablero();};
   $$("#p-tab .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
 }
 
@@ -3271,8 +3270,10 @@ function vVentas(){
      <td class="n">${S(x.p.ub)}</td>
      <td class="n"><span class="bd ${x.p.ub_pct>=45?'ok':x.p.ub_pct>=35?'wa':'ba'}">${P(x.p.ub_pct,1)}</span></td>
      <td style="font-size:12.5px">${esc(x.cn)} <span style="color:var(--ink5)">${x.u?P(100*x.mejor.q/x.u,0):""}</span></td></tr>`).join("")}</tbody>
-   </table></div></div>`;
+   </table></div></div>
+   <div id="histVentas"></div>`;
   $("#vtMes").onchange=e=>{VT.mes=e.target.value;vVentas();setTimeout(()=>tablasFiltrables($("#p-ventas")),20);};
+  try{ vTablero(); }catch(e){}
   $$("#p-ventas .clic").forEach(t=>t.onclick=()=>abrir(t.dataset.p));
 }
 
@@ -4695,7 +4696,7 @@ function calcAlertas(){
     const top=100*orden[0].neto*orden[0].u/V;
     if(top>30) add("baja","venta",`La venta depende de ${orden[0].nombre}`,
       `Un solo producto es ${P(top,1)} de la facturación.`,
-      `Si ese producto falla una semana, el impacto es directo. Vale desarrollar el segundo.`, "tab");
+      `Si ese producto falla una semana, el impacto es directo. Vale desarrollar el segundo.`, "ventas");
   }
   const sev={alta:0,media:1,baja:2};
   return A.sort((a,b)=>sev[a.sev]-sev[b.sev]);
@@ -4822,7 +4823,7 @@ function guardar(){
 }
 
 /* ---------------- arranque ---------------- */
-function render(){vRes();vProd();vIns();vMo();vUtil();vTablero();vCanales();vVentas();vPron();vPlanilla();vPlan();vInv();vVta();vEsc();vAlertas();pintarBadge();setTimeout(()=>tablasFiltrables(),30);try{ if(esAdmin()) vUsuarios(); }catch(e){}
+function render(){vRes();vProd();vIns();vMo();vUtil();vCanales();vVentas();vPron();vPlanilla();vPlan();vInv();vVta();vEsc();vAlertas();pintarBadge();setTimeout(()=>tablasFiltrables(),30);try{ if(esAdmin()) vUsuarios(); }catch(e){}
   $("#cEsc").textContent=ST.esc.length; $("#cProd").textContent=D.productos.length;}
 function puedeVer(k){ try{ return permitida(k); }catch(e){ return true; } }
 function mostrarGrupo(g,activar){
@@ -4880,8 +4881,6 @@ const PESTANAS=[
   expone:"Costo por minuto de cada estación. De ahí se deduce la planilla y cuánto gana cada puesto."},
  {k:"util", n:"Utilidad bruta",     sens:"alta",  qui:"Dueño y gerencia",
   expone:"El estado de resultados: gastos, alquiler, punto de equilibrio."},
- {k:"tab",  n:"Tablero de ventas",  sens:"media", qui:"Gerencia y administración",
-  expone:"Venta por mes y por producto. No muestra costos."},
  {k:"can",  n:"Canales",            sens:"crítica", qui:"Solo dueño",
   expone:"La comisión negociada con Rappi y los descuentos B2B. Es información comercial confidencial."},
  {k:"pron", n:"Pronóstico",         sens:"baja",  qui:"Cualquiera del equipo",
@@ -4906,9 +4905,9 @@ const PESTANAS=[
 const PAQUETES={
  panaderia:{n:"Panadería",   v:["plan","pron","vta","inv"],
    d:"Lo que necesita quien hornea: qué producir, cuánto se proyecta y cuánto insumo se va. Ningún precio ni margen."},
- mostrador:{n:"Mostrador",   v:["plan","tab","pron","ventas"],
+ mostrador:{n:"Mostrador",   v:["plan","pron","ventas"],
    d:"Lo operativo más la venta. No ve costos, recetas ni planilla."},
- gerencia: {n:"Gerencia",    v:["res","prod","util","tab","ventas","pron","plan","vta","inv","ale","esc"],
+ gerencia: {n:"Gerencia",    v:["res","prod","util","ventas","pron","plan","vta","inv","ale","esc"],
    d:"Todo salvo recetas, mano de obra y canales: ve el resultado sin el know-how ni los sueldos."},
  todo:     {n:"Acceso total", v:PESTANAS.filter(p=>p.k!=="usr").map(p=>p.k),
    d:"Todas las pestañas menos la administración de usuarios."}
