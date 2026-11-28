@@ -3347,6 +3347,55 @@ function invEstado(){
       valor:stock!=null?stock*i.costo_compra:0, costoPedido:pedir?pedir*i.costo_compra:0, sem};
   });
 }
+/* Lista de conteos compartidos. Se lee de la base, asi que muestra lo que conto
+   cualquiera desde cualquier equipo. Entre dos conteos de insumos se puede medir
+   la merma real; entre dos de turno, lo que no cuadra en vitrina. */
+function pintarConteos(){
+  const cont=$("#listaConteos"), est=$("#cntEstado"); if(!cont) return;
+  if(typeof listarConteos!=="function"){
+    if(est) est.textContent="sin sesión";
+    cont.innerHTML=`<div class="note">Los conteos compartidos necesitan sesión abierta.
+     Lo que se cuente ahora igual queda en este navegador.</div>`; return;
+  }
+  Promise.all([listarConteos("insumos",12), listarConteos("producto_terminado",12)])
+   .then(([ins,pt])=>{
+    if(est) est.textContent=(ins.length+pt.length)+" guardados";
+    const CD=consumoDiario();
+    const fTeorico=(dias)=>D.insumos.reduce((s,i)=>
+      s+((CD[i.id]||0)/(i.factor_conversion_compra_receta||1))*dias*i.costo_compra,0);
+    const tabIns=!ins.length?`<div class="note">Todavía nadie cerró un conteo de almacén desde la aplicación.</div>`:
+     `<div class="tw"><table><thead><tr><th>Fecha</th><th>Contó</th><th>Guardó</th>
+       <th class="n">Insumos</th><th class="n">Valor</th>
+       <th class="n">Consumo teórico desde el anterior</th><th class="n">Diferencia</th></tr></thead>
+      <tbody>${ins.map((h,k)=>{const prev=ins[k+1]; let teor=null,dif=null;
+        if(prev){ const dias=(new Date(h.fecha)-new Date(prev.fecha))/86400000;
+          if(dias>0){ teor=fTeorico(dias); dif=((prev.valor||0)-(h.valor||0))-teor; } }
+        return `<tr><td style="font-weight:600">${esc(h.fecha)}</td>
+         <td>${esc(h.responsable||"—")}</td>
+         <td style="font-size:12px;color:var(--ink5)">${esc(h.autor_email||"—")}</td>
+         <td class="n">${N(h.n_lineas)}</td><td class="n">${S0(h.valor||0)}</td>
+         <td class="n">${teor!=null?S0(teor):"—"}</td>
+         <td class="n" style="font-weight:700;color:${dif==null?'var(--ink5)':dif>0?'var(--ba)':'var(--ok)'}">
+          ${dif!=null?(dif>0?"+":"")+S0(dif):"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+    const tabPT=!pt.length?`<div class="note" style="margin-top:10px">Todavía nadie cerró un turno de vitrina.</div>`:
+     `<h3 style="font-family:var(--fd);font-size:15px;margin:18px 0 3px">Turnos de vitrina</h3>
+      <div class="tw"><table><thead><tr><th>Fecha</th><th>Turno</th><th>Día</th><th>Guardó</th>
+       <th class="n">Productos</th><th class="n">Unidades en vitrina</th></tr></thead>
+      <tbody>${pt.map(h=>`<tr><td style="font-weight:600">${esc(h.fecha)}</td>
+        <td><span class="bd nt">${esc(h.turno||"—")}</span></td><td>${esc(h.dia||"—")}</td>
+        <td style="font-size:12px;color:var(--ink5)">${esc(h.autor_email||"—")}</td>
+        <td class="n">${N(h.n_lineas)}</td><td class="n">${N(h.unidades||0)}</td></tr>`).join("")}</tbody></table></div>`;
+    cont.innerHTML=tabIns+tabPT+
+     `<div class="note" style="margin:12px 0 0"><b>Por qué están en la base y no solo en el navegador.</b>
+      Un conteo que vive en el navegador aguanta una recarga, pero no sale de ese equipo: si Deborah cuenta en
+      la tableta de la panadería, en tu laptop no hay nada. Acá quedan con quién los guardó y a qué hora, y no
+      se pueden editar después — si un conteo salió mal, se cuenta de nuevo y los dos quedan a la vista.</div>`;
+   }).catch(e=>{
+    if(est) est.textContent="no se pudo leer";
+    cont.innerHTML=`<div class="note aw">No se pudieron leer los conteos del equipo: ${esc(e.message||String(e))}.
+     Hace falta sesión abierta y perfil aprobado. Lo que se cuente igual queda en este navegador.</div>`;
+   });
+}
 function vInv(){
   const E=invEstado();
   const F=E.filter(x=>(!IV.fam||x.familia===IV.fam)&&(!IV.frec||x.frecuencia_conteo===IV.frec)
@@ -3503,6 +3552,7 @@ function vInv(){
      <select id="ptDia">${[["lunes","Lunes"],["martes","Martes"],["miercoles","Miércoles"],["jueves","Jueves"],
        ["viernes","Viernes"],["sabado","Sábado"],["domingo","Domingo"]].map(([k,n])=>
        `<option value="${k}" ${PT.dia===k?"selected":""}>${n}</option>`).join("")}</select></div>
+    <button class="btn" id="ptCerrar">Cerrar el turno</button>
     <button class="btn" id="ptLimpiar">Borrar</button></div></div>
    ${(()=>{
      const PH=D.perfil_hora||{}, per=D.perfil_dia||{};
@@ -3583,7 +3633,15 @@ function vInv(){
        <td><button class="btn sm" data-delh="${k}">Borrar</button></td></tr>`}).join("")}</tbody></table></div>
    <div class="note" style="margin:12px 0 0">La columna de diferencia es lo que desapareció sin pasar por una receta:
     merma, rotura, consumo del personal o error de conteo. En positivo, faltó más de lo que el modelo explica.</div>
-  </div>`:""}`;
+   <div class="note" style="margin:9px 0 0"><b>Esta tabla es de este navegador.</b> Los conteos compartidos con
+    el resto del equipo están abajo.</div>
+  </div>`:""}
+
+  <div class="card" id="cardConteos"><div class="ch"><div><h2 class="ct">7 · Conteos del equipo</h2>
+    <p class="cs">Lo que contó cualquiera, desde cualquier equipo, con su nombre y su hora. Un conteo guardado no se edita: si salió mal, se cuenta de nuevo.</p></div>
+    <span class="bd nt" id="cntEstado">—</span></div>
+   <div id="listaConteos"><p class="cs">Cargando…</p></div>
+  </div>`;
 
   const g=()=>{ST.inv=ST.inv||{conteos:{}};};
   $("#ivFecha").onchange=e=>{g();ST.inv.fecha=e.target.value;save();};
@@ -3601,24 +3659,56 @@ function vInv(){
     save(); vInv();
   });
   $("#ivLimpiar").onclick=()=>{if(confirm("¿Borrar el conteo actual?")){ST.inv={conteos:{}};save();vInv();}};
-  $("#ivCerrar").onclick=()=>{
+  $("#ivCerrar").onclick=async()=>{
     if(!contados.length) return alert("No hay nada contado todavía.");
+    const fecha=($("#ivFecha").value||hoy), resp=$("#ivResp").value||"";
     ST.invHist=ST.invHist||[];
-    ST.invHist.unshift({fecha:($("#ivFecha").value||hoy),responsable:$("#ivResp").value||"",
-      n:contados.length, valor:valorInv, conteos:{...((ST.inv||{}).conteos||{})}});
+    ST.invHist.unshift({fecha, responsable:resp, n:contados.length, valor:valorInv,
+      conteos:{...((ST.inv||{}).conteos||{})}});
     ST.invHist=ST.invHist.slice(0,12);
-    save(); vInv();
+    save();
+    const b=$("#ivCerrar"); if(b){b.disabled=true;b.textContent="Guardando…";}
+    try{
+      if(typeof guardarConteo!=="function") throw new Error("sin sesión");
+      await guardarConteo({tipo:"insumos", fecha, responsable:resp,
+        lineas:{...((ST.inv||{}).conteos||{})}, n:contados.length, valor:+valorInv.toFixed(4)});
+      vInv();
+      setTimeout(()=>{const x=$("#ivCerrar"); if(x){x.disabled=false;x.textContent="Cerrar el conteo";}},100);
+    }catch(e){
+      vInv();
+      setTimeout(()=>{const x=$("#ivCerrar"); if(x){x.disabled=false;x.textContent="Cerrar el conteo";}},100);
+      alert("El conteo quedó guardado en este navegador, pero NO se compartió con el equipo:\n"
+        +(e.message||e)+"\n\nPara compartirlo hay que tener sesión abierta y perfil aprobado.");
+    }
   };
   $$("#p-inv [data-delh]").forEach(b=>b.onclick=()=>{ST.invHist.splice(+b.dataset.delh,1);save();vInv();});
   $("#ptTurno").onchange=e=>{PT.turno=e.target.value;vInv();};
   $("#ptDia").onchange=e=>{PT.dia=e.target.value;vInv();};
   $("#ptLimpiar").onclick=()=>{ST.invPT={conteos:{}};save();vInv();};
+  if($("#ptCerrar")) $("#ptCerrar").onclick=async()=>{
+    const c=((ST.invPT||{}).conteos)||{};
+    const ids=Object.keys(c); if(!ids.length) return alert("No hay nada contado en el turno todavía.");
+    const unid=ids.reduce((s,k)=>s+(c[k]||0),0);
+    const b=$("#ptCerrar"); b.disabled=true; b.textContent="Guardando…";
+    try{
+      if(typeof guardarConteo!=="function") throw new Error("sin sesión");
+      await guardarConteo({tipo:"producto_terminado",
+        fecha:new Date().toISOString().slice(0,10), turno:PT.turno, dia:PT.dia,
+        responsable:((ST.inv||{}).responsable||""), lineas:{...c}, n:ids.length, unidades:unid});
+      b.textContent="Turno cerrado"; vInv();
+    }catch(e){
+      b.disabled=false; b.textContent="Cerrar el turno";
+      alert("No se pudo compartir el conteo del turno:\n"+(e.message||e)
+        +"\n\nQueda en este navegador. Para compartirlo hace falta sesión abierta y perfil aprobado.");
+    }
+  };
   $$("#p-inv input[data-pt]").forEach(el=>el.onchange=ev=>{
     ST.invPT=ST.invPT||{conteos:{}};
     const v=ev.target.value;
     if(v==="") delete ST.invPT.conteos[ev.target.dataset.pt];
     else ST.invPT.conteos[ev.target.dataset.pt]=Math.max(0,+v||0);
     save(); vInv();});
+  pintarConteos();
   $("#ivCopiar").onclick=()=>{
     const lista=pedido.filter(x=>!IV.prov||x.proveedor===IV.prov);
     const txt="PEDIDO oh-jalá · "+($("#ivFecha").value||hoy)+"\\n"+
@@ -5262,6 +5352,43 @@ async function leerVersionReceta(id){
 window.grabarVersionReceta=grabarVersionReceta;
 window.listarVersionesReceta=listarVersionesReceta;
 window.leerVersionReceta=leerVersionReceta;
+
+/* ---------------- CONTEOS DE INVENTARIO COMPARTIDOS ----------------
+   Antes el conteo vivia solo en el localStorage del navegador: aguantaba una
+   recarga, pero no salia de ese equipo. Esto lo manda a la base, con autor y
+   hora, para que el conteo de la tableta de la panaderia se vea en la laptop.
+   La tabla es append-only: un conteo es un hecho de un momento y no se edita.
+   El localStorage se queda como borrador de trabajo mientras se cuenta. */
+async function guardarConteo(payload){
+  const u=(await sb.auth.getUser()).data.user;
+  if(!u) throw new Error("hay que iniciar sesion para compartir el conteo");
+  const {data,error}=await sb.from("inventario_conteo").insert({
+    tipo:payload.tipo, fecha:payload.fecha, turno:payload.turno||null, dia:payload.dia||null,
+    responsable:(payload.responsable||"").slice(0,120),
+    lineas:payload.lineas||{}, n_lineas:payload.n||0,
+    valor:payload.valor!=null?payload.valor:null,
+    unidades:payload.unidades!=null?payload.unidades:null,
+    nota:(payload.nota||"").slice(0,400),
+    autor:u.id, autor_email:u.email
+  }).select().single();
+  if(error) throw error;
+  return data;
+}
+async function listarConteos(tipo, limite){
+  const {data,error}=await sb.from("inventario_conteo")
+    .select("id,tipo,fecha,turno,dia,responsable,n_lineas,valor,unidades,nota,autor_email,creado_en")
+    .eq("tipo",tipo).order("fecha",{ascending:false}).order("creado_en",{ascending:false})
+    .limit(limite||15);
+  if(error) throw error;
+  return data||[];
+}
+async function leerConteo(id){
+  const {data,error}=await sb.from("inventario_conteo").select("*").eq("id",id).single();
+  if(error) throw error; return data;
+}
+window.guardarConteo=guardarConteo;
+window.listarConteos=listarConteos;
+window.leerConteo=leerConteo;
 
 </script>
 </body>
