@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Costeo · oh-jalá</title>
+<title>Oh-jalá · Sistema ERP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="datos.js?v=96ee5ddcff"></script>
+<script src="datos.js?v=3b7cad1c3c"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -586,7 +586,7 @@ th.ord::after{content:" \2195";font-size:10px}
 <header class="hd"><div class="hdi">
  <div class="brand">
   <div class="logo"><svg width="30" height="30" viewBox="0 0 36 36" fill="none"><path d="M7 22C7 14.5 12 10 18 10C24 10 29 14.5 29 22C29 25.3 26.5 27 23 27H13C9.5 27 7 25.3 7 22Z" fill="#C96B2C"/><path d="M11 21C13 15.5 16.5 13 18 13C19.5 13 23 15.5 25 21" stroke="#FFEED6" stroke-width="2.2" stroke-linecap="round"/><path d="M14.5 14.5L18 24.5L21.5 14.5" stroke="#FFEED6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="7" r="2" fill="#E8803A"/></svg></div>
-  <div class="bt"><div><span class="bn">oh-jalá</span><span class="pill">Costeo · S/</span></div>
+  <div class="bt"><div><span class="bn">Oh-jalá</span><span class="pill">Sistema ERP</span></div>
    <div class="bs">Panadería diferente · San Isidro, Lima</div></div></div>
  <div class="hc">
   <div class="cfg"><label for="selAnio">Año</label><select id="selAnio"><option value="2026">2026</option><option value="2025">2025</option></select></div>
@@ -5084,8 +5084,54 @@ function vPron(){
          <div style="font-family:var(--fm);font-size:10.5px;text-align:right">${P(uso,0)}${uso>100?' ⚠':''}</div></td></tr>`}).join("")}</tbody>
     <tfoot><tr><td>SEMANA</td><td class="n">100%</td><td class="n">${N(uSem)}</td><td class="n">${S0(dSem)}</td>
       <td class="n">${S0(MP/SEM)}</td><td class="n">${N(minSem)}</td><td></td></tr></tfoot></table></div>
-   <div class="note" style="margin:12px 0 0">El viernes concentra ${P(((D.perfil_dia||{}).viernes||0)*100,0)} de la semana.
-    Si ese día no alcanza la capacidad, no sirve que el lunes sobre: el pan de Shabat no se puede adelantar tres días.</div></div>
+   <div class="note" style="margin:12px 0 0">El viernes concentra ${P(((D.perfil_dia||{}).viernes||0)*100,0)} de la venta de la semana.
+    Pero esa es la VENTA, no la producción: el pan del viernes se hornea antes. La tabla de abajo simula la semana real,
+    adelantando lo que aguanta fresco.</div></div>
+
+  ${(()=>{
+    /* Produccion por dia, con adelanto. La venta de un dia no es la produccion de
+       ese dia: lo que se vende el viernes se hornea el jueves o el viernes de
+       madrugada. Se adelanta hasta dos dias, que es lo que aguanta fresco, y
+       nunca mas: el pan de Shabat no se hornea el martes. */
+    const ADEL=2, capDia=capSem/6;
+    const sim=DIAS.map(([k,nm])=>({k,nm,vende:(D.perfil_dia||{})[k]||0}));
+    let banco=0;
+    sim.forEach(d=>{
+      d.necesita=minSem*d.vende;
+      d.capacidad=(d.k==="domingo")?0:capDia;
+      const hace=Math.min(d.necesita, d.capacidad+banco);
+      d.produce=hace;
+      d.falta=d.necesita-hace;
+      d.adelantado=Math.max(0,hace-Math.min(d.necesita,d.capacidad));
+      banco=Math.max(0, Math.min(d.capacidad*ADEL, banco+d.capacidad-hace));
+      d.libre=banco;
+      d.uso=d.capacidad?100*hace/d.capacidad:0;
+    });
+    const falta=sim.reduce((s,d)=>s+d.falta,0);
+    return `<div class="card"><div class="ch"><div><h2 class="ct">Cuánto producir cada día</h2>
+      <p class="cs">La semana simulada día por día: lo que pide la venta, lo que cabe ese día, y lo que se adelanta.
+       Se puede hornear hasta ${ADEL} días antes; más no, por frescura.</p></div>
+      <span class="bd ${falta>1?'ba':'ok'}">${falta>1?N(falta)+" min sin hacer":"la semana cabe"}</span></div>
+     <div class="tw"><table><thead><tr><th>Día</th><th class="n">Pide la venta</th><th class="n">Capacidad del día</th>
+       <th class="n">Se produce</th><th class="n">De eso, adelantado</th><th class="n">Queda sin hacer</th>
+       <th class="n">Capacidad libre que queda</th><th class="n">Uso</th></tr></thead>
+      <tbody>${sim.map(d=>`<tr${d.falta>1?' style="background:#fdf1ef"':''}>
+        <td style="font-weight:600">${d.nm}</td>
+        <td class="n">${N(d.necesita)}</td>
+        <td class="n" style="color:var(--ink5)">${d.capacidad?N(d.capacidad):"cerrado"}</td>
+        <td class="n" style="font-weight:600">${N(d.produce)}</td>
+        <td class="n" style="color:var(--ink5)">${d.adelantado>1?N(d.adelantado):"—"}</td>
+        <td class="n" style="font-weight:700;color:${d.falta>1?'var(--ba)':'var(--ink5)'}">${d.falta>1?N(d.falta):"—"}</td>
+        <td class="n" style="color:var(--ink5)">${N(d.libre)}</td>
+        <td class="n"><span class="bd ${d.uso>=100?'ba':d.uso>=90?'aw':'ok'}">${P(d.uso,0)}</span></td></tr>`).join("")}</tbody>
+      <tfoot><tr><td>SEMANA</td><td class="n">${N(minSem)}</td><td class="n">${N(capSem)}</td>
+       <td class="n">${N(sim.reduce((s,d)=>s+d.produce,0))}</td><td class="n"></td>
+       <td class="n">${falta>1?N(falta):"—"}</td><td class="n"></td>
+       <td class="n">${P(capSem?100*minSem/capSem:0,0)}</td></tr></tfoot></table></div>
+     <div class="note ${falta>1?'ba':''}" style="margin:12px 0 0">${falta>1
+       ? "<b>La semana no cabe.</b> Quedan "+N(falta)+" minutos sin hacer aunque se adelante todo lo que la frescura permite. Hay que sumar gente el día que falta o mover volumen a otro día."
+       : "<b>La semana cabe.</b> El viernes pide "+P(100*(sim[4]||{}).uso,0)+" de su capacidad, y se sostiene porque lunes y martes dejan "+N((sim[1]||{}).libre||0)+" minutos de colchón que se adelantan. Sin ese adelanto, el viernes solo no entraría."}</div>
+    </div>`;})()}
 
   <div class="card"><div class="ch"><div><h2 class="ct">Cuánto producir por semana</h2>
     <p class="cs">Unidades y lotes que hay que programar para cubrir la proyección.</p></div></div>
@@ -5602,14 +5648,36 @@ function calcAlertas(){
       `Sin margen para un feriado o una máquina parada. Vigilar antes de aceptar pedidos grandes.`, "mo", c.id);
   });
 
-  // 5. viernes: el día que revienta
-  const perV=(D.perfil_dia||{}).viernes||0;
+  /* 5. El pico de la semana.
+     Antes esta regla comparaba la VENTA de un dia contra la capacidad de ese dia,
+     repartida en partes iguales. Como el viernes concentra el 34% de la venta y un
+     dia es el 17% de la semana, la cuenta daba 2.04 y la alerta saltaba siempre,
+     en las seis estaciones. Era ruido, y ademas comparaba cosas distintas: el pan
+     del viernes no se hornea el viernes.
+     Ahora se simula la semana: cada dia se produce lo que se puede, se adelanta lo
+     que cabe —hasta dos dias, que es lo que aguanta fresco— y se mira si al final
+     de algun dia quedo trabajo sin hacer. Solo entonces hay alerta. */
+  const PERD=D.perfil_dia||{};
+  const DIASEM=[["lunes","lunes"],["martes","martes"],["miercoles","miércoles"],
+                ["jueves","jueves"],["viernes","viernes"],["sabado","sábado"],["domingo","domingo"]];
+  const ADELANTO=2;
   cap.forEach(c=>{
     const demSem=ps.reduce((s,p)=>s+((MZ[p.id]||{})[c.id]?.min||0),0)/52;
-    const capDia=c.min_practica/4.345/6, demV=demSem*perV;
-    if(capDia && demV/capDia>1.1) add("alta","capacidad",`El viernes satura ${c.nombre}`,
-      `Ese día pide ${N(demV)} minutos y la capacidad diaria es ${N(capDia)}: ${P(100*demV/capDia,0)} de uso.`,
-      `El pan de Shabat no se adelanta. Hay que sumar gente el viernes o adelantar lo que aguante frío.`, "plan", c.id);
+    if(!demSem||!c.min_practica) return;
+    const capDia=c.min_practica/4.345/6;            // domingo no se produce
+    let banco=0, peor=null;
+    DIASEM.forEach(([k,nom],i)=>{
+      const necesita=demSem*(PERD[k]||0);
+      const disponible=(k==="domingo")?0:capDia;
+      // lo que se puede adelantar: la capacidad libre de hasta ADELANTO dias antes
+      const hoy=Math.min(necesita,disponible+banco);
+      const falta=necesita-hoy;
+      banco=Math.max(0,Math.min(disponible*ADELANTO, banco+disponible-Math.min(necesita,disponible+banco)));
+      if(falta>1 && (!peor||falta>peor.falta)) peor={dia:nom,falta,necesita,disponible};
+    });
+    if(peor) add("alta","capacidad",`El ${peor.dia} no alcanza en ${c.nombre}`,
+      `Ese día pide ${N(peor.necesita)} minutos, la capacidad del día es ${N(peor.disponible)} y, aun adelantando lo de ${ADELANTO} días antes, quedan ${N(peor.falta)} sin hacer.`,
+      `Sumar gente ese día, o adelantar lo que aguante frío. Lo de Shabat no se adelanta.`, "plan", c.id);
   });
 
   // 6. canales
@@ -5624,10 +5692,17 @@ function calcAlertas(){
   });
 
   // 7. concentración de insumos
-  const gasto={};
-  ps.forEach(p=>p.receta.forEach(r=>{gasto[r.nombre]=(gasto[r.nombre]||0)+r.costo_por_unidad*p.u;}));
+  /* Se agrupa por id, no por nombre: dos insumos distintos con el mismo nombre
+     colapsaban en uno. Y se usa consumoInsumos, que explota los rellenos en sus
+     insumos, para no contar la fila del relleno Y sus hijos. */
+  const gasto={}, nombres={};
+  try{ Object.values(consumoInsumos(ST.anio)).forEach(x=>{
+        if(!x.id) return; gasto[x.id]=(gasto[x.id]||0)+x.costo; nombres[x.id]=x.nombre; }); }
+  catch(e){ ps.forEach(p=>p.receta.forEach(r=>{ const k=r.insumo_id||r.nombre;
+        gasto[k]=(gasto[k]||0)+r.costo_por_unidad*p.u; nombres[k]=r.nombre; })); }
   const TG=Object.values(gasto).reduce((a,b)=>a+b,0);
-  Object.entries(gasto).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([n,g])=>{
+  Object.entries(gasto).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([id,g])=>{
+    const n=nombres[id]||id;
     if(100*g/TG>UMB.insumo_max) add("baja","insumo",`${n} concentra el gasto`,
       `Es ${P(100*g/TG,1)} de toda la materia prima: ${S0(g)} al año.`,
       `Un alza de 10% en ese insumo cuesta ${S0(g*0.1)}. Conviene tener un segundo proveedor.`, "ins");
