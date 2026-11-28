@@ -3526,13 +3526,16 @@ function vUtil(){
   const POSC=EC.reduce((s,e)=>s+(e.pos||0),0)/12;
   const EMPC=EC.reduce((s,e)=>s+(e.emp||0),0)/12;
   const DEP=(D.cif.find(c=>/depreciac/i.test(c.concepto))||{}).monto_mensual||0;
-  const PEAJE=OCIO+D.gastos.filter(g=>g.id!=="go_comisiones_delivery").reduce((s,g)=>s+g.monto_mensual,0)+PLAN_FUERA;
+  /* A2: pool_directo_mensual de la planilla contra la suma de los pools de
+     estacion. La diferencia es tiempo pagado de produccion que no cae en ninguna
+     estacion y que no estaba en ninguna linea del P&L.
+     OJO: esta declaracion va ANTES de PEAJE. Estuvo despues y PEAJE la leia en su
+     zona muerta temporal, asi que la pestania entera se caia. Es exactamente el
+     riesgo que el Motor V4 marco en B3. */
+  const PLAN_FUERA=Math.max(0,((D.planilla||{}).pool_directo_mensual||0)-D.capacidad.reduce((s,c)=>s+c.pool,0));
   // la estructura ya no es una lista fija: sale de los gastos, menos las comisiones del canal
   const GEST=D.gastos.filter(g=>g.id!=="go_comisiones_delivery");
-  /* A2: pool_directo_mensual de la planilla (28,797.55) contra la suma de los
-     pools de estacion (27,348.53). La diferencia es tiempo pagado de produccion
-     que no cae en ninguna estacion y que no estaba en ninguna linea del P&L. */
-  const PLAN_FUERA=Math.max(0,((D.planilla||{}).pool_directo_mensual||0)-D.capacidad.reduce((s,c)=>s+c.pool,0));
+  const PEAJE=OCIO+GEST.reduce((s,g)=>s+g.monto_mensual,0)+PLAN_FUERA;
   const ESTR=GEST.reduce((s,g)=>s+g.monto_mensual,0)+PLAN_FUERA;
   const EBIT=MB-REG-MERMA-COMD-POSC-EMPC-OCIO-ESTR;
   const DEPREP=(((D.detalle_gastos||{}).go_reparto)||[]).filter(x=>/epreciac/i.test(x.c)).reduce((s,x)=>s+x.m,0);
