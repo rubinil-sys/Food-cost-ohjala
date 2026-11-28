@@ -42,8 +42,13 @@ button,input,select{font:inherit;color:inherit} button{cursor:pointer}
 .hbtn:hover{background:rgba(255,255,255,.18)} .hbtn.ac{background:var(--c500);border-color:var(--c500)} .hbtn.ac:hover{background:var(--c600)}
 .tabs{background:var(--sf);border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(28,36,33,.03);position:sticky;top:74px;z-index:30}
 .ti{max-width:1440px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:4px;overflow-x:auto}
-.tb{border:none;background:transparent;padding:13px 16px 11px;font-size:14px;font-weight:600;color:var(--ink5);border-bottom:3px solid transparent;white-space:nowrap}
-.tb:hover{color:var(--g900);background:var(--sf2)} .tb.on{color:var(--g900);border-bottom-color:var(--c500);font-weight:700}
+.tb{border:none;background:transparent;padding:9px 15px 8px;border-bottom:3px solid transparent;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;line-height:1.25}
+.tbn{font-size:14px;font-weight:600;color:var(--ink5)}
+.tbd{font-size:11px;font-weight:400;color:var(--ink5);opacity:.72}
+.tb.on .tbn{color:var(--g900);font-weight:700} .tb.on .tbd{color:var(--c600);opacity:1}
+.tb:hover .tbn,.tb:hover .tbd{color:var(--g900)}
+@media(max-width:900px){.tbd{display:none}}
+.tb:hover{background:var(--sf2)} .tb.on{border-bottom-color:var(--c500)}
 .cnt{font-family:var(--fm);font-size:11px;font-weight:700;padding:2px 6px;border-radius:999px;background:var(--s100);color:var(--ink7);margin-left:6px}
 .tb.on .cnt{background:var(--c100);color:var(--c600)}
 .src{margin-left:auto;font-size:11.5px;color:var(--ink5);white-space:nowrap;padding-left:12px;font-family:var(--fm)}
@@ -596,28 +601,28 @@ th.ord::after{content:" \2195";font-size:10px}
 <nav class="tabs">
  <div class="gi" id="grupos">
   <button class="gb" data-g="ventas">Ventas</button>
-  <button class="gb on" data-g="negocio">Negocio</button>
   <button class="gb" data-g="productos">Productos</button>
+  <button class="gb on" data-g="negocio">Negocio</button>
   <button class="gb" data-g="operacion">Operación</button>
   <button class="gb" data-g="equipo">Equipo</button>
  </div>
  <div class="ti">
- <button class="tb" data-g="ventas" data-t="ventas">Ventas</button>
- <button class="tb" data-g="ventas" data-t="can">Canales</button>
- <button class="tb" data-g="ventas" data-t="pron">Pronóstico</button>
- <button class="tb on" data-g="negocio" data-t="res">Resumen</button>
- <button class="tb" data-g="negocio" data-t="util">Del costo al EBITDA</button>
- <button class="tb" data-g="negocio" data-t="ale">Alertas <span class="cnt" id="cAle">0</span></button>
- <button class="tb" data-g="negocio" data-t="esc">Escenarios <span class="cnt" id="cEsc">0</span></button>
- <button class="tb" data-g="productos" data-t="prod">Productos <span class="cnt" id="cProd">19</span></button>
- <button class="tb" data-g="productos" data-t="ins">Insumos y recetas</button>
- <button class="tb" data-g="productos" data-t="mo">Mano de obra</button>
- <button class="tb" data-g="productos" data-t="datos">Editar datos</button>
- <button class="tb" data-g="operacion" data-t="plan">Plan de producción</button>
- <button class="tb" data-g="operacion" data-t="inv">Inventario y pedidos</button>
- <button class="tb" data-g="operacion" data-t="vta">Consumo</button>
- <button class="tb" data-g="equipo" data-t="planilla">Planilla</button>
- <button class="tb" id="tabUsr" data-g="equipo" data-t="usr" style="display:none">Usuarios</button>
+ <button class="tb" data-g="ventas" data-t="ventas"><span class="tbn">Ventas</span><span class="tbd">Transacciones, ticket, meta y hora</span></button>
+ <button class="tb" data-g="ventas" data-t="can"><span class="tbn">Canales</span><span class="tbd">Tienda, pedidos, Rappi y corporativo</span></button>
+ <button class="tb" data-g="ventas" data-t="pron"><span class="tbn">Pronóstico</span><span class="tbd">Qué viene y si cabe en la planta</span></button>
+ <button class="tb" data-g="productos" data-t="prod"><span class="tbn">Productos<span class="cnt" id="cProd">19</span></span><span class="tbd">Ficha, receta en cascada y márgenes</span></button>
+ <button class="tb" data-g="productos" data-t="ins"><span class="tbn">Insumos y recetas</span><span class="tbd">Precios de compra, mermas y recetas</span></button>
+ <button class="tb" data-g="productos" data-t="mo"><span class="tbn">Mano de obra</span><span class="tbd">Minutos, tarifas y capacidad</span></button>
+ <button class="tb" data-g="productos" data-t="datos"><span class="tbn">Editar datos</span><span class="tbd">Crear y corregir insumos y recetas</span></button>
+ <button class="tb on" data-g="negocio" data-t="res"><span class="tbn">Resumen</span><span class="tbd">La foto del negocio en una pantalla</span></button>
+ <button class="tb" data-g="negocio" data-t="util"><span class="tbn">Del costo al EBITDA</span><span class="tbd">Del costo del pan al resultado neto</span></button>
+ <button class="tb" data-g="negocio" data-t="ale"><span class="tbn">Alertas<span class="cnt" id="cAle">0</span></span><span class="tbd">Lo que está mal hoy, con su número</span></button>
+ <button class="tb" data-g="negocio" data-t="esc"><span class="tbn">Escenarios<span class="cnt" id="cEsc">0</span></span><span class="tbd">Guardar un supuesto y compararlo</span></button>
+ <button class="tb" data-g="operacion" data-t="plan"><span class="tbn">Plan de producción</span><span class="tbd">Qué hornear, cuánto y qué día</span></button>
+ <button class="tb" data-g="operacion" data-t="inv"><span class="tbn">Inventario y pedidos</span><span class="tbd">Contar el almacén y pedir lo que falta</span></button>
+ <button class="tb" data-g="operacion" data-t="vta"><span class="tbn">Consumo</span><span class="tbd">Consumo real contra el teórico</span></button>
+ <button class="tb" data-g="equipo" data-t="planilla"><span class="tbn">Planilla</span><span class="tbd">Quién cuesta cuánto, con las cargas</span></button>
+ <button class="tb" id="tabUsr" data-g="equipo" data-t="usr" style="display:none"><span class="tbn">Usuarios</span><span class="tbd">Quién entra y qué pestañas ve</span></button>
  <span class="src">Datos de demostración</span>
 </div></nav>
 <div id="franja" style="display:none;background:var(--babg);border-bottom:1px solid var(--babd);color:var(--ba);padding:9px 22px;font-size:13.5px"></div>
@@ -1135,15 +1140,15 @@ const MAPA_GRUPOS=[
   t:[["ventas","Ventas","Transacciones, ticket, meta contra real, margen por canal y curva horaria."],
      ["can","Canales","Economía de tienda, pedidos, Rappi y corporativo. Clientes B2B y simulador."],
      ["pron","Pronóstico","Proyección por base elegible, con supuestos y capacidad."]]},
+ {g:"productos", n:"Productos", d:"De qué está hecho cada pan y cuánto trabajo lleva.",
+  t:[["prod","Productos","Ficha de cada uno: receta en cascada, pasos, márgenes y precio sugerido."],
+     ["ins","Insumos y recetas","Precios de compra, mermas, masas compartidas y rellenos."],
+     ["mo","Mano de obra","Minutos por estación, tarifas, capacidad y quién satura qué."]]},
  {g:"negocio", n:"Negocio", d:"La foto completa y lo que hay que atender.",
   t:[["res","Resumen","Cuánto se vende, cuánto deja cada producto y el recargo al consumo."],
      ["util","Del costo al EBITDA","El P&L línea por línea, los cuatro pisos del costo, el peaje y el impuesto."],
      ["ale","Alertas","Lo que está mal hoy: márgenes bajos, estaciones saturadas, precios desfasados."],
      ["esc","Escenarios","Guardar un estado de los deslizadores y compararlo después."]]},
- {g:"productos", n:"Productos", d:"De qué está hecho cada pan y cuánto trabajo lleva.",
-  t:[["prod","Productos","Ficha de cada uno: receta en cascada, pasos, márgenes y precio sugerido."],
-     ["ins","Insumos y recetas","Precios de compra, mermas, masas compartidas y rellenos."],
-     ["mo","Mano de obra","Minutos por estación, tarifas, capacidad y quién satura qué."]]},
  {g:"operacion", n:"Operación", d:"Qué hornear y qué comprar.",
   t:[["plan","Plan de producción","Stock inicial, demanda y lotes: la orden de producción del día."],
      ["inv","Inventario y pedidos","Contar lo que hay, ver qué aguanta y armar el pedido por proveedor."],
@@ -1863,6 +1868,127 @@ function pintarVersiones(){
       }catch(e){ alert("No se pudo cargar: "+(e.message||e)); }
     });
   }).catch(e=>{ c.innerHTML=`<div class="note aw">No se pudo leer el historial: ${esc(e.message||String(e))}</div>`; });
+}
+
+/* ================= INGENIERIA DE MENU (la matriz de cuatro cuadrantes) =========
+   Kasavana y Smith, 1982: la version de la matriz BCG para una carta. Dos ejes:
+     popularidad  = unidades vendidas contra lo que le tocaria si todos vendieran igual
+     rentabilidad = margen de contribucion por unidad contra el promedio ponderado
+   El umbral clasico de popularidad es el 70% del reparto parejo (1/n x 0.70): un
+   producto no tiene que vender el promedio para contar como popular.
+   El margen de contribucion acá es precio neto real menos materia prima, que es la
+   definicion clasica. La mano de obra y el CIF no entran: se pagan igual.
+   Se agrega una columna que la matriz original no tiene y este negocio si necesita:
+   lo que deja cada producto por minuto de la estacion que no da mas. Dos productos
+   pueden ser los dos "estrella" y uno ocupar el triple de planta que el otro. */
+function menuIngenieria(){
+  const ps=TODOS().map(p=>({...p,u:und(p.id,ST.anio)})).filter(p=>p.u>0);
+  if(!ps.length) return null;
+  const CB=(()=>{ try{ return cuelloBotella().cuello; }catch(e){ return null; } })();
+  const filas=ps.map(p=>{
+    let venta=0;
+    D.canales.forEach(c=>{ const q=undCanal(p.id,ST.anio,c.id);
+      if(q) venta+=p.neto*(FPREC[c.id]!=null?FPREC[c.id]:1)*q; });
+    const netoReal=venta/p.u;
+    const mcU=netoReal-p.mp;
+    const minCuello=CB?(minPorEstacion(p)[CB.id]||0):0;
+    return {p, u:p.u, venta, netoReal, mcU, mc:mcU*p.u, minCuello,
+            porMin:minCuello?mcU/minCuello:null};
+  });
+  const U=filas.reduce((s,x)=>s+x.u,0);
+  const MC=filas.reduce((s,x)=>s+x.mc,0);
+  const mcProm=U?MC/U:0;                       // promedio PONDERADO, no el simple
+  const popEsper=(1/filas.length)*0.70;        // el 70% clasico
+  filas.forEach(x=>{
+    x.pop=U?x.u/U:0;
+    x.popular=x.pop>=popEsper;
+    x.rentable=x.mcU>=mcProm;
+    x.cuad = x.popular&&x.rentable ? "estrella"
+           : x.popular&&!x.rentable ? "caballo"
+           : !x.popular&&x.rentable ? "rompecabezas" : "perro";
+  });
+  return {filas, U, MC, mcProm, popEsper, CB};
+}
+const CUAD={
+  estrella:    {n:"Estrella",          i:"★", c:"ok",
+    q:"Vende mucho y deja mucho.", a:"No tocar el precio ni la receta. Protegerlo: que nunca falte, que siempre esté a la vista y que la calidad no se mueva."},
+  caballo:     {n:"Caballo de batalla", i:"◆", c:"aw",
+    q:"Vende mucho y deja poco.", a:"Es el que trae a la gente. Subir el precio con cuidado, o bajarle el costo sin que se note: gramaje, insumo alternativo, menos merma."},
+  rompecabezas:{n:"Rompecabezas",      i:"?", c:"nt",
+    q:"Deja mucho y vende poco.", a:"El margen ya está. Falta que se venda: ponerlo en vitrina, nombrarlo distinto, ofrecerlo en combo o llevarlo al canal corporativo."},
+  perro:       {n:"Perro",             i:"✕", c:"ba",
+    q:"Vende poco y deja poco.", a:"Candidato a salir de la carta, salvo que esté por una razón que no es la plata: completar la vitrina, un cliente fiel, una temporada."}
+};
+function cardMenu(){
+  const M=menuIngenieria(); if(!M) return "";
+  const {filas,mcProm,popEsper,CB}=M;
+  const cuenta=k=>filas.filter(x=>x.cuad===k).length;
+  const W=760,H=430,PAD=62;
+  const maxPop=Math.max(...filas.map(x=>x.pop))*1.12;
+  const maxMC=Math.max(...filas.map(x=>x.mcU))*1.12;
+  const px=v=>PAD+(v/maxPop)*(W-PAD-28);
+  const py=v=>H-PAD-(v/maxMC)*(H-PAD-30);
+  const COLOR={estrella:"var(--okbar)",caballo:"var(--wabar)",rompecabezas:"var(--c500)",perro:"var(--babar)"};
+  return `<div class="card"><div class="ch"><div><h2 class="ct">La carta en cuatro cuadrantes</h2>
+    <p class="cs">Ingeniería de menú: cada producto según cuánto vende y cuánto deja. Lo que hay que hacer con uno
+     depende de en qué cuadrante cae, y no es lo mismo para los cuatro.</p></div>
+    <span class="bd nt">${filas.length} productos con venta</span></div>
+
+   <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+    <svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto" aria-label="Matriz de ingeniería de menú">
+     <rect x="${PAD}" y="20" width="${px(popEsper)-PAD}" height="${py(mcProm)-20}" fill="var(--c100)" opacity=".30"/>
+     <rect x="${px(popEsper)}" y="20" width="${W-28-px(popEsper)}" height="${py(mcProm)-20}" fill="var(--okbar)" opacity=".13"/>
+     <rect x="${PAD}" y="${py(mcProm)}" width="${px(popEsper)-PAD}" height="${H-PAD-py(mcProm)}" fill="var(--babar)" opacity=".10"/>
+     <rect x="${px(popEsper)}" y="${py(mcProm)}" width="${W-28-px(popEsper)}" height="${H-PAD-py(mcProm)}" fill="var(--wabar)" opacity=".13"/>
+     <line x1="${px(popEsper)}" y1="20" x2="${px(popEsper)}" y2="${H-PAD}" stroke="var(--ink5)" stroke-width="1" stroke-dasharray="4 3"/>
+     <line x1="${PAD}" y1="${py(mcProm)}" x2="${W-28}" y2="${py(mcProm)}" stroke="var(--ink5)" stroke-width="1" stroke-dasharray="4 3"/>
+     <line x1="${PAD}" y1="${H-PAD}" x2="${W-28}" y2="${H-PAD}" stroke="var(--lineS)" stroke-width="1.5"/>
+     <line x1="${PAD}" y1="20" x2="${PAD}" y2="${H-PAD}" stroke="var(--lineS)" stroke-width="1.5"/>
+     <text x="${W-34}" y="40" text-anchor="end" font-size="13" font-weight="700" fill="var(--g800)">★ Estrella</text>
+     <text x="${PAD+8}" y="40" font-size="13" font-weight="700" fill="var(--c600)">? Rompecabezas</text>
+     <text x="${W-34}" y="${H-PAD-9}" text-anchor="end" font-size="13" font-weight="700" fill="var(--wa)">◆ Caballo de batalla</text>
+     <text x="${PAD+8}" y="${H-PAD-9}" font-size="13" font-weight="700" fill="var(--ba)">✕ Perro</text>
+     ${filas.map(x=>`<g><circle cx="${px(x.pop).toFixed(1)}" cy="${py(x.mcU).toFixed(1)}"
+       r="${Math.max(5,Math.min(19,Math.sqrt(x.mc)/9)).toFixed(1)}" fill="${COLOR[x.cuad]}" opacity=".78"
+       stroke="#fff" stroke-width="1.5"><title>${esc(x.p.nombre)} · ${N(x.u)} u · ${S(x.mcU)} por unidad</title></circle></g>`).join("")}
+     <text x="${(PAD+W)/2}" y="${H-16}" text-anchor="middle" font-size="12" fill="var(--ink5)">Popularidad: participación en las unidades vendidas →</text>
+     <text x="16" y="${H/2}" text-anchor="middle" font-size="12" fill="var(--ink5)" transform="rotate(-90 16 ${H/2})">Margen de contribución por unidad →</text>
+    </svg>
+    <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:10px">
+     ${Object.entries(CUAD).map(([k,c])=>`<div class="niv" style="margin:0">
+       <div class="nivh" style="margin:0"><span class="nivn">${c.i}</span><b>${c.n}</b>
+        <span class="bd ${c.c}">${cuenta(k)}</span></div>
+       <div style="font-size:12.5px;color:var(--ink5);margin-top:4px"><b>${esc(c.q)}</b> ${esc(c.a)}</div></div>`).join("")}
+    </div>
+   </div>
+
+   <div class="tw" style="margin-top:18px"><table><thead><tr><th>Producto</th><th>Cuadrante</th>
+     <th class="n">Unidades</th><th class="n">% de las unidades</th><th class="n">Neto real</th>
+     <th class="n">Materia prima</th><th class="n">Margen por unidad</th><th class="n">Margen total</th>
+     ${CB?`<th class="n">S/ por minuto de ${esc(CB.nombre)}</th>`:""}</tr></thead>
+    <tbody>${filas.slice().sort((a,b)=>b.mc-a.mc).map(x=>`<tr class="clic" data-p="${x.p.id}">
+      <td style="font-weight:600">${esc(x.p.nombre)}</td>
+      <td><span class="bd ${CUAD[x.cuad].c}">${CUAD[x.cuad].i} ${CUAD[x.cuad].n}</span></td>
+      <td class="n">${N(x.u)}</td>
+      <td class="n" style="color:var(--ink5)">${P(100*x.pop,1)}</td>
+      <td class="n">${S(x.netoReal)}</td>
+      <td class="n" style="color:var(--ink5)">${S(x.p.mp)}</td>
+      <td class="n" style="font-weight:600">${S(x.mcU)}</td>
+      <td class="n">${S0(x.mc)}</td>
+      ${CB?`<td class="n">${x.porMin!=null?S(x.porMin):'<span style="color:var(--ink5)">no la usa</span>'}</td>`:""}</tr>`).join("")}</tbody>
+    <tfoot><tr><td>TOTAL</td><td></td><td class="n">${N(M.U)}</td><td class="n">100%</td>
+     <td class="n"></td><td class="n"></td><td class="n">${S(mcProm)}</td><td class="n">${S0(M.MC)}</td>
+     ${CB?`<td class="n"></td>`:""}</tr></tfoot></table></div>
+
+   <div class="note" style="margin:13px 0 0"><b>Dónde están los cortes.</b>
+    Un producto es popular si se lleva más de ${P(100*popEsper,1)} de las unidades, que es el 70% de lo que le
+    tocaría si todos vendieran igual — el umbral clásico, porque no hace falta vender el promedio para ser popular.
+    Y es rentable si deja más de ${S(mcProm)} por unidad, que es el margen promedio ponderado de la carta.
+    El margen acá es precio neto menos materia prima: la mano de obra y el CIF no entran porque se pagan igual.
+    ${CB?`<br><br><b>La columna que la matriz original no tiene.</b> Con la planta llena, dos productos pueden ser
+    los dos estrella y uno ocupar el triple de ${esc(CB.nombre)} que el otro. Esa columna dice cuál conviene
+    empujar primero cuando no hay minutos para los dos.`:""}</div>
+  </div>`;
 }
 
 /* ================= DECISIONES: QUE HACER, CON SU NUMERO =================
@@ -4211,6 +4337,7 @@ function vVentas(){
      <td class="n"><span class="bd ${x.p.ub_pct>=45?'ok':x.p.ub_pct>=35?'wa':'ba'}">${P(x.p.ub_pct,1)}</span></td>
      <td style="font-size:12.5px">${esc(x.cn)} <span style="color:var(--ink5)">${x.u?P(100*x.mejor.q/x.u,0):""}</span></td></tr>`).join("")}</tbody>
    </table></div></div>
+   ${(()=>{ try{ return cardMenu(); }catch(e){ console.error("menu",e); return ""; } })()}
    <div id="histVentas"></div>`;
   $("#vtMes").onchange=e=>{VT.mes=e.target.value;vVentas();setTimeout(()=>tablasFiltrables($("#p-ventas")),20);};
   try{ vTablero(); }catch(e){}
