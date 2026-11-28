@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 4.50 |
 | Precio neto | S/ 3.8136 |
-| Materia prima | S/ 1.6318 |
+| Materia prima | S/ 1.6316 |
 | Mano de obra directa | S/ 0.6704 |
 | CIF de producción | S/ 0.5864 |
-| **Costo unitario (CUF)** | **S/ 2.8886** |
-| Utilidad bruta | S/ 0.9250 (24.3%) |
+| **Costo unitario (CUF)** | **S/ 2.8884** |
+| Utilidad bruta | S/ 0.9252 (24.3%) |
 | Minutos de persona por unidad | 1.675 |
 | Tandas por semana | 5.3 |
 
@@ -29,8 +29,8 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Aceite vegetal de girasol | insumo directo | 3.0 g | S/ 0.0267 |
 | Levadura fresca prensada | insumo directo | 1.2 g | S/ 0.0144 |
 | Sal marina fina yodada | insumo directo | 1.1 g | S/ 0.0031 |
-| Azucar blanca refinada | insumo directo | 1.5 g | S/ 0.0068 |
-| Salsa de tomate para pizza | insumo directo | 16.0 g | S/ 0.1617 |
+| Azucar blanca refinada | insumo directo | 1.5 g | S/ 0.0067 |
+| Salsa de tomate para pizza | insumo directo | 16.0 g | S/ 0.1616 |
 | Queso edam en bloque | insumo directo | 13.0 g | S/ 0.4557 |
 | Oregano seco | insumo directo | 0.3 g | S/ 0.0078 |
 
@@ -41,7 +41,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Bolsa de papel kraft con ventana | 40 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 40 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 0.0000 + rellenos S/ 0.0000 + directos S/ 0.9618 + empaque S/ 0.6700 = **S/ 1.6318**
+**Materia prima por unidad:** masa S/ 0.0000 + rellenos S/ 0.0000 + directos S/ 0.9616 + empaque S/ 0.6700 = **S/ 1.6316**
 
 ## 2 · Proceso paso a paso
 

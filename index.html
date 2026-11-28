@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="datos.js?v=e27a3d0403"></script>
+<script src="datos.js?v=96ee5ddcff"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -609,6 +609,7 @@ th.ord::after{content:" \2195";font-size:10px}
  <button class="tb" data-g="productos" data-t="prod">Productos <span class="cnt" id="cProd">19</span></button>
  <button class="tb" data-g="productos" data-t="ins">Insumos y recetas</button>
  <button class="tb" data-g="productos" data-t="mo">Mano de obra</button>
+ <button class="tb" data-g="productos" data-t="datos">Editar datos</button>
  <button class="tb" data-g="ventas" data-t="ventas">Ventas</button>
  <button class="tb" data-g="ventas" data-t="can">Canales</button>
  <button class="tb" data-g="ventas" data-t="pron">Pronóstico</button>
@@ -625,6 +626,7 @@ th.ord::after{content:" \2195";font-size:10px}
  <section id="p-prod" class="pane"></section>
  <section id="p-ins" class="pane"></section>
  <section id="p-mo" class="pane"></section>
+ <section id="p-datos" class="pane"></section>
  <section id="p-util" class="pane"></section>
  <section id="p-can" class="pane"></section>
  <section id="p-pron" class="pane"></section>
@@ -1517,6 +1519,352 @@ function consumoMO(anio,mes,unidadesPorProd){
 }
 function capPractica(){ const o={}; (D.capacidad||[]).forEach(c=>o[c.id]=c); return o; }
 
+/* ================= MODULO DE EDICION =================
+   Hasta ahora el dataset vivia dentro del HTML y solo quien editaba el codigo
+   podia cambiar un gramo. Acá se editan los insumos, las preparaciones y los
+   productos; cada cambio pasa por recalcularModelo(), que rehace la cascada
+   completa, y los cuadres avisan si algo dejo de calzar.
+   Los cambios viven en memoria hasta que alguien guarda una version: la tabla
+   modelo es append-only, asi que una version guardada no se altera.
+   Los tiempos y los pasos NO se editan todavia: su forma puede cambiar y no
+   quiero construir ese formulario dos veces. */
+let DT={vista:"insumos", sel:null, sucio:false, ultimo:null};
+const slugId=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").slice(0,40)||("id_"+Date.now());
+function tocar(){ DT.sucio=true; recalcularModelo(); render(); }
+function usosInsumo(id){
+  let n=0;
+  D.productos.forEach(p=>{
+    (p.receta||[]).forEach(r=>{ if(r.insumo_id===id) n++; });
+    const N0=p.niveles||{};
+    (N0.directos||[]).forEach(x=>{ if(x.insumo_id===id) n++; });
+    (N0.empaque||[]).forEach(x=>{ if(x.insumo_id===id) n++; });
+  });
+  (D.semielaborados||[]).forEach(s=>(s.receta||[]).forEach(r=>{ if(r.insumo_id===id) n++; }));
+  (D.rellenos||[]).forEach(R=>(R.insumos||[]).forEach(x=>{ if(x.insumo_id===id) n++; }));
+  return n;
+}
+function vDatos(){
+  const pane=$("#p-datos"); if(!pane) return;
+  const puede=(()=>{ try{ return puedeEditar(); }catch(e){ return true; } })();
+  const M=(typeof MODELO!=="undefined"&&MODELO)||{origen:"semilla",version:0};
+  const fams=[...new Set(D.insumos.map(i=>i.familia))].sort();
+  const nav=[["insumos","Insumos"],["prep","Masas y preparaciones"],["prod","Productos"],["ver","Versiones"]];
+
+  const cabecera=`
+  <div class="note ${DT.sucio?'aw':''}" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+   <div style="flex:1;min-width:320px">
+    ${DT.sucio
+      ? "<b>Hay cambios sin guardar.</b> Están aplicados en todo el tablero pero solo en este navegador. Guarda una versión para que los vea el resto del equipo."
+      : "<b>De dónde salen estos datos.</b> "+(M.origen==="base"
+          ? "Versión <b>"+M.version+"</b> de la base"+(M.autor?", guardada por "+esc(M.autor):"")+"."
+          : "La copia que viene dentro de la página. Nadie ha guardado una versión todavía.")}
+   </div>
+   ${puede?`<button class="btn ${DT.sucio?'ac':''}" id="dtGuardar">Guardar versión</button>`:""}
+   ${DT.sucio?`<button class="btn" id="dtDescartar">Descartar y recargar</button>`:""}
+   <button class="btn" id="dtBajar">Descargar JSON</button>
+  </div>
+  ${!puede?`<div class="note ba" style="margin-top:10px"><b>Tu perfil es de lectura.</b> Puedes ver los datos pero no cambiarlos.</div>`:""}
+  <div class="paqs" style="margin:14px 0 4px">
+   ${nav.map(([k,n])=>`<button class="paq ${DT.vista===k?'on':''}" data-dv="${k}">${n}</button>`).join("")}
+  </div>`;
+
+  let cuerpo="";
+
+  if(DT.vista==="insumos"){
+    const dis=puede?"":"disabled";
+    cuerpo=`<div class="card"><div class="ch"><div><h2 class="ct">Insumos</h2>
+      <p class="cs">El costo efectivo sale solo: costo de compra ÷ (1 − merma) ÷ factor de conversión. Cambiar un precio recalcula toda la cascada hasta el EBITDA.</p></div>
+      ${puede?`<button class="hbtn" id="dtNuevoIns">Nuevo insumo</button>`:""}</div>
+     <div class="tw"><table><thead><tr><th>Insumo</th><th>Familia</th><th>Compra</th>
+       <th class="n">Costo compra</th><th class="n">Merma %</th><th class="n">Costo efectivo</th>
+       <th class="n">Presentación</th><th>Proveedor</th><th class="n">Se usa en</th><th></th></tr></thead>
+      <tbody>${D.insumos.map(i=>`<tr>
+       <td><input class="inp" style="width:230px" value="${esc(i.nombre)}" data-ins="${i.id}" data-c="nombre" ${dis}></td>
+       <td><select class="inp" data-ins="${i.id}" data-c="familia" ${dis}>
+         ${fams.map(f=>`<option ${f===i.familia?"selected":""}>${esc(f)}</option>`).join("")}</select></td>
+       <td style="font-size:12.5px;color:var(--ink5)">${esc(i.unidad_compra)} → ${esc(i.unidad_receta)}</td>
+       <td class="n"><input class="inp n" style="width:92px" type="number" step="0.01" value="${i.costo_compra}" data-ins="${i.id}" data-c="costo_compra" ${dis}></td>
+       <td class="n"><input class="inp n" style="width:76px" type="number" step="0.1" value="${N(100*(i.merma_pct||0),1)}" data-ins="${i.id}" data-c="merma_pct_pct" ${dis}></td>
+       <td class="n" style="font-family:var(--fm);font-weight:600">${S3(i.costo_efectivo)}</td>
+       <td class="n"><input class="inp n" style="width:84px" type="number" step="0.1" value="${i.presentacion_compra||""}" data-ins="${i.id}" data-c="presentacion_compra" ${dis}></td>
+       <td><input class="inp" style="width:210px" value="${esc(i.proveedor||"")}" data-ins="${i.id}" data-c="proveedor" ${dis}></td>
+       <td class="n"><span class="bd ${usosInsumo(i.id)?'nt':'wa'}">${usosInsumo(i.id)}</span></td>
+       <td>${puede&&!usosInsumo(i.id)?`<button class="btn sm" data-delins="${i.id}">Borrar</button>`:""}</td></tr>`).join("")}</tbody>
+     </table></div>
+     <div class="note" style="margin:12px 0 0">Un insumo solo se puede borrar cuando no lo usa ninguna receta. La columna «Se usa en» cuenta las líneas que lo nombran.</div>
+    </div>`;
+  }
+
+  if(DT.vista==="prep"){
+    const todas=(D.semielaborados||[]).map(s=>({...s,_t:"semi"}))
+      .concat((D.rellenos||[]).map(r=>({...r,_t:"rell"})));
+    const sel=todas.find(x=>x.id===DT.sel)||todas[0];
+    const esSemi=sel&&sel._t==="semi";
+    const real=esSemi?(D.semielaborados||[]).find(x=>x.id===sel.id):(D.rellenos||[]).find(x=>x.id===sel.id);
+    const lineas=esSemi?(real.receta||[]):(real.insumos||[]);
+    const pesa=lineas.reduce((s,x)=>s+(x.gramos||0),0);
+    const dis=puede?"":"disabled";
+    cuerpo=`<div class="card"><div class="ch"><div><h2 class="ct">Masas y preparaciones</h2>
+      <p class="cs">Nivel L1: se hacen con insumos y se reparten por gramo entre los productos que las usan. Cambiar un gramo acá mueve a todos sus productos a la vez.</p></div></div>
+     <div class="paqs" style="margin-bottom:14px">${todas.map(x=>`<button class="paq ${sel&&x.id===sel.id?'on':''}" data-dprep="${x.id}">${esc(x.nombre)}</button>`).join("")}</div>
+     ${sel?`
+     <div class="cfgs" style="margin-bottom:14px">
+      <div class="cfg"><label>Nombre</label><input class="inp" style="width:280px" value="${esc(real.nombre)}" data-prep="${real.id}" data-c="nombre" ${dis}></div>
+      <div class="cfg"><label>Rinde (g por tanda)</label><input class="inp n" style="width:110px" type="number" step="1" value="${real.rinde_g}" data-prep="${real.id}" data-c="rinde_g" ${dis}></div>
+      <div class="cfg"><label>Pesan los insumos</label><b>${N(pesa)} g</b></div>
+      <div class="cfg"><label>Costo de la tanda</label><b>${S(real.costo_tanda)}</b></div>
+      <div class="cfg"><label>Por kilo</label><b>${S(1000*(real.costo_por_g||0))}</b></div>
+     </div>
+     ${real.rinde_g>pesa*1.001?`<div class="note ba" style="margin-bottom:12px"><b>El rendimiento supera a sus insumos.</b>
+       Rinde ${N(real.rinde_g)} g con ${N(pesa)} g de insumos. Sin agua ni otro líquido una preparación no gana peso, y el costo por gramo sale barato. El build no sale con esto.</div>`:""}
+     <div class="tw"><table><thead><tr><th>Insumo</th><th class="n">Gramos por tanda</th>
+       <th class="n">% del peso</th><th class="n">Costo</th><th class="n">% del costo</th><th></th></tr></thead>
+      <tbody>${lineas.map((x,k)=>{const I=D.insumos.find(i=>i.id===x.insumo_id)||{};
+        return `<tr>
+        <td><select class="inp" style="width:300px" data-pl="${real.id}" data-k="${k}" data-c="insumo_id" ${dis}>
+          ${D.insumos.map(i=>`<option value="${i.id}" ${i.id===x.insumo_id?"selected":""}>${esc(i.nombre)}</option>`).join("")}</select></td>
+        <td class="n"><input class="inp n" style="width:100px" type="number" step="1" value="${x.gramos}" data-pl="${real.id}" data-k="${k}" data-c="gramos" ${dis}></td>
+        <td class="n" style="color:var(--ink5)">${P(pesa?100*(x.gramos||0)/pesa:0,1)}</td>
+        <td class="n">${S(x.costo)}</td>
+        <td class="n" style="color:var(--ink5)">${P(real.costo_tanda?100*(x.costo||0)/real.costo_tanda:0,1)}</td>
+        <td>${puede?`<button class="btn sm" data-delpl="${real.id}" data-k="${k}">Quitar</button>`:""}</td></tr>`;}).join("")}</tbody>
+      <tfoot><tr><td>TANDA</td><td class="n">${N(pesa)} g</td><td class="n">100%</td>
+       <td class="n">${S(real.costo_tanda)}</td><td class="n">100%</td><td></td></tr></tfoot></table></div>
+     ${puede?`<button class="btn" id="dtNuevaLinea" data-prep="${real.id}" style="margin-top:12px">Agregar insumo a esta preparación</button>`:""}
+     <div class="note" style="margin:12px 0 0">La usan ${esSemi?((real.usado_por||[]).length+" productos"):(D.productos.filter(p=>((p.niveles||{}).rellenos||[]).some(r=>r.id===real.id)).length+" productos")}.
+      Los minutos de esta preparación se editan con los tiempos, que todavía no están en este módulo.</div>
+     `:`<div class="note">No hay preparaciones cargadas.</div>`}
+    </div>`;
+  }
+
+  if(DT.vista==="prod"){
+    const sel=D.productos.find(p=>p.id===DT.sel)||D.productos[0];
+    const N0=sel.niveles||{};
+    const dis=puede?"":"disabled";
+    cuerpo=`<div class="card"><div class="ch"><div><h2 class="ct">Productos</h2>
+      <p class="cs">Nivel L2: toma gramos de cada preparación, le suma sus insumos directos y su empaque. El precio y los gramos se editan acá; los pasos y los tiempos no, todavía.</p></div>
+      ${puede?`<button class="hbtn" id="dtNuevoProd">Nuevo producto</button>`:""}</div>
+     <div class="paqs" style="margin-bottom:14px">${D.productos.map(p=>`<button class="paq ${p.id===sel.id?'on':''}" data-dprod="${p.id}">${esc(p.nombre)}</button>`).join("")}</div>
+     <div class="cfgs" style="margin-bottom:14px">
+      <div class="cfg"><label>Nombre</label><input class="inp" style="width:260px" value="${esc(sel.nombre)}" data-prod="${sel.id}" data-c="nombre" ${dis}></div>
+      <div class="cfg"><label>Precio vitrina (con IGV)</label><input class="inp n" style="width:100px" type="number" step="0.1" value="${sel.precio}" data-prod="${sel.id}" data-c="precio" ${dis}></div>
+      <div class="cfg"><label>Peso (g)</label><input class="inp n" style="width:90px" type="number" step="1" value="${sel.peso||0}" data-prod="${sel.id}" data-c="peso" ${dis}></div>
+      <div class="cfg"><label>Unidades por tanda</label><b>${sel.unidades_lote||1}</b></div>
+      <div class="cfg"><label>Neto</label><b>${S(sel.neto)}</b></div>
+      <div class="cfg"><label>CUF</label><b>${S(sel.cuf)}</b></div>
+      <div class="cfg"><label>Utilidad bruta</label><b>${P(sel.ub_pct,1)}</b></div>
+     </div>
+     <div class="cfg" style="margin-bottom:14px;width:100%"><label>Descripción</label>
+      <input class="inp" style="width:100%;max-width:760px" value="${esc(sel.desc||"")}" data-prod="${sel.id}" data-c="desc" ${dis}></div>
+     <div class="tw"><table><thead><tr><th>Nivel</th><th>Qué lleva</th><th class="n">Por unidad</th>
+       <th class="n">Costo por unidad</th><th></th></tr></thead>
+      <tbody>
+       ${N0.semielaborado?`<tr><td><span class="bd nt">L1</span></td>
+        <td>${esc(N0.semielaborado.nombre)}</td>
+        <td class="n"><input class="inp n" style="width:92px" type="number" step="1" value="${N0.semielaborado.gramos_por_unidad}" data-niv="${sel.id}" data-c="semi" ${dis}> g</td>
+        <td class="n">${S(N0.semielaborado.costo_por_unidad)}</td><td></td></tr>`:""}
+       ${(N0.rellenos||[]).map((rl,k)=>`<tr><td><span class="bd nt">L1</span></td>
+        <td>${esc(rl.nombre)}</td>
+        <td class="n"><input class="inp n" style="width:92px" type="number" step="1" value="${rl.gramos_por_unidad}" data-niv="${sel.id}" data-k="${k}" data-c="relleno" ${dis}> g</td>
+        <td class="n">${S(rl.costo_por_unidad)}</td><td></td></tr>`).join("")}
+       ${(N0.directos||[]).map((x,k)=>`<tr><td><span class="bd nt">L2</span></td>
+        <td>${esc(x.nombre)} <span style="color:var(--ink5);font-size:12px">${esc(x.uso||"")}</span></td>
+        <td class="n"><input class="inp n" style="width:92px" type="number" step="0.5" value="${x.gramos_por_unidad}" data-niv="${sel.id}" data-k="${k}" data-c="directo" ${dis}> g</td>
+        <td class="n">${S(x.costo_por_unidad)}</td>
+        <td>${puede?`<button class="btn sm" data-deldir="${sel.id}" data-k="${k}">Quitar</button>`:""}</td></tr>`).join("")}
+       ${(N0.empaque||[]).map((x,k)=>`<tr><td><span class="bd nt">L2</span></td>
+        <td>${esc(x.nombre)}</td>
+        <td class="n"><input class="inp n" style="width:92px" type="number" step="1" value="${x.cantidad}" data-niv="${sel.id}" data-k="${k}" data-c="empaque" ${dis}></td>
+        <td class="n">${S(x.costo_por_unidad)}</td>
+        <td>${puede?`<button class="btn sm" data-delemp="${sel.id}" data-k="${k}">Quitar</button>`:""}</td></tr>`).join("")}
+      </tbody>
+      <tfoot><tr><td></td><td>MATERIA PRIMA POR UNIDAD</td><td class="n"></td>
+       <td class="n">${S(sel.mp)}</td><td></td></tr></tfoot></table></div>
+     ${puede?`<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+       <button class="btn" id="dtNuevoDir" data-prod="${sel.id}">Agregar insumo directo</button>
+       <button class="btn" id="dtNuevoEmp" data-prod="${sel.id}">Agregar empaque</button></div>`:""}
+     <div class="note" style="margin:12px 0 0">Las unidades por tanda y los pasos no se editan todavía: dividen los minutos del lote, así que van con el módulo de tiempos.</div>
+    </div>`;
+  }
+
+  if(DT.vista==="ver"){
+    cuerpo=`<div class="card"><div class="ch"><div><h2 class="ct">Versiones del modelo</h2>
+      <p class="cs">Cada versión guarda el dataset completo con autor y hora. No se pueden editar ni borrar: si una salió mal, se guarda otra.</p></div></div>
+     <div id="dtVersiones"><p class="cs">Cargando…</p></div></div>`;
+  }
+
+  pane.innerHTML=cabecera+cuerpo+`<div id="dtCuadres"></div>`;
+
+  /* ---- enganches ---- */
+  $$("#p-datos [data-dv]").forEach(b=>b.onclick=()=>{DT.vista=b.dataset.dv;vDatos();
+    if(DT.vista==="ver") pintarVersiones();});
+  $$("#p-datos [data-dprep]").forEach(b=>b.onclick=()=>{DT.sel=b.dataset.dprep;vDatos();});
+  $$("#p-datos [data-dprod]").forEach(b=>b.onclick=()=>{DT.sel=b.dataset.dprod;vDatos();});
+
+  $$("#p-datos [data-ins]").forEach(el=>el.onchange=e=>{
+    const i=D.insumos.find(x=>x.id===e.target.dataset.ins); if(!i) return;
+    const c=e.target.dataset.c, v=e.target.value;
+    if(c==="merma_pct_pct") i.merma_pct=Math.max(0,Math.min(0.95,(+v||0)/100));
+    else if(c==="costo_compra"||c==="presentacion_compra") i[c]=Math.max(0,+v||0);
+    else i[c]=v;
+    tocar();
+  });
+  $$("#p-datos [data-delins]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.delins;
+    if(usosInsumo(id)) return alert("Ese insumo se usa en alguna receta.");
+    if(!confirm("¿Borrar el insumo? Los cambios no se guardan hasta que guardes una versión.")) return;
+    D.insumos=D.insumos.filter(x=>x.id!==id); tocar();
+  });
+  if($("#dtNuevoIns")) $("#dtNuevoIns").onclick=()=>{
+    const nombre=prompt("Nombre del insumo"); if(!nombre) return;
+    const u=prompt("Unidad de compra (kg, L, und)","kg")||"kg";
+    const ur=u==="kg"?"g":(u==="L"?"ml":"und");
+    const costo=+prompt("Costo de compra por "+u,"0")||0;
+    let id=slugId(nombre), n=1;
+    while(D.insumos.some(x=>x.id===id)) id=slugId(nombre)+"_"+(++n);
+    D.insumos.push({id,nombre,familia:(D.insumos[0]||{}).familia||"otros",unidad_compra:u,
+      costo_compra:costo,merma_pct:0,unidad_receta:ur,
+      factor_conversion_compra_receta:(u==="kg"||u==="L")?1000:1,
+      costo_efectivo:0,proveedor:"",frecuencia_conteo:"semanal",dias_seguridad:3,
+      lead_time_dias:2,presentacion_compra:1});
+    tocar();
+  };
+
+  $$("#p-datos [data-prep]").forEach(el=>el.onchange=e=>{
+    const id=e.target.dataset.prep;
+    const o=(D.semielaborados||[]).find(x=>x.id===id)||(D.rellenos||[]).find(x=>x.id===id);
+    if(!o) return;
+    const c=e.target.dataset.c;
+    if(c==="rinde_g") o.rinde_g=Math.max(1,+e.target.value||1); else o[c]=e.target.value;
+    tocar();
+  });
+  $$("#p-datos [data-pl]").forEach(el=>el.onchange=e=>{
+    const id=e.target.dataset.pl, k=+e.target.dataset.k;
+    const s=(D.semielaborados||[]).find(x=>x.id===id), R=(D.rellenos||[]).find(x=>x.id===id);
+    const arr=s?s.receta:(R?R.insumos:null); if(!arr||!arr[k]) return;
+    if(e.target.dataset.c==="gramos") arr[k].gramos=Math.max(0,+e.target.value||0);
+    else { arr[k].insumo_id=e.target.value;
+           const I=D.insumos.find(i=>i.id===e.target.value)||{};
+           if("nombre" in arr[k]) arr[k].nombre=I.nombre; }
+    tocar();
+  });
+  $$("#p-datos [data-delpl]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.delpl, k=+b.dataset.k;
+    const s=(D.semielaborados||[]).find(x=>x.id===id), R=(D.rellenos||[]).find(x=>x.id===id);
+    const arr=s?s.receta:(R?R.insumos:null); if(!arr) return;
+    arr.splice(k,1); tocar();
+  });
+  if($("#dtNuevaLinea")) $("#dtNuevaLinea").onclick=e=>{
+    const id=e.target.dataset.prep;
+    const s=(D.semielaborados||[]).find(x=>x.id===id), R=(D.rellenos||[]).find(x=>x.id===id);
+    const I=D.insumos[0]; if(!I) return;
+    if(s) s.receta.push({insumo_id:I.id,nombre:I.nombre,familia:I.familia,gramos:0,costo_unit:0,costo:0,pct_costo:0});
+    else if(R) R.insumos.push({insumo_id:I.id,gramos:0,costo:0});
+    tocar();
+  };
+
+  $$("#p-datos [data-prod]").forEach(el=>el.onchange=e=>{
+    const p=D.productos.find(x=>x.id===e.target.dataset.prod); if(!p) return;
+    const c=e.target.dataset.c;
+    if(c==="precio"||c==="peso") p[c]=Math.max(0,+e.target.value||0); else p[c]=e.target.value;
+    tocar();
+  });
+  $$("#p-datos [data-niv]").forEach(el=>el.onchange=e=>{
+    const p=D.productos.find(x=>x.id===e.target.dataset.niv); if(!p) return;
+    const N1=p.niveles||{}, c=e.target.dataset.c, k=+e.target.dataset.k, v=Math.max(0,+e.target.value||0);
+    if(c==="semi"&&N1.semielaborado) N1.semielaborado.gramos_por_unidad=v;
+    if(c==="relleno"&&(N1.rellenos||[])[k]) N1.rellenos[k].gramos_por_unidad=v;
+    if(c==="directo"&&(N1.directos||[])[k]) N1.directos[k].gramos_por_unidad=v;
+    if(c==="empaque"&&(N1.empaque||[])[k]) N1.empaque[k].cantidad=v;
+    tocar();
+  });
+  $$("#p-datos [data-deldir]").forEach(b=>b.onclick=()=>{
+    const p=D.productos.find(x=>x.id===b.dataset.deldir); if(!p) return;
+    (p.niveles.directos||[]).splice(+b.dataset.k,1); tocar(); });
+  $$("#p-datos [data-delemp]").forEach(b=>b.onclick=()=>{
+    const p=D.productos.find(x=>x.id===b.dataset.delemp); if(!p) return;
+    (p.niveles.empaque||[]).splice(+b.dataset.k,1); tocar(); });
+  if($("#dtNuevoDir")) $("#dtNuevoDir").onclick=e=>{
+    const p=D.productos.find(x=>x.id===e.target.dataset.prod); if(!p) return;
+    const I=D.insumos[0]; p.niveles=p.niveles||{};
+    p.niveles.directos=p.niveles.directos||[];
+    p.niveles.directos.push({insumo_id:I.id,nombre:I.nombre,uso:"",gramos_por_unidad:0,costo_por_unidad:0});
+    tocar(); };
+  if($("#dtNuevoEmp")) $("#dtNuevoEmp").onclick=e=>{
+    const p=D.productos.find(x=>x.id===e.target.dataset.prod); if(!p) return;
+    const I=D.insumos.find(i=>i.familia==="empaque")||D.insumos[0];
+    p.niveles=p.niveles||{}; p.niveles.empaque=p.niveles.empaque||[];
+    p.niveles.empaque.push({insumo_id:I.id,nombre:I.nombre,cantidad:1,costo_por_unidad:0});
+    tocar(); };
+  if($("#dtNuevoProd")) $("#dtNuevoProd").onclick=()=>{
+    const nombre=prompt("Nombre del producto nuevo"); if(!nombre) return;
+    let id=slugId(nombre), n=1;
+    while(D.productos.some(x=>x.id===id)) id=slugId(nombre)+"_"+(++n);
+    const base=D.productos[0];
+    D.productos.push({id,nombre,categoria:base.categoria,desc:"",ill:base.ill,
+      precio:0,peso:0,unidades_lote:1,mp:0,mod:0,cif:0,cuf:0,neto:0,ub:0,
+      niveles:{directos:[],empaque:[],rellenos:[],subtotales:{semielaborado:0,rellenos:0,directos:0,empaque:0,total:0}},
+      receta:[],pasos:[]});
+    D.ventas[id]=D.ventas[id]||{};
+    DT.sel=id; DT.vista="prod";
+    alert("Producto creado sin receta ni ventas. Cárgale los insumos acá; los pasos y los tiempos siguen en el dataset.");
+    tocar();
+  };
+
+  if($("#dtGuardar")) $("#dtGuardar").onclick=async()=>{
+    if(typeof guardarModelo!=="function") return alert("Hay que iniciar sesión para guardar.");
+    const malos=(()=>{ try{ return cuadres().filter(c=>!c.ok&&c.nombre.indexOf("planilla")<0); }catch(e){ return []; } })();
+    if(malos.length && !confirm("Hay "+malos.length+" cuadre(s) sin calzar:\n\n"+malos.map(m=>"· "+m.nombre).join("\n")+"\n\n¿Guardar igual?")) return;
+    const nota=prompt("¿Qué cambiaste? (queda junto a tu correo y la hora)"); if(nota===null) return;
+    const b=$("#dtGuardar"); b.disabled=true; b.textContent="Guardando…";
+    try{ const v=await guardarModelo(nota);
+      DT.sucio=false; if(typeof MODELO!=="undefined"){ MODELO.origen="base"; MODELO.version=v.version; }
+      vDatos(); alert("Guardado como versión "+v.version+".");
+    }catch(e){ b.disabled=false; b.textContent="Guardar versión";
+      alert("No se pudo guardar: "+(e.message||e)+"\n\nGuardar el modelo requiere permiso de edición."); }
+  };
+  if($("#dtDescartar")) $("#dtDescartar").onclick=()=>{
+    if(confirm("¿Descartar los cambios y recargar la última versión guardada?")) location.reload();
+  };
+  if($("#dtBajar")) $("#dtBajar").onclick=()=>{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,1)],{type:"application/json"}));
+    a.download="modelo_ohjala.json"; a.click();
+  };
+  try{ const el2=$("#dtCuadres"); if(el2){ const R=cuadres();
+    el2.innerHTML=`<div class="note ${R.some(c=>!c.ok&&c.nombre.indexOf("planilla")<0)?'ba':'ok'}" style="margin-top:16px">
+      <b>Cuadres: ${R.filter(c=>c.ok).length} de ${R.length} calzan.</b>
+      ${R.filter(c=>!c.ok).map(c=>"<br>· "+esc(c.nombre)+": "+esc(c.hallado)).join("")}
+      <br><span style="color:var(--ink5)">El detalle está en Alertas. El de la planilla está pendiente de decisión y no bloquea.</span></div>`; } }catch(e){}
+  setTimeout(()=>{try{tablasFiltrables($("#p-datos"));}catch(e){}},20);
+}
+function pintarVersiones(){
+  const c=$("#dtVersiones"); if(!c) return;
+  if(typeof listarModeloVersiones!=="function"){ c.innerHTML=`<div class="note">Hace falta sesión abierta.</div>`; return; }
+  listarModeloVersiones().then(vs=>{
+    if(!vs.length){ c.innerHTML=`<div class="note">Todavía no hay versiones guardadas. El tablero está usando la copia que viene dentro de la página.</div>`; return; }
+    c.innerHTML=`<div class="tw"><table><thead><tr><th>Versión</th><th>Cuándo</th><th>Quién</th><th>Nota</th>
+      <th class="n">Productos</th><th class="n">Insumos</th><th class="n">MP sumada</th><th></th></tr></thead>
+     <tbody>${vs.map(v=>`<tr><td style="font-family:var(--fm);font-weight:700">v${v.version}</td>
+      <td>${new Date(v.creado_en).toLocaleString("es-PE",{day:"2-digit",month:"short",year:"2-digit",hour:"2-digit",minute:"2-digit"})}</td>
+      <td style="font-size:12px">${esc(v.autor_email||"—")}</td>
+      <td style="font-size:12.5px;color:var(--ink5)">${esc(v.nota||"—")}</td>
+      <td class="n">${esc(v.productos||"—")}</td><td class="n">${esc(v.insumos||"—")}</td>
+      <td class="n">${v.mp_total!=null?S(v.mp_total):"—"}</td>
+      <td><button class="btn sm" data-rest="${v.id}" data-v="${v.version}">Cargar</button></td></tr>`).join("")}</tbody>
+    </table></div>`;
+    $$("#dtVersiones [data-rest]").forEach(b=>b.onclick=async()=>{
+      if(!confirm("¿Cargar la versión "+b.dataset.v+"? Lo que tengas sin guardar se pierde.")) return;
+      try{ const v=await restaurarModelo(b.dataset.rest);
+        if(typeof MODELO!=="undefined"){ MODELO.origen="base"; MODELO.version=v; }
+        DT.sucio=false; recalcularModelo(); render(); vDatos();
+        alert("Cargada la versión "+v+". No se guardó nada: si la quieres fijar, guarda una versión nueva.");
+      }catch(e){ alert("No se pudo cargar: "+(e.message||e)); }
+    });
+  }).catch(e=>{ c.innerHTML=`<div class="note aw">No se pudo leer el historial: ${esc(e.message||String(e))}</div>`; });
+}
+
 /* ================= DECISIONES: QUE HACER, CON SU NUMERO =================
    El P&L dice cuanto se pierde. Esto dice que hacer, y en que orden.
    La idea central: los sueldos y el CIF ya estan pagados, asi que en el corto
@@ -1824,7 +2172,8 @@ function pintarCuadres(){
    falta la cadena OIT.
    El redondeo imita al de los scripts que generaron el dataset, porque la prueba
    de cierre compara campo por campo contra lo guardado. */
-const R4=x=>Math.round(x*1e4)/1e4, R8=x=>Math.round(x*1e8)/1e8, R2=x=>Math.round(x*100)/100;
+const R4=x=>Math.round(x*1e4)/1e4, R8=x=>Math.round(x*1e8)/1e8,
+      R2=x=>Math.round(x*100)/100, R6=x=>Math.round(x*1e6)/1e6;
 
 function recalcularModelo(){
   const porId={}, porNombre={};
@@ -1834,10 +2183,11 @@ function recalcularModelo(){
   });
   const ins=(id,nombre)=>porId[id]||porNombre[nombre]||{costo_efectivo:0};
 
+  /* --- L1: masas --- */
   (D.semielaborados||[]).forEach(s=>{
     let t=0;
     (s.receta||[]).forEach(r=>{
-      const I=ins(r.insumo_id,r.nombre); const ce=I.costo_efectivo||0;
+      const I=ins(r.insumo_id,r.nombre), ce=I.costo_efectivo||0;
       r.costo_unit=R8(ce); r.costo=R4((r.gramos||0)*ce); t+=(r.gramos||0)*ce;
     });
     s.costo_tanda=R4(t);
@@ -1845,19 +2195,50 @@ function recalcularModelo(){
     s.costo_por_kg=R4(s.rinde_g?1000*t/s.rinde_g:0);
     (s.receta||[]).forEach(r=>{ r.pct_costo=R2(s.costo_tanda?100*r.costo/s.costo_tanda:0); });
     const h=(s.receta||[]).find(r=>/harina/i.test(r.nombre||""));
-    if(h&&h.gramos) (s.receta||[]).forEach(r=>{ if(r.pct_panadero!=null) r.pct_panadero=R2(100*(r.gramos||0)/h.gramos); });
+    if(h&&h.gramos)(s.receta||[]).forEach(r=>{ if(r.pct_panadero!=null) r.pct_panadero=R2(100*(r.gramos||0)/h.gramos); });
+    // minutos y costo de mano de obra por kilo de la tanda
+    const kg=(s.rinde_g||0)/1000;
+    s.minh_tanda=R4((s.pasos||[]).reduce((a,x)=>a+(x.minh_lote||0),0));
+    s.mo_tanda=R4((s.pasos||[]).reduce((a,x)=>a+(x.minh_lote||0)*(x.tarifa||0),0));
+    s.minm_tanda=R4((s.pasos||[]).reduce((a,x)=>a+(x.minm_lote||0),0));
+    s.minh_por_kg=kg?R6(s.minh_tanda/kg):0;
+    s.mo_por_kg=kg?R6(s.mo_tanda/kg):0;
+    s.minm_por_kg=kg?R6(s.minm_tanda/kg):0;
+    const pe={};
+    (s.pasos||[]).forEach(x=>{ pe[x.estacion]=pe[x.estacion]||{minh:0,mo:0};
+      pe[x.estacion].minh+=(x.minh_lote||0); pe[x.estacion].mo+=(x.minh_lote||0)*(x.tarifa||0); });
+    s.por_estacion={}; Object.entries(pe).forEach(([e,v])=>{
+      s.por_estacion[e]={minh:kg?R6(v.minh/kg):0, mo:kg?R6(v.mo/kg):0}; });
   });
 
+  /* --- L1: rellenos, mezclas y baños --- */
   (D.rellenos||[]).forEach(R=>{
     let t=0;
     (R.insumos||[]).forEach(x=>{
-      const I=ins(x.insumo_id,null); const ce=I.costo_efectivo||0;
+      const I=ins(x.insumo_id,null), ce=I.costo_efectivo||0;
       x.costo=R2((x.gramos||0)*ce); t+=(x.gramos||0)*ce;
     });
     R.costo_tanda=R4(t);
     R.costo_por_g=R8(R.rinde_g?t/R.rinde_g:0);
+    const kg=(R.rinde_g||0)/1000;
+    R.minh_tanda=R4((R.pasos||[]).reduce((a,x)=>a+(x.minh_lote||0),0));
+    R.mo_tanda=R4((R.pasos||[]).reduce((a,x)=>a+(x.minh_lote||0)*(x.tarifa||0),0));
+    R.minm_tanda=R4((R.pasos||[]).reduce((a,x)=>a+(x.minm_lote||0),0));
+    R.minh_por_kg=kg?R6(R.minh_tanda/kg):0;
+    R.mo_por_kg=kg?R6(R.mo_tanda/kg):0;
+    R.minm_por_kg=kg?R6(R.minm_tanda/kg):0;
+    const pe={};
+    (R.pasos||[]).forEach(x=>{ pe[x.estacion]=pe[x.estacion]||{minh:0,mo:0};
+      pe[x.estacion].minh+=(x.minh_lote||0); pe[x.estacion].mo+=(x.minh_lote||0)*(x.tarifa||0); });
+    R.por_estacion={}; Object.entries(pe).forEach(([e,v])=>{
+      R.por_estacion[e]={minh:kg?R6(v.minh/kg):0, mo:kg?R6(v.mo/kg):0}; });
   });
 
+  /* --- L2: productos --- */
+  /* D.meta.igv viene como 18, no como 0.18. Se acepta cualquiera de las dos
+     convenciones: lo que importa es no dividir el precio entre 19. */
+  const igv0=(D.meta||{}).igv;
+  const IGV=(igv0==null)?0.18:(igv0>1?igv0/100:igv0);
   D.productos.forEach(p=>{
     const L=p.unidades_lote||1, N0=p.niveles;
     (p.receta||[]).forEach(r=>{
@@ -1867,47 +2248,152 @@ function recalcularModelo(){
                r.costo_por_unidad=R4(r.costo_lote/L); }
         return;
       }
-      const I=ins(r.insumo_id,r.nombre); const ce=I.costo_efectivo||0;
+      const I=ins(r.insumo_id,r.nombre), ce=I.costo_efectivo||0;
       r.costo_unit_ins=R8(ce);
       r.costo_lote=R4((r.cant_lote||0)*ce);
       r.costo_por_unidad=R4(r.costo_lote/L);
       if(I.merma_pct!=null) r.merma=I.merma_pct;
     });
+    let mnS=0,mnR=0,moS=0,moR=0,mqS=0,mqR=0;
     if(N0){
-      if(N0.semielaborado){
-        const s=(D.semielaborados||[]).find(x=>x.id===N0.semielaborado.id);
-        if(s){ N0.semielaborado.costo_por_g=R8(s.costo_por_g);
-               N0.semielaborado.costo_por_unidad=R4((N0.semielaborado.gramos_por_unidad||0)*s.costo_por_g); }
+      const s=(D.semielaborados||[]).find(x=>x.id===((N0.semielaborado||{}).id));
+      if(s&&N0.semielaborado){
+        const g=(N0.semielaborado.gramos_por_unidad||0);
+        N0.semielaborado.costo_por_g=R8(s.costo_por_g);
+        N0.semielaborado.costo_por_unidad=R4(g*s.costo_por_g);
+        mnS=(g/1000)*(s.minh_por_kg||0); moS=(g/1000)*(s.mo_por_kg||0);
+        mqS=(g/1000)*(s.minm_por_kg||0);
       }
       (N0.rellenos||[]).forEach(rl=>{
         const R=(D.rellenos||[]).find(x=>x.id===rl.id);
-        if(R){ rl.costo_por_g=R8(R.costo_por_g);
-               rl.costo_por_unidad=R4((rl.gramos_por_unidad||0)*R.costo_por_g); }
+        if(!R) return;
+        rl.costo_por_g=R8(R.costo_por_g);
+        rl.costo_por_unidad=R4((rl.gramos_por_unidad||0)*R.costo_por_g);
+        mnR+=((rl.gramos_por_unidad||0)/1000)*(R.minh_por_kg||0);
+        moR+=((rl.gramos_por_unidad||0)/1000)*(R.mo_por_kg||0);
+        mqR+=((rl.gramos_por_unidad||0)/1000)*(R.minm_por_kg||0);
       });
-      (N0.directos||[]).forEach(x=>{
-        const I=ins(x.insumo_id,x.nombre);
-        x.costo_por_unidad=R4((x.gramos_por_unidad||0)*(I.costo_efectivo||0));
-      });
-      (N0.empaque||[]).forEach(x=>{
-        const I=ins(x.insumo_id,x.nombre);
-        x.costo_por_unidad=R4((x.cantidad||0)*(I.costo_efectivo||0));
-      });
-      const semi=N0.semielaborado?(N0.semielaborado.costo_por_unidad||0):0;
-      const rell=(N0.rellenos||[]).reduce((s,x)=>s+(x.costo_por_unidad||0),0);
-      const dir=(N0.directos||[]).reduce((s,x)=>s+(x.costo_por_unidad||0),0);
-      const emp=(N0.empaque||[]).reduce((s,x)=>s+(x.costo_por_unidad||0),0);
-      N0.subtotales={semielaborado:R4(semi), rellenos:R4(rell), directos:R4(dir),
-                     empaque:R4(emp), total:R4(semi+rell+dir+emp)};
+      (N0.directos||[]).forEach(x=>{ const I=ins(x.insumo_id,x.nombre);
+        x.costo_por_unidad=R4((x.gramos_por_unidad||0)*(I.costo_efectivo||0)); });
+      (N0.empaque||[]).forEach(x=>{ const I=ins(x.insumo_id,x.nombre);
+        x.costo_por_unidad=R4((x.cantidad||0)*(I.costo_efectivo||0)); });
+      const semi=(N0.semielaborado||{}).costo_por_unidad||0;
+      const rell=(N0.rellenos||[]).reduce((a,x)=>a+(x.costo_por_unidad||0),0);
+      const dir=(N0.directos||[]).reduce((a,x)=>a+(x.costo_por_unidad||0),0);
+      const emp=(N0.empaque||[]).reduce((a,x)=>a+(x.costo_por_unidad||0),0);
+      N0.subtotales={semielaborado:R4(semi),rellenos:R4(rell),directos:R4(dir),
+                     empaque:R4(emp),total:R4(semi+rell+dir+emp)};
       p.mp=R4(N0.subtotales.total);
     }
-    p.neto=R4(p.precio/(1+((D.meta||{}).igv!=null?D.meta.igv:0.18)));
+    if((p.pasos||[]).length){
+      const mnP=(p.pasos||[]).reduce((a,x)=>a+(x.minh_lote||0),0)/L;
+      const moP=(p.pasos||[]).reduce((a,x)=>a+(x.minh_lote||0)*(x.tarifa||0),0)/L;
+      (p.pasos||[]).forEach(x=>{ x.minh_unid=R6((x.minh_lote||0)/L);
+        x.costo_unid=R6((x.minh_lote||0)*(x.tarifa||0)/L); });
+      p.min_niveles={semi:R6(mnS),relleno:R6(mnR),producto:R6(mnP)};
+      p.mo_niveles={semi:R4(moS),relleno:R4(moR),producto:R4(moP)};
+      p.min_hombre=R4(mnS+mnR+mnP);
+      p.mod=R4(moS+moR+moP);
+      /* Los minutos de maquina tambien se heredan: la amasadora y la camara
+         trabajan en la tanda de masa, no en el pan. Y min_horno es tiempo de
+         HORNO ocupado (minutos de maquina de esa estacion), que es el driver
+         con el que se reparte el gas y la energia: no es el tiempo de la
+         persona parada frente al horno. */
+      p.min_maquina=R4((p.pasos||[]).reduce((a,x)=>a+(x.minm_lote||0),0)/L+mqS+mqR);
+      p.min_horno=R4((p.pasos||[]).filter(x=>x.estacion==="horno")
+        .reduce((a,x)=>a+(x.minm_lote||0),0)/L);
+      p.min_setup_lote=R4((p.pasos||[]).reduce((a,x)=>a+(x.min_setup||0),0));
+    }
+  });
+
+  /* --- CIF por el driver que declara cada pool --- */
+  const anios=Object.keys(D.matriz_mo||{});
+  const aRef=(D.pnl&&String(D.pnl.anio))||anios[anios.length-1]||"2026";
+  const demH=D.productos.reduce((s,p)=>s+(p.min_horno||0)*und(p.id,aRef),0)/12;
+  const demP=D.productos.reduce((s,p)=>s+(p.min_hombre||0)*und(p.id,aRef),0)/12;
+  const mH=(D.cif||[]).filter(c=>c.driver==="min_horno").reduce((s,c)=>s+c.monto_mensual,0);
+  const mP=(D.cif||[]).filter(c=>c.driver!=="min_horno").reduce((s,c)=>s+c.monto_mensual,0);
+  const tH=demH?mH/demH:0, tP=demP?mP/demP:0;
+  (D.cif||[]).forEach(c=>{ const b=c.driver==="min_horno"?demH:demP;
+    c.tasa_driver=R6(b?c.monto_mensual/b:0); c.base_driver_mensual=R2(b);
+    c.driver_aplicado=c.driver==="min_horno"?"min_horno":"min_hombre"; });
+  D.productos.forEach(p=>{
+    p.cif=R4(tH*(p.min_horno||0)+tP*(p.min_hombre||0));
+    p.neto=R4(p.precio/(1+IGV));
     p.cuf=R4((p.mp||0)+(p.mod||0)+(p.cif||0));
     p.ub=R4(p.neto-p.cuf);
     p.ub_pct=R2(p.neto?100*p.ub/p.neto:0);
     p.fc_pct=R2(p.neto?100*(p.mp||0)/p.neto:0);
     p.mod_pct=R2(p.neto?100*(p.mod||0)/p.neto:0);
     p.cif_pct=R2(p.neto?100*(p.cif||0)/p.neto:0);
+    p.lotes_semana=Math.round(und(p.id,aRef)/52/(p.unidades_lote||1)*10)/10;
   });
+
+  /* --- matriz de minutos por estacion, por año --- */
+  anios.forEach(anio=>{
+    const MZ={};
+    D.productos.forEach(p=>{
+      if(!(p.pasos||[]).length) return;
+      const u=und(p.id,anio); if(!u) return;
+      const L=p.unidades_lote||1, est={};
+      const add=(e,mn,co,cual)=>{ const d=est[e]=est[e]||{min:0,min_producto:0,min_semi:0,min_relleno:0,costo:0};
+        d.min+=mn; d["min_"+cual]+=mn; d.costo+=co; };
+      (p.pasos||[]).forEach(x=>add(x.estacion,(x.minh_lote||0)/L*u,(x.minh_lote||0)*(x.tarifa||0)/L*u,"producto"));
+      const N0=p.niveles||{};
+      const s=(D.semielaborados||[]).find(x=>x.id===((N0.semielaborado||{}).id));
+      if(s&&s.por_estacion){ const g=((N0.semielaborado||{}).gramos_por_unidad||0)/1000;
+        Object.entries(s.por_estacion).forEach(([e,v])=>add(e,g*v.minh*u,g*v.mo*u,"semi")); }
+      (N0.rellenos||[]).forEach(rl=>{ const R=(D.rellenos||[]).find(x=>x.id===rl.id);
+        if(R&&R.por_estacion){ const g=(rl.gramos_por_unidad||0)/1000;
+          Object.entries(R.por_estacion).forEach(([e,v])=>add(e,g*v.minh*u,g*v.mo*u,"relleno")); } });
+      MZ[p.id]={}; Object.entries(est).forEach(([e,v])=>{
+        MZ[p.id][e]={min:R4(v.min),min_producto:R4(v.min_producto),min_semi:R4(v.min_semi),
+                     min_relleno:R4(v.min_relleno),costo:R4(v.costo)}; });
+    });
+    D.matriz_mo[anio]=MZ;
+  });
+
+  /* --- rentabilidad por canal --- */
+  Object.keys(D.rentabilidad_canal||{}).forEach(anio=>{
+    const out={};
+    (D.canales||[]).forEach(c=>{
+      let u=0,venta=0,mp=0,mod=0,cif=0;
+      D.productos.forEach(p=>{
+        const q=undCanal(p.id,anio,c.id); if(!q) return;
+        const f=(c.factor_precio!=null?c.factor_precio:1);
+        u+=q; venta+=p.neto*f*q; mp+=(p.mp||0)*q; mod+=(p.mod||0)*q; cif+=(p.cif||0)*q;
+      });
+      const com=venta*((c.comision_pct||0)/100), emp=u*(c.costo_empaque_extra||0);
+      const ub=venta-mp-mod-cif;
+      out[c.id]={u,venta:R2(venta),mp:R2(mp),mod:R2(mod),cif:R2(cif),comision:R2(com),
+        empaque:R2(emp),ub:R2(ub),mc:R2(ub-com-emp),
+        ub_pct:R2(venta?100*ub/venta:0),mc_pct:R2(venta?100*(ub-com-emp)/venta:0),
+        ticket:R2(u?venta/u:0)};
+    });
+    D.rentabilidad_canal[anio]=out;
+  });
+
+  /* --- demanda y utilizacion por estacion, y el pnl --- */
+  const dm={};
+  Object.values(D.matriz_mo[aRef]||{}).forEach(pr=>Object.entries(pr).forEach(([e,v])=>{
+    dm[e]=(dm[e]||0)+v.min/12; }));
+  (D.estaciones||[]).forEach(e=>{
+    e.minutos_hombre_demandados_mes=R2(dm[e.id]||0);
+    e.utilizacion_pct=R2(e.minutos_hombre_disponibles_mes?100*(dm[e.id]||0)/e.minutos_hombre_disponibles_mes:0);
+  });
+  const RR=D.rentabilidad_canal[aRef]||{};
+  const V=Object.values(RR).reduce((s,x)=>s+x.venta,0);
+  const MPt=Object.values(RR).reduce((s,x)=>s+x.mp,0);
+  const MOt=Object.values(RR).reduce((s,x)=>s+x.mod,0);
+  const CIt=Object.values(RR).reduce((s,x)=>s+x.cif,0);
+  if(D.pnl){
+    D.pnl.venta_neta_mes=R2(V/12); D.pnl.materia_prima_mes=R2(MPt/12);
+    D.pnl.mano_obra_directa_mes=R2(MOt/12); D.pnl.cif_mes=R2(CIt/12);
+    D.pnl.utilidad_bruta_mes=R2((V-MPt-MOt-CIt)/12);
+    D.pnl.gastos_operativos_mes=R2((D.gastos||[]).reduce((s,g)=>s+g.monto_mensual,0));
+    D.pnl.minutos_hombre_aplicados_mes=R2(D.productos.reduce((s,p)=>s+(p.min_hombre||0)*und(p.id,aRef),0)/12);
+    D.pnl.minutos_horno_mes=R2(D.productos.reduce((s,p)=>s+(p.min_horno||0)*und(p.id,aRef),0)/12);
+  }
   return D;
 }
 
@@ -5286,6 +5772,7 @@ function render(){
   seguro(vVentas,"#p-ventas","Ventas"); seguro(vPron,"#p-pron","Pronostico"); seguro(vPlanilla,"#p-planilla","Planilla");
   seguro(vPlan,"#p-plan","Plan"); seguro(vInv,"#p-inv","Inventario"); seguro(vVta,"#p-vta","Consumo");
   seguro(vEsc,"#p-esc","Escenarios"); seguro(vAlertas,"#p-ale","Alertas");
+  seguro(vDatos,"#p-datos","Datos");
   pintarBadge(); setTimeout(()=>tablasFiltrables(),30);
   setTimeout(()=>{try{pintarCuadres();}catch(e){console.error("cuadres",e);}},60);
   try{ if(esAdmin()) vUsuarios(); }catch(e){}
@@ -5329,6 +5816,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ST.abierto)cerrar()
    ============================================================ */
 const SB_URL="https://fqgwcyrmncxmnxyxydux.supabase.co", SB_KEY="sb_publishable_b2I75xOPa2wqffw4XJXMUw_lNoffxiw";
 let sb=null, SESION=null, PERFIL=null;
+let MODELO={origen:"semilla", version:0};   // de donde salio el dataset que se esta mostrando
 
 /* ============================================================
    PERMISOS POR PESTAÑA
@@ -5342,6 +5830,8 @@ const PESTANAS=[
   expone:"Precio, costo unitario y margen de cada producto. Con esto se calcula cuánto ganas por pan."},
  {k:"ins",  n:"Insumos y recetas",  sens:"crítica", qui:"Solo dueño y jefa de producción",
   expone:"Las recetas completas, gramo por gramo, y el precio pagado a cada proveedor. Es el know-how."},
+ {k:"datos",n:"Editar datos",      sens:"alta",  qui:"Solo quien edita el modelo",
+  expone:"Deja cambiar precios de compra, gramos de receta y precios de venta. Un cambio aca mueve el costo de todos los productos."},
  {k:"mo",   n:"Mano de obra",       sens:"crítica", qui:"Solo dueño",
   expone:"Costo por minuto de cada estación. De ahí se deduce la planilla y cuánto gana cada puesto."},
  {k:"util", n:"Utilidad bruta",     sens:"alta",  qui:"Dueño y gerencia",
@@ -5372,7 +5862,7 @@ const PAQUETES={
    d:"Lo que necesita quien hornea: qué producir, cuánto se proyecta y cuánto insumo se va. Ningún precio ni margen."},
  mostrador:{n:"Mostrador",   v:["plan","pron","ventas"],
    d:"Lo operativo más la venta. No ve costos, recetas ni planilla."},
- gerencia: {n:"Gerencia",    v:["res","prod","util","ventas","pron","plan","vta","inv","ale","esc"],
+ gerencia: {n:"Gerencia",    v:["res","prod","util","ventas","pron","plan","vta","inv","ale","esc","datos"],
    d:"Todo salvo recetas, mano de obra y canales: ve el resultado sin el know-how ni los sueldos."},
  todo:     {n:"Acceso total", v:PESTANAS.filter(p=>p.k!=="usr").map(p=>p.k),
    d:"Todas las pestañas menos la administración de usuarios."}
@@ -5530,6 +6020,11 @@ async function arrancarSesion(){
     if(PERFIL.estado==="bloqueado") return vBloqueado();
     if(PERFIL.estado!=="aprobado") return vPendiente();
     entrar(); pintarSesion();
+    /* El modelo se carga ANTES del primer render: si no, se pinta la semilla y
+       despues salta a otros numeros delante del usuario. */
+    try{ MODELO=await limite(cargarModelo(),12000,"modelo"); }
+    catch(e){ MODELO={origen:"semilla", version:0, error:(e&&e.message)||String(e)}; }
+    window.MODELO=MODELO;
     try{ await limite(cargarEscenarios(),12000,"escenarios"); }catch(e){ ST.esc=[]; }
     render();
   }catch(e){
@@ -5853,6 +6348,58 @@ async function leerConteo(id){
 window.guardarConteo=guardarConteo;
 window.listarConteos=listarConteos;
 window.leerConteo=leerConteo;
+
+/* ---------------- EL MODELO: CARGA Y GUARDADO ----------------
+   El dataset vivia dentro del HTML, asi que solo quien edita el codigo podia
+   cambiar un gramo. Ahora la tabla modelo guarda una fila por version y la
+   aplicacion carga la ultima al abrir. La copia embebida en el HTML queda como
+   semilla: si la base no tiene ninguna version, o no hay sesion, se usa esa.
+   Una sola fuente de verdad en cada momento, nunca dos. */
+async function cargarModelo(){
+  try{
+    const {data,error}=await sb.from("modelo")
+      .select("id,version,datos,nota,autor_email,creado_en")
+      .order("version",{ascending:false}).limit(1);
+    if(error) throw error;
+    if(!data||!data.length) return {origen:"semilla", version:0};
+    const m=data[0];
+    // se reemplaza el contenido de D sin cambiar la referencia: todas las vistas la tienen capturada
+    Object.keys(D).forEach(k=>{ if(!(k in m.datos)) delete D[k]; });
+    Object.assign(D,m.datos);
+    return {origen:"base", version:m.version, nota:m.nota, autor:m.autor_email, creado_en:m.creado_en};
+  }catch(e){
+    console.warn("modelo: se usa la copia embebida.", e.message||e);
+    return {origen:"semilla", version:0, error:e.message||String(e)};
+  }
+}
+async function guardarModelo(nota){
+  const u=(await sb.auth.getUser()).data.user;
+  if(!u) throw new Error("hay que iniciar sesion");
+  const resumen={
+    productos:(D.productos||[]).length, insumos:(D.insumos||[]).length,
+    semielaborados:(D.semielaborados||[]).length, rellenos:(D.rellenos||[]).length,
+    mp_total:+(D.productos||[]).reduce((s,p)=>s+(p.mp||0),0).toFixed(4)
+  };
+  const {data,error}=await sb.from("modelo").insert({
+    version:0, datos:D, resumen, nota:(nota||"").slice(0,400), autor:u.id, autor_email:u.email
+  }).select("id,version,creado_en").single();
+  if(error) throw error;
+  return data;
+}
+async function listarModeloVersiones(){
+  const {data,error}=await sb.from("v_modelo_versiones").select("*").limit(20);
+  if(error) throw error;
+  return data||[];
+}
+async function restaurarModelo(id){
+  const {data,error}=await sb.from("modelo").select("datos,version").eq("id",id).single();
+  if(error) throw error;
+  Object.keys(D).forEach(k=>{ if(!(k in data.datos)) delete D[k]; });
+  Object.assign(D,data.datos);
+  return data.version;
+}
+window.cargarModelo=cargarModelo; window.guardarModelo=guardarModelo;
+window.listarModeloVersiones=listarModeloVersiones; window.restaurarModelo=restaurarModelo;
 
 </script>
 </body>

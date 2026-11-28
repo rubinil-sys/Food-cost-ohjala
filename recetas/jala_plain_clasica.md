@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 21.00 |
 | Precio neto | S/ 17.7966 |
-| Materia prima | S/ 4.8625 |
+| Materia prima | S/ 4.8624 |
 | Mano de obra directa | S/ 2.2315 |
 | CIF de producción | S/ 2.0622 |
-| **Costo unitario (CUF)** | **S/ 9.1562** |
-| Utilidad bruta | S/ 8.6404 (48.5%) |
+| **Costo unitario (CUF)** | **S/ 9.1561** |
+| Utilidad bruta | S/ 8.6405 (48.5%) |
 | Minutos de persona por unidad | 5.396 |
 | Tandas por semana | 11.3 |
 
@@ -40,7 +40,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Sal marina fina yodada | 158 g | 1.8 | S/ 0.44 |
 | | | | **S/ 99.37 por tanda** |
 
-Costo heredado por unidad: **S/ 4.0464** (705 g × S/ 0.005738 por g).
+Costo heredado por unidad: **S/ 4.0463** (705 g × S/ 0.005738 por g).
 
 ### L2 · Directos del producto
 
@@ -55,7 +55,7 @@ Costo heredado por unidad: **S/ 4.0464** (705 g × S/ 0.005738 por g).
 | Bolsa de papel kraft con ventana | 24 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 24 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 4.0464 + rellenos S/ 0.0000 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 4.8625**
+**Materia prima por unidad:** masa S/ 4.0463 + rellenos S/ 0.0000 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 4.8624**
 
 ## 2 · Proceso paso a paso
 

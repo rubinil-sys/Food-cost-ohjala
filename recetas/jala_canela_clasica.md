@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 23.50 |
 | Precio neto | S/ 19.9153 |
-| Materia prima | S/ 6.1286 |
+| Materia prima | S/ 6.1285 |
 | Mano de obra directa | S/ 2.6470 |
 | CIF de producción | S/ 2.2921 |
-| **Costo unitario (CUF)** | **S/ 11.0677** |
-| Utilidad bruta | S/ 8.8476 (44.4%) |
+| **Costo unitario (CUF)** | **S/ 11.0676** |
+| Utilidad bruta | S/ 8.8477 (44.4%) |
 | Minutos de persona por unidad | 6.417 |
 | Tandas por semana | 15.1 |
 
@@ -40,7 +40,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Sal marina fina yodada | 158 g | 1.8 | S/ 0.44 |
 | | | | **S/ 99.37 por tanda** |
 
-Costo heredado por unidad: **S/ 3.2936** (574 g × S/ 0.005738 por g).
+Costo heredado por unidad: **S/ 3.2935** (574 g × S/ 0.005738 por g).
 
 ### L1 · Relleno — Relleno de canela y azucar rubia
 
@@ -73,7 +73,7 @@ Costo heredado por unidad: **S/ 2.0189**.
 | Bolsa de papel kraft con ventana | 24 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 24 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 3.2936 + rellenos S/ 2.0189 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 6.1286**
+**Materia prima por unidad:** masa S/ 3.2935 + rellenos S/ 2.0189 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 6.1285**
 
 ## 2 · Proceso paso a paso
 

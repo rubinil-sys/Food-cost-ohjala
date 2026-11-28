@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 8.50 |
 | Precio neto | S/ 7.2034 |
-| Materia prima | S/ 2.6664 |
+| Materia prima | S/ 2.6662 |
 | Mano de obra directa | S/ 0.8768 |
 | CIF de producción | S/ 1.5723 |
-| **Costo unitario (CUF)** | **S/ 5.1155** |
-| Utilidad bruta | S/ 2.0879 (29.0%) |
+| **Costo unitario (CUF)** | **S/ 5.1153** |
+| Utilidad bruta | S/ 2.0881 (29.0%) |
 | Minutos de persona por unidad | 2.333 |
 | Tandas por semana | 4.2 |
 
@@ -24,10 +24,10 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
-| Harina de trigo panadera (fuerza) | insumo directo | 62.5 g | S/ 0.2651 |
-| Azucar blanca refinada | insumo directo | 45.8 g | S/ 0.2063 |
+| Harina de trigo panadera (fuerza) | insumo directo | 62.5 g | S/ 0.2652 |
+| Azucar blanca refinada | insumo directo | 45.8 g | S/ 0.2062 |
 | Huevo de gallina (granel) | insumo directo | 37.5 g | S/ 0.3424 |
-| Mantequilla sin sal | insumo directo | 27.1 g | S/ 0.8844 |
+| Mantequilla sin sal | insumo directo | 27.1 g | S/ 0.8842 |
 | Naranja Valencia para jugo y ralladura | insumo directo | 50.0 g | S/ 0.1889 |
 | Polvo de hornear | insumo directo | 2.3 g | S/ 0.0321 |
 | Leche entera fresca | insumo directo | 15.8 g | S/ 0.0760 |
@@ -40,7 +40,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Bolsa de papel kraft con ventana | 24 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 24 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 0.0000 + rellenos S/ 0.0000 + directos S/ 1.9964 + empaque S/ 0.6700 = **S/ 2.6664**
+**Materia prima por unidad:** masa S/ 0.0000 + rellenos S/ 0.0000 + directos S/ 1.9962 + empaque S/ 0.6700 = **S/ 2.6662**
 
 ## 2 · Proceso paso a paso
 

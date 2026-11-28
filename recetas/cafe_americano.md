@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 8.00 |
 | Precio neto | S/ 6.7797 |
-| Materia prima | S/ 2.0785 |
+| Materia prima | S/ 2.0784 |
 | Mano de obra directa | S/ 0.6253 |
 | CIF de producción | S/ 0.5627 |
-| **Costo unitario (CUF)** | **S/ 3.2665** |
-| Utilidad bruta | S/ 3.5132 (51.8%) |
+| **Costo unitario (CUF)** | **S/ 3.2664** |
+| Utilidad bruta | S/ 3.5133 (51.8%) |
 | Minutos de persona por unidad | 2.500 |
 | Tandas por semana | 567.1 |
 
@@ -30,7 +30,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Agua filtrada y osmotizada | 240 ml | — | S/ 0.22 |
 | | | | **S/ 1.54 por tanda** |
 
-Costo heredado por unidad: **S/ 1.5385** (258 g × S/ 0.005963 por g).
+Costo heredado por unidad: **S/ 1.5384** (258 g × S/ 0.005963 por g).
 
 ### L2 · Empaque
 
@@ -39,7 +39,7 @@ Costo heredado por unidad: **S/ 1.5385** (258 g × S/ 0.005963 por g).
 | Vaso de carton 12 oz doble pared | 1 und | 1.000 | S/ 0.3800 |
 | Tapa plastica para vaso 12 oz | 1 und | 1.000 | S/ 0.1600 |
 
-**Materia prima por unidad:** masa S/ 1.5385 + rellenos S/ 0.0000 + directos S/ 0.0000 + empaque S/ 0.5400 = **S/ 2.0785**
+**Materia prima por unidad:** masa S/ 1.5384 + rellenos S/ 0.0000 + directos S/ 0.0000 + empaque S/ 0.5400 = **S/ 2.0784**
 
 ## 2 · Proceso paso a paso
 

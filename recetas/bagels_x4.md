@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 22.00 |
 | Precio neto | S/ 18.6441 |
-| Materia prima | S/ 2.9590 |
+| Materia prima | S/ 2.9592 |
 | Mano de obra directa | S/ 2.3934 |
 | CIF de producción | S/ 2.2873 |
-| **Costo unitario (CUF)** | **S/ 7.6397** |
-| Utilidad bruta | S/ 11.0044 (59.0%) |
+| **Costo unitario (CUF)** | **S/ 7.6399** |
+| Utilidad bruta | S/ 11.0042 (59.0%) |
 | Minutos de persona por unidad | 5.471 |
 | Tandas por semana | 2.7 |
 
@@ -27,11 +27,11 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Harina de trigo panadera (fuerza) | insumo directo | 317.6 g | S/ 1.3476 |
 | Agua filtrada y osmotizada | insumo directo | 176.5 g | S/ 0.1588 |
 | Azucar rubia | insumo directo | 15.3 g | S/ 0.0642 |
-| Aceite vegetal de girasol | insumo directo | 10.6 g | S/ 0.0942 |
-| Sal marina fina yodada | insumo directo | 5.4 g | S/ 0.0152 |
+| Aceite vegetal de girasol | insumo directo | 10.6 g | S/ 0.0943 |
+| Sal marina fina yodada | insumo directo | 5.4 g | S/ 0.0151 |
 | Levadura fresca prensada | insumo directo | 3.6 g | S/ 0.0438 |
-| Miel de abeja | insumo directo | 4.7 g | S/ 0.1318 |
-| Bicarbonato de sodio grado alimentario | insumo directo | 2.6 g | S/ 0.0251 |
+| Miel de abeja | insumo directo | 4.7 g | S/ 0.1319 |
+| Bicarbonato de sodio grado alimentario | insumo directo | 2.6 g | S/ 0.0252 |
 | Ajonjoli (sesamo) crudo | insumo directo | 10.6 g | S/ 0.1783 |
 
 ### L2 · Empaque
@@ -41,7 +41,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Caja de carton chica para bagels | 17 und | 1.000 | S/ 0.7800 |
 | Etiqueta adhesiva impresa de marca | 17 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 0.0000 + rellenos S/ 0.0000 + directos S/ 2.0590 + empaque S/ 0.9000 = **S/ 2.9590**
+**Materia prima por unidad:** masa S/ 0.0000 + rellenos S/ 0.0000 + directos S/ 2.0592 + empaque S/ 0.9000 = **S/ 2.9592**
 
 ## 2 · Proceso paso a paso
 

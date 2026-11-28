@@ -8,11 +8,11 @@
 |---|---|
 | Precio de lista (con IGV) | S/ 32.00 |
 | Precio neto | S/ 27.1186 |
-| Materia prima | S/ 9.1431 |
+| Materia prima | S/ 9.1432 |
 | Mano de obra directa | S/ 2.8545 |
 | CIF de producción | S/ 2.4812 |
-| **Costo unitario (CUF)** | **S/ 14.4788** |
-| Utilidad bruta | S/ 12.6398 (46.6%) |
+| **Costo unitario (CUF)** | **S/ 14.4789** |
+| Utilidad bruta | S/ 12.6397 (46.6%) |
 | Minutos de persona por unidad | 6.915 |
 | Tandas por semana | 7.6 |
 
@@ -41,7 +41,7 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 | Sal marina fina yodada | 132 g | 2.0 | S/ 0.37 |
 | | | | **S/ 91.43 por tanda** |
 
-Costo heredado por unidad: **S/ 4.1557** (587 g × S/ 0.007082 por g).
+Costo heredado por unidad: **S/ 4.1558** (587 g × S/ 0.007082 por g).
 
 ### L1 · Relleno — Relleno salado de parmesano, edam y ajo
 
@@ -73,7 +73,7 @@ Costo heredado por unidad: **S/ 4.1713**.
 | Bolsa de papel kraft con ventana | 22 und | 1.000 | S/ 0.5500 |
 | Etiqueta adhesiva impresa de marca | 22 und | 1.000 | S/ 0.1200 |
 
-**Materia prima por unidad:** masa S/ 4.1557 + rellenos S/ 4.1713 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 9.1431**
+**Materia prima por unidad:** masa S/ 4.1558 + rellenos S/ 4.1713 + directos S/ 0.1461 + empaque S/ 0.6700 = **S/ 9.1432**
 
 ## 2 · Proceso paso a paso
 

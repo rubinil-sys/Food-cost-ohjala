@@ -26,19 +26,19 @@ Tres niveles. **L0** son los insumos que se compran. **L1** son las preparacione
 
 | Insumo | Por tanda de masa | % panadero | Costo de la tanda |
 |---|---|---|---|
-| Harina integral de trigo | 3,960 g | 60.0 | S/ 22.40 |
-| Harina de trigo panadera (fuerza) | 2,640 g | 40.0 | S/ 11.20 |
-| Huevo de gallina (granel) | 1,188 g | 18.0 | S/ 10.85 |
-| Mantequilla sin sal | 330 g | 5.0 | S/ 10.78 |
-| Miel de abeja | 264 g | 4.0 | S/ 7.39 |
-| Leche entera fresca | 1,056 ml | 16.0 | S/ 5.07 |
-| Aceite vegetal de girasol | 528 ml | 8.0 | S/ 4.70 |
-| Leche entera en polvo | 132 g | 2.0 | S/ 3.17 |
-| Azucar blanca refinada | 528 g | 8.0 | S/ 2.38 |
-| Levadura fresca prensada | 165 g | 2.5 | S/ 1.98 |
-| Agua filtrada y osmotizada | 1,848 ml | 28.0 | S/ 1.66 |
-| Mejorador panario | 33 g | 0.5 | S/ 0.73 |
-| Sal marina fina yodada | 119 g | 1.8 | S/ 0.33 |
+| Harina integral de trigo | 3,960 g | 100.0 | S/ 22.40 |
+| Harina de trigo panadera (fuerza) | 2,640 g | 66.7 | S/ 11.20 |
+| Huevo de gallina (granel) | 1,188 g | 30.0 | S/ 10.85 |
+| Mantequilla sin sal | 330 g | 8.3 | S/ 10.78 |
+| Miel de abeja | 264 g | 6.7 | S/ 7.39 |
+| Leche entera fresca | 1,056 ml | 26.7 | S/ 5.07 |
+| Aceite vegetal de girasol | 528 ml | 13.3 | S/ 4.70 |
+| Leche entera en polvo | 132 g | 3.3 | S/ 3.17 |
+| Azucar blanca refinada | 528 g | 13.3 | S/ 2.38 |
+| Levadura fresca prensada | 165 g | 4.2 | S/ 1.98 |
+| Agua filtrada y osmotizada | 1,848 ml | 46.7 | S/ 1.66 |
+| Mejorador panario | 33 g | 0.8 | S/ 0.73 |
+| Sal marina fina yodada | 119 g | 3.0 | S/ 0.33 |
 | | | | **S/ 82.63 por tanda** |
 
 Costo heredado por unidad: **S/ 4.1312** (640 g × S/ 0.006460 por g).
