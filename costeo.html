@@ -1157,6 +1157,15 @@ const MAPA_RUTAS=[
  {q:"¿Qué tengo que comprar esta semana?",
   p:[["inv","Inventario","Contar el almacén"],["inv","Semáforo","Qué está en quiebre"],["inv","Pedido","Copiar por proveedor"]],
   r:"El consumo por día sale de las recetas, no de la intuición. El pedido cubre el tiempo del proveedor más la cobertura que elijas."},
+ {q:"¿Cómo se hace este pan, y a qué hora hay que empezar?",
+  p:[["prod","Productos","Clic en el pan → Proceso paso a paso"],["prod","Productos","Botón Imprimir, para la mesa"],["mo","Mano de obra","Qué estación ocupa cada paso"]],
+  r:"La columna Reloj es calendario, no minutos de persona: la cámara fermenta 90 minutos y al panadero le ocupa 2. La jalá canela toma 6.75 horas, así que para vitrina a las 07:00 hay que pesar a las 00:15."},
+ {q:"¿Cuánta mano de obra consumo cada mes?",
+  p:[["mo","Mano de obra","Utilización mes a mes"],["plan","Plan de producción","Métricas de la semana"],["vta","Consumo","Lo mismo para la materia prima"]],
+  r:"El promedio del año está al 93%, pero diciembre pide 123% y noviembre 103%. El promedio esconde los dos meses que no caben."},
+ {q:"¿Qué decía esta receta antes, y quién la cambió?",
+  p:[["prod","Productos","Clic en el pan → Versiones"],["prod","Productos","Grabar versión antes de tocar nada"]],
+  r:"Dos historiales: GitHub guarda la receta autorizada con diff legible; la base guarda quién grabó qué desde la aplicación, y eso no se puede borrar después."},
  {q:"Quiero darle acceso a alguien del equipo",
   p:[["usr","Usuarios","Aprobar y elegir pestañas"],["usr","Usuarios","Probar como esa persona"]],
   r:"Recetas, mano de obra y canales no se dan: son know-how, sueldos e información comercial."}
@@ -1362,6 +1371,131 @@ function refrescarTarjeta(pid){
 }
 
 /* ---------------- DETALLE: receta + pasos ---------------- */
+/* ---------------- VERSIONES DE LA RECETA (vista) ----------------
+   Dos historiales distintos, y conviene no confundirlos:
+     - GitHub guarda la receta AUTORIZADA (recetas/<id>.md). Es el baseline, y cambia
+       cuando se edita el dataset y se vuelve a exportar. Diff legible, para siempre.
+     - receta_version (Supabase) guarda lo que alguien grabo DESDE la aplicacion, con
+       su correo y la hora. Append-only: no hay como alterarla despues.
+   El primero responde "que decia la receta en octubre". El segundo, "quien la cambio". */
+const GH_REPO="https://github.com/rubinil-sys/Food-cost-ohjala";
+function cardVersiones(p){
+  const n=(p.pasos||[]).length?5:3;
+  return `<div class="card" id="cardVers"><div class="ch"><div><h2 class="ct">${n} · Versiones de esta receta</h2>
+    <p class="cs">Qué decía antes y quién la cambió. Una versión grabada no se puede editar ni borrar después.</p></div>
+    <button class="hbtn" id="bGrabarV" data-p="${p.id}">Grabar versión</button></div>
+
+   <div class="note" style="margin:0 0 13px"><b>Hay dos historiales y responden preguntas distintas.</b>
+    El de <b>GitHub</b> guarda la receta autorizada: cada cambio al dataset queda como un commit con su
+    diff legible — responde <i>qué decía la receta en octubre</i>.
+    El de la <b>base</b> guarda lo que alguien grabó desde esta pantalla, con su correo y la hora —
+    responde <i>quién la cambió</i>. El primero no tiene autor; el segundo no tiene el detalle completo
+    del repositorio. Los dos juntos sí.</div>
+
+   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+    <a class="hbtn" target="_blank" rel="noopener"
+       href="${GH_REPO}/commits/main/recetas/${p.id}.md">Historial en GitHub</a>
+    <a class="hbtn" target="_blank" rel="noopener"
+       href="${GH_REPO}/blob/main/recetas/${p.id}.md">Ver la ficha autorizada</a>
+   </div>
+
+   <div id="listaVers"><p class="cs">Cargando versiones…</p></div>
+   </div>`;
+}
+function pintarVersiones(pid){
+  const cont=$("#listaVers"); if(!cont) return;
+  const p=calc(D.productos.find(x=>x.id===pid))||{};
+  if(typeof listarVersionesReceta!=="function"){
+    cont.innerHTML=`<p class="cs">El historial de la base necesita sesión abierta.</p>`; return;
+  }
+  listarVersionesReceta(pid).then(vs=>{
+    if(!vs.length){
+      cont.innerHTML=`<div class="note">Todavía no hay versiones grabadas de este producto.
+       La receta vigente es la que está en el repositorio. Si vas a cambiar un gramaje o un tiempo,
+       graba primero la versión actual: después ya no se puede reconstruir.</div>`; return;
+    }
+    const dl=(a,b)=>{ if(a==null||b==null) return "—";
+      const d=a-b; if(Math.abs(d)<1e-9) return `<span style="color:var(--ink5)">=</span>`;
+      return `<span style="color:${d>0?'var(--ba)':'var(--ok)'}">${d>0?"+":"−"}${N(Math.abs(d),4)}</span>`; };
+    cont.innerHTML=`<div class="tw"><table><thead><tr><th>Versión</th><th>Cuándo</th><th>Quién</th>
+      <th>Nota</th><th class="n">Min/unidad</th><th class="n">MP</th><th class="n">CUF</th>
+      <th class="n">Δ CUF vs hoy</th></tr></thead>
+     <tbody>${vs.map(v=>{const r=v.resumen||{};
+       return `<tr><td style="font-family:var(--fm);font-weight:700">v${v.version}</td>
+        <td>${new Date(v.creado_en).toLocaleString("es-PE",{day:"2-digit",month:"short",year:"2-digit",hour:"2-digit",minute:"2-digit"})}</td>
+        <td style="font-size:12px">${esc(v.autor_email||"—")}</td>
+        <td style="font-size:12px;color:var(--ink5)">${esc(v.nota||"—")}</td>
+        <td class="n">${r.min_hombre!=null?N(r.min_hombre,3):"—"}</td>
+        <td class="n">${r.mp!=null?S3(r.mp):"—"}</td>
+        <td class="n">${r.cuf!=null?S3(r.cuf):"—"}</td>
+        <td class="n">${dl(p.cuf,r.cuf)}</td></tr>`;}).join("")}</tbody>
+     <tfoot><tr><td style="font-family:var(--fm);font-weight:700">hoy</td><td>vigente</td><td>—</td>
+      <td style="font-size:12px;color:var(--ink5)">lo que está cargado</td>
+      <td class="n">${N(p.min_hombre,3)}</td><td class="n">${S3(p.mp)}</td>
+      <td class="n">${S3(p.cuf)}</td><td class="n"></td></tr></tfoot></table></div>`;
+  }).catch(e=>{
+    cont.innerHTML=`<div class="note aw">No se pudo leer el historial: ${esc(e.message||String(e))}.
+     Las versiones solo se ven con sesión abierta y perfil aprobado.</div>`;
+  });
+}
+function engancharVersiones(pid){
+  const b=$("#bGrabarV"); if(!b) return;
+  b.onclick=async()=>{
+    if(typeof grabarVersionReceta!=="function"){ alert("Hay que iniciar sesión para grabar versiones."); return; }
+    const nota=prompt("¿Qué cambió o por qué grabas esta versión?\n(Queda en el registro junto a tu correo y la hora.)");
+    if(nota===null) return;
+    b.disabled=true; b.textContent="Grabando…";
+    try{ const v=await grabarVersionReceta(pid,nota);
+      b.textContent="Grabada v"+v.version; pintarVersiones(pid);
+      setTimeout(()=>{b.disabled=false;b.textContent="Grabar versión";},2200);
+    }catch(e){
+      b.disabled=false; b.textContent="Grabar versión";
+      alert("No se pudo grabar: "+(e.message||e)+"\n\nGrabar versiones requiere perfil con permiso de edición.");
+    }
+  };
+}
+
+/* ---------------- ACUMULADOR DE MANO DE OBRA POR MES ----------------
+   La pestana medía un "mes promedio" (el año dividido por 12). Eso esconde el
+   problema: el mes promedio puede estar al 78% y diciembre al 112%. Esto cuenta
+   los minutos mes por mes, siguiendo la estacionalidad real de las ventas, con
+   la misma cascada de tres niveles del costo. Es a la mano de obra lo que
+   consumoInsumos es a la materia prima: una sola fuente para todas las vistas. */
+function minPorEstacion(p){
+  const out={}, L=p.unidades_lote||1;
+  (p.pasos||[]).forEach(x=>{ out[x.estacion]=(out[x.estacion]||0)+(x.minh_lote||0)/L; });
+  const N0=p.niveles||{};
+  const semi=(D.semielaborados||[]).find(s=>s.id===((N0.semielaborado||{}).id));
+  if(semi&&semi.por_estacion){ const g=((N0.semielaborado||{}).gramos_por_unidad||0)/1000;
+    Object.entries(semi.por_estacion).forEach(([e,v])=>{ out[e]=(out[e]||0)+g*(v.minh||0); }); }
+  (N0.rellenos||[]).forEach(rl=>{ const R=(D.rellenos||[]).find(q=>q.id===rl.id||q.nombre===rl.nombre);
+    if(R&&R.por_estacion){ const g=(rl.gramos_por_unidad||0)/1000;
+      Object.entries(R.por_estacion).forEach(([e,v])=>{ out[e]=(out[e]||0)+g*(v.minh||0); }); } });
+  return out;
+}
+function consumoMO(anio,mes,unidadesPorProd){
+  const porEst={}, porProd={}, niv={semi:0,relleno:0,producto:0};
+  let min=0, costo=0, setup=0, und_=0;
+  TODOS().forEach(p=>{
+    const u = unidadesPorProd ? (unidadesPorProd[p.id]||0) : und(p.id,anio,mes?String(mes):undefined);
+    if(!u) return;
+    const me=minPorEstacion(p), ce=moPorEstacion(p), f=factorMOD(p);
+    Object.keys(me).forEach(e=>{ porEst[e]=porEst[e]||{min:0,costo:0};
+      porEst[e].min+=me[e]*u*(f||1); });
+    Object.keys(ce).forEach(e=>{ porEst[e]=porEst[e]||{min:0,costo:0};
+      porEst[e].costo+=ce[e]*u*(f||1); });
+    const MN=p.min_niveles||{};
+    niv.semi+=(MN.semi||0)*u; niv.relleno+=(MN.relleno||0)*u; niv.producto+=(MN.producto||0)*u;
+    const mu=Object.values(me).reduce((s,v)=>s+v,0)*(f||1);
+    min+=mu*u; costo+=(p.mod||0)*u; und_+=u;
+    setup+=(p.min_setup_lote||0)*(u/(p.unidades_lote||1));
+    porProd[p.id]={nombre:p.nombre, u, min:mu*u, costo:(p.mod||0)*u,
+                   minU:mu, est:me};
+  });
+  return {porEst,porProd,niv,min,costo,setup,und:und_};
+}
+function capPractica(){ const o={}; (D.capacidad||[]).forEach(c=>o[c.id]=c); return o; }
+
 /* ---------------- PROCESO PASO A PASO ----------------
    Los pasos y los tiempos ya existian, pero vivian dentro de la tarjeta de mano de
    obra, que habla de costo. Esto los muestra como lo que son para quien hornea: una
@@ -1678,6 +1812,9 @@ function abrir(pid){
       <div class="n" style="font-weight:700;font-size:16px">${S(p.ub)}</div>
       <div class="n"><span class="bd ok">${P(p.ub_pct,1)}</span></div></div>
     </div></div>`;
+  $("#modalBody").insertAdjacentHTML("beforeend", cardVersiones(p));
+  engancharVersiones(pid); pintarVersiones(pid);
+  setTimeout(()=>{try{tablasFiltrables($("#modalBody"));}catch(e){}},30);
   $("#modal").classList.add("on"); ST.abierto=pid; document.body.style.overflow="hidden";
 }
 function cerrar(){$("#modal").classList.remove("on");ST.abierto=null;document.body.style.overflow="";}
@@ -1961,6 +2098,10 @@ function vMo(){
   const costoMin=cap.reduce((s,c)=>s+c.pool,0);
   const costoOcio=cap.reduce((s,c)=>s+c.holgura*c.tarifa,0);
 
+  const MMES=Array.from({length:12},(_,i)=>{
+    const C=consumoMO(ST.anio,i+1);
+    return {mes:i+1, min:C.min, costo:C.costo, niv:C.niv, setup:C.setup, und:C.und, porEst:C.porEst};
+  });
   $("#p-mo").innerHTML=`
   <div class="note">La mano de obra se mide en minutos, no repartiendo sueldos a ojo. Cada paso consume minutos de una estación,
    y las ventas del año dicen cuántos minutos se piden en total.</div>
@@ -2048,6 +2189,68 @@ function vMo(){
       <td class="n">${N(totPrac)}</td><td class="n">—</td></tr>
      <tr><td>UTILIZACIÓN</td>${cap.map(c=>`<td class="n"><span class="bd ${c.util>=95?'ba':c.util>=85?'wa':'ok'}">${P(c.util,0)}</span></td>`).join("")}
       <td class="n">${P(100*totDem/totPrac,0)}</td><td class="n">—</td></tr></tfoot></table></div></div>
+
+<div class="card"><div class="ch"><div><h2 class="ct">Utilización mes a mes</h2>
+    <p class="cs">Los minutos que realmente se piden en cada mes, no el promedio del año. Un mes promedio al 78% puede esconder un diciembre al 110%.</p></div>
+    <span class="bd nt">acumula ${N(MMES.reduce((s,m)=>s+m.min,0))} min en ${ST.anio}</span></div>
+
+   <div class="tw"><table><thead><tr><th>Mes</th><th class="n">Unidades</th>
+     <th class="n">Min persona</th><th class="n">Masa</th><th class="n">Relleno</th><th class="n">Propios</th>
+     <th class="n">Preparación</th><th class="n">Horas</th><th class="n">% de capacidad</th>
+     <th class="n">Costo MOD</th><th class="n">Acumulado</th></tr></thead>
+    <tbody>${(()=>{let ac=0; return MMES.map(m=>{ac+=m.min;
+      const pc=totPrac?100*m.min/totPrac:0;
+      return `<tr><td style="font-weight:600">${MES[m.mes]}</td>
+       <td class="n">${N(m.und)}</td>
+       <td class="n" style="font-weight:600">${N(m.min)}</td>
+       <td class="n" style="color:var(--ink5)">${N(m.niv.semi)}</td>
+       <td class="n" style="color:var(--ink5)">${N(m.niv.relleno)}</td>
+       <td class="n" style="color:var(--ink5)">${N(m.niv.producto)}</td>
+       <td class="n" style="color:var(--ink5)">${N(m.setup)}</td>
+       <td class="n">${N(m.min/60)}</td>
+       <td class="n"><span class="bd ${pc>=100?'ba':pc>=90?'aw':'ok'}">${P(pc,1)}</span></td>
+       <td class="n">${S0(m.costo)}</td>
+       <td class="n" style="color:var(--ink5)">${N(ac/60)} h</td></tr>`;}).join("")})()}
+    </tbody>
+    <tfoot><tr><td>AÑO ${ST.anio}</td><td class="n">${N(MMES.reduce((s,m)=>s+m.und,0))}</td>
+     <td class="n">${N(MMES.reduce((s,m)=>s+m.min,0))}</td>
+     <td class="n">${N(MMES.reduce((s,m)=>s+m.niv.semi,0))}</td>
+     <td class="n">${N(MMES.reduce((s,m)=>s+m.niv.relleno,0))}</td>
+     <td class="n">${N(MMES.reduce((s,m)=>s+m.niv.producto,0))}</td>
+     <td class="n">${N(MMES.reduce((s,m)=>s+m.setup,0))}</td>
+     <td class="n">${N(MMES.reduce((s,m)=>s+m.min,0)/60)}</td>
+     <td class="n">${P(totPrac?100*MMES.reduce((s,m)=>s+m.min,0)/(totPrac*12):0,1)}</td>
+     <td class="n">${S0(MMES.reduce((s,m)=>s+m.costo,0))}</td><td class="n"></td></tr></tfoot></table></div>
+
+   <div class="note" style="margin:12px 0 0"><b>Cuadre.</b> La suma de los doce meses da
+    <b>${N(MMES.reduce((s,m)=>s+m.min,0))} minutos</b> y <b>${S0(MMES.reduce((s,m)=>s+m.costo,0))}</b> de mano de obra directa.
+    La misma cifra que sale del P&L por otro camino: ${S0((D.pnl||{}).mano_obra_directa_mes*12||0)} al año.
+    Si las dos no coinciden, alguna vista está mintiendo.</div>
+
+   ${(()=>{const pico=MMES.slice().sort((a,b)=>b.min-a.min)[0]; if(!pico) return "";
+     const cp=capPractica();
+     const filas=Object.entries(pico.porEst).map(([e,v])=>({e,v,c:cp[e]||{}}))
+       .sort((a,b)=>(b.v.min/(b.c.min_practica||1))-(a.v.min/(a.c.min_practica||1)));
+     const rojas=filas.filter(f=>f.c.min_practica&&f.v.min>f.c.min_practica);
+     return `<h3 style="font-family:var(--fd);font-size:15px;margin:19px 0 3px">El mes más cargado: ${MES[pico.mes]}</h3>
+      <p class="cs" style="margin:0 0 9px">${N(pico.min)} minutos contra ${N(totPrac)} de capacidad práctica.
+       Así se reparten por estación.</p>
+      <div class="tw"><table><thead><tr><th>Estación</th><th class="n">Minutos pedidos</th>
+        <th class="n">Capacidad práctica</th><th class="n">Utilización</th><th class="n">Holgura</th>
+        <th class="n">Costo del mes</th></tr></thead>
+       <tbody>${filas.map(f=>{const u=f.c.min_practica?100*f.v.min/f.c.min_practica:0;
+         return `<tr class="clic" data-e="${f.e}"><td style="font-weight:600">${esc(f.c.nombre||f.e)}</td>
+          <td class="n">${N(f.v.min)}</td><td class="n">${N(f.c.min_practica||0)}</td>
+          <td class="n"><span class="bd ${u>=100?'ba':u>=90?'aw':'ok'}">${P(u,1)}</span></td>
+          <td class="n" style="color:${(f.c.min_practica||0)-f.v.min<0?'var(--ba)':'var(--ink5)'}">${N((f.c.min_practica||0)-f.v.min)}</td>
+          <td class="n">${S0(f.v.costo)}</td></tr>`;}).join("")}</tbody></table></div>
+      ${rojas.length?`<div class="note ba" style="margin:12px 0 0"><b>En ${MES[pico.mes]} no alcanza.</b>
+        ${rojas.map(f=>`${esc(f.c.nombre||f.e)} pide ${N(f.v.min)} minutos y tiene ${N(f.c.min_practica)}: le faltan
+         <b>${N(f.v.min-f.c.min_practica)}</b>, que son ${N((f.v.min-f.c.min_practica)/((D.planilla||{}).minutos_disponibles_por_persona_mes||8985.6),2)} personas más ese mes`).join("; ")}.
+        O se contrata temporal, o se produce antes y se congela, o ese mes se entrega tarde.</div>`:
+        `<div class="note ok" style="margin:12px 0 0">Incluso en el mes más cargado ninguna estación pasa del 100%.
+         La holgura más chica es de ${N(Math.min(...filas.filter(f=>f.c.min_practica).map(f=>(f.c.min_practica-f.v.min))))} minutos.</div>`}`;})()}
+   </div>
 
   <div class="card"><div class="ch"><div><h2 class="ct">Planilla</h2>
     <p class="cs">De aquí sale el costo por minuto. El factor de carga social (${N((D.planilla||{}).factor_carga_social||0,2)})
@@ -4971,6 +5174,45 @@ async function cambiarUsuario(id,campos){
   },15000);
   try{ await arrancarSesion(); } finally { clearTimeout(reloj); }
 })();
+
+/* ---------------- VERSIONES DE RECETA ----------------
+   La tabla receta_version es append-only por diseño: tiene politica de select y de
+   insert, y ninguna de update ni de delete. Una version grabada no se puede alterar
+   ni borrar desde la aplicacion, ni por un admin. Eso es lo que la vuelve servible
+   como rastro: si alguien cambia un gramaje, la version anterior sigue ahi.
+   El numero de version lo pone un trigger en la base, no el navegador. */
+async function grabarVersionReceta(pid, nota){
+  const p=D.productos.find(x=>x.id===pid); if(!p) throw new Error("producto desconocido");
+  const u=(await sb.auth.getUser()).data.user;
+  if(!u) throw new Error("hay que iniciar sesion");
+  const datos={receta:p.receta, pasos:p.pasos, niveles:p.niveles,
+    min_niveles:p.min_niveles, mo_niveles:p.mo_niveles,
+    unidades_lote:p.unidades_lote, min_setup_lote:p.min_setup_lote,
+    semielaborado:(D.semielaborados||[]).find(s=>s.id===((p.niveles||{}).semielaborado||{}).id)||null,
+    rellenos:((p.niveles||{}).rellenos||[]).map(rl=>(D.rellenos||[]).find(q=>q.id===rl.id)||null)};
+  const resumen={mp:p.mp, mod:p.mod, cif:p.cif, cuf:p.cuf, precio:p.precio, neto:p.neto,
+    min_hombre:p.min_hombre, pasos:(p.pasos||[]).length, insumos:(p.receta||[]).length};
+  const {data,error}=await sb.from("receta_version").insert({
+    producto_id:pid, producto_nombre:p.nombre, version:0,
+    datos, resumen, nota:(nota||"").slice(0,400), autor:u.id, autor_email:u.email
+  }).select().single();
+  if(error) throw error;
+  return data;
+}
+async function listarVersionesReceta(pid){
+  const {data,error}=await sb.from("receta_version")
+    .select("id,version,nota,autor_email,creado_en,resumen")
+    .eq("producto_id",pid).order("version",{ascending:false});
+  if(error) throw error;
+  return data||[];
+}
+async function leerVersionReceta(id){
+  const {data,error}=await sb.from("receta_version").select("*").eq("id",id).single();
+  if(error) throw error; return data;
+}
+window.grabarVersionReceta=grabarVersionReceta;
+window.listarVersionesReceta=listarVersionesReceta;
+window.leerVersionReceta=leerVersionReceta;
 
 </script>
 </body>
