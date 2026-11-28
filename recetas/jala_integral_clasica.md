@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 1 · Masa integral
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L1 · Masa — Masa integral
 
 **640 g por unidad.** La tanda de masa rinde 12,791 g y la comparten 1 productos: cada uno paga por los gramos que se lleva, no una tanda entera.
 
@@ -41,9 +43,11 @@
 
 Costo heredado por unidad: **S/ 4.1314** (640 g × S/ 0.006460 por g).
 
-### Nivel 1 · Mezcla de semillas para integral
+### L1 · Mezcla seca — Mezcla de semillas para integral
 
 **46 g por unidad.** La tanda rinde 1,420 g.
+
+No es un relleno: es una mezcla de semillas que va en la masa y en la costra.
 
 | Insumo | Por tanda | Costo |
 |---|---|---|
@@ -55,13 +59,13 @@ Costo heredado por unidad: **S/ 4.1314** (640 g × S/ 0.006460 por g).
 
 Costo heredado por unidad: **S/ 0.6887**.
 
-### Nivel 2 · Directos del producto
+### L2 · Directos del producto
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
 | Huevo de gallina (granel) | pintado de piezas | 16.0 g | S/ 0.1461 |
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -74,7 +78,7 @@ Costo heredado por unidad: **S/ 0.6887**.
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa A · Masa integral (tanda de masa)
+### Etapa A · L1 Masa — Masa integral
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
@@ -84,17 +88,19 @@ La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma pre
 
 Minutos de persona por tanda de masa: **22.0**.
 
-### Etapa B · Mezcla de semillas para integral (tanda de relleno)
+### Etapa B · L1 Mezcla seca — Mezcla de semillas para integral
 
 _Se puede hacer en paralelo con la fermentación de la masa._
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **Preparacion del relleno** | Se prepara la tanda completa del relleno. | Mesa de formado y trenzado | 9.0 | 3.1 | — | — | 9 min |
+| 1 | **Pesado de las cuatro semillas** | Se pesan linaza, ajonjolí, chía y girasol por separado. | Mesa de formado y trenzado | 4.0 | 3.0 | — | — | 4 min |
+| 2 | **Tostado ligero del ajonjolí y el girasol** | Horno a 140 °C para despertar el aceite; la chía y la linaza no se tuestan. | Mesa de formado y trenzado | 3.0 | 0.1 | — | 6 | 13 min |
+| 3 | **Mezclado en seco y reservado** | Se mezcla en frío y se guarda hermético: tostada y húmeda se enrancia. | Mesa de formado y trenzado | 2.0 | 0.0 | — | — | 15 min |
 
 Minutos de persona por tanda de relleno: **9.0**.
 
-### Etapa C · Jala Integral Clasica (tanda de 20 unidades)
+### Etapa C · L2 Producto — Jala Integral Clasica (tanda de 20 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|

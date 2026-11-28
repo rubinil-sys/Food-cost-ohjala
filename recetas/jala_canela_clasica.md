@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 1 · Masa base de jalá
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L1 · Masa — Masa base de jalá
 
 **574 g por unidad.** La tanda de masa rinde 17,318 g y la comparten 5 productos: cada uno paga por los gramos que se lleva, no una tanda entera.
 
@@ -40,9 +42,11 @@
 
 Costo heredado por unidad: **S/ 3.2936** (574 g × S/ 0.005738 por g).
 
-### Nivel 1 · Relleno de canela y azucar rubia
+### L1 · Relleno — Relleno de canela y azucar rubia
 
 **118 g por unidad.** La tanda rinde 2,400 g.
+
+Se crema la mantequilla con el azúcar y se integran los secos.
 
 | Insumo | Por tanda | Costo |
 |---|---|---|
@@ -56,13 +60,13 @@ Costo heredado por unidad: **S/ 3.2936** (574 g × S/ 0.005738 por g).
 
 Costo heredado por unidad: **S/ 1.6656**.
 
-### Nivel 2 · Directos del producto
+### L2 · Directos del producto
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
 | Huevo de gallina (granel) | pintado de piezas | 16.0 g | S/ 0.1461 |
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -75,7 +79,7 @@ Costo heredado por unidad: **S/ 1.6656**.
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa A · Masa base de jalá (tanda de masa)
+### Etapa A · L1 Masa — Masa base de jalá
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
@@ -85,17 +89,20 @@ La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma pre
 
 Minutos de persona por tanda de masa: **22.0**.
 
-### Etapa B · Relleno de canela y azucar rubia (tanda de relleno)
+### Etapa B · L1 Relleno — Relleno de canela y azucar rubia
 
 _Se puede hacer en paralelo con la fermentación de la masa._
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **Preparacion del relleno** | Se prepara la tanda completa del relleno. | Mesa de formado y trenzado | 18.0 | 6.3 | — | — | 18 min |
+| 1 | **Pesado de los insumos del relleno** | Se pesan azúcar rubia, mantequilla, canela, harina, miel y sal. | Mesa de formado y trenzado | 4.0 | 4.0 | — | — | 4 min |
+| 2 | **Cremado de mantequilla con azúcar rubia** | Batidora: la mantequilla en pomada con el azúcar hasta blanquear. | Mesa de formado y trenzado | 7.0 | 1.3 | — | — | 11 min |
+| 3 | **Integrado de canela, miel, harina y sal** | Se agregan los secos y la miel; se mezcla sin airear. | Mesa de formado y trenzado | 5.0 | 0.6 | — | — | 16 min |
+| 4 | **Reservado en frío** | Reposa en cámara para que tome cuerpo y no escurra al laminar. | Mesa de formado y trenzado | 2.0 | 0.4 | — | 20 | 38 min |
 
 Minutos de persona por tanda de relleno: **18.0**.
 
-### Etapa C · Jala Canela Clasica (tanda de 24 unidades)
+### Etapa C · L2 Producto — Jala Canela Clasica (tanda de 24 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|

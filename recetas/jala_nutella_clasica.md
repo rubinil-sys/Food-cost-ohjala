@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 1 · Masa base de jalá
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L1 · Masa — Masa base de jalá
 
 **600 g por unidad.** La tanda de masa rinde 17,318 g y la comparten 5 productos: cada uno paga por los gramos que se lleva, no una tanda entera.
 
@@ -40,9 +42,11 @@
 
 Costo heredado por unidad: **S/ 3.4442** (600 g × S/ 0.005738 por g).
 
-### Nivel 1 · Relleno de avellana y cacao
+### L1 · Relleno — Relleno de avellana y cacao
 
 **132 g por unidad.** La tanda rinde 2,050 g.
+
+Se templa la crema, se refuerza con cacao y se incorporan las pecanas.
 
 | Insumo | Por tanda | Costo |
 |---|---|---|
@@ -55,13 +59,13 @@ Costo heredado por unidad: **S/ 3.4442** (600 g × S/ 0.005738 por g).
 
 Costo heredado por unidad: **S/ 4.2120**.
 
-### Nivel 2 · Directos del producto
+### L2 · Directos del producto
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
 | Huevo de gallina (granel) | pintado de piezas | 16.0 g | S/ 0.1461 |
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -74,7 +78,7 @@ Costo heredado por unidad: **S/ 4.2120**.
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa A · Masa base de jalá (tanda de masa)
+### Etapa A · L1 Masa — Masa base de jalá
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
@@ -84,17 +88,20 @@ La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma pre
 
 Minutos de persona por tanda de masa: **22.0**.
 
-### Etapa B · Relleno de avellana y cacao (tanda de relleno)
+### Etapa B · L1 Relleno — Relleno de avellana y cacao
 
 _Se puede hacer en paralelo con la fermentación de la masa._
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **Preparacion del relleno** | Se prepara la tanda completa del relleno. | Mesa de formado y trenzado | 14.0 | 4.9 | — | — | 14 min |
+| 1 | **Pesado y picado de pecanas** | Se pesan los insumos y se pican las mitades de pecana en trozo grueso. | Mesa de formado y trenzado | 4.0 | 3.0 | — | — | 4 min |
+| 2 | **Templado de la crema de avellana** | La crema sale del balde a temperatura de sala para que se pueda integrar. | Mesa de formado y trenzado | 4.0 | 0.9 | — | 10 | 18 min |
+| 3 | **Integrado de cacao, leche en polvo y mantequilla** | Se tamizan los polvos y se integran con la mantequilla. | Mesa de formado y trenzado | 4.0 | 0.0 | — | — | 22 min |
+| 4 | **Incorporado de las pecanas** | Se mezclan al final para que no se rompan. | Mesa de formado y trenzado | 2.0 | 1.0 | — | — | 24 min |
 
 Minutos de persona por tanda de relleno: **14.0**.
 
-### Etapa C · Jala Nutella Clasica (tanda de 20 unidades)
+### Etapa C · L2 Producto — Jala Nutella Clasica (tanda de 20 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|

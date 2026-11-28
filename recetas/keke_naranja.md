@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 2 · Directos del producto
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L2 · Directos del producto
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
@@ -31,7 +33,7 @@
 | Leche entera fresca | insumo directo | 15.8 g | S/ 0.0760 |
 | Sal marina fina yodada | insumo directo | 0.4 g | S/ 0.0012 |
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -44,7 +46,7 @@
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa C · Keke de Naranja (porcion) (tanda de 24 unidades)
+### Etapa C · L2 Producto — Keke de Naranja (porcion) (tanda de 24 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|

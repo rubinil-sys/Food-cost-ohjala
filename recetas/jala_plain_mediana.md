@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 1 · Masa base de jalá
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L1 · Masa — Masa base de jalá
 
 **412 g por unidad.** La tanda de masa rinde 17,318 g y la comparten 5 productos: cada uno paga por los gramos que se lleva, no una tanda entera.
 
@@ -40,13 +42,13 @@
 
 Costo heredado por unidad: **S/ 2.3660** (412 g × S/ 0.005738 por g).
 
-### Nivel 2 · Directos del producto
+### L2 · Directos del producto
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
 | Huevo de gallina (granel) | pintado de piezas | 16.0 g | S/ 0.1461 |
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -59,7 +61,7 @@ Costo heredado por unidad: **S/ 2.3660** (412 g × S/ 0.005738 por g).
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa A · Masa base de jalá (tanda de masa)
+### Etapa A · L1 Masa — Masa base de jalá
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
@@ -69,7 +71,7 @@ La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma pre
 
 Minutos de persona por tanda de masa: **22.0**.
 
-### Etapa C · Jala Plain Mediana (tanda de 42 unidades)
+### Etapa C · L2 Producto — Jala Plain Mediana (tanda de 42 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|

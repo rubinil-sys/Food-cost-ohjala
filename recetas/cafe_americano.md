@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 1 · Extracción de café
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L1 · Mezcla — Extracción de café
 
 **258 g por unidad.** La tanda de masa rinde 258 g y la comparten 1 productos: cada uno paga por los gramos que se lleva, no una tanda entera.
 
@@ -30,7 +32,7 @@
 
 Costo heredado por unidad: **S/ 1.5385** (258 g × S/ 0.005963 por g).
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -43,7 +45,7 @@ Costo heredado por unidad: **S/ 1.5385** (258 g × S/ 0.005963 por g).
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa A · Extracción de café (tanda de masa)
+### Etapa A · L1 Mezcla — Extracción de café
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
@@ -52,7 +54,7 @@ La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma pre
 
 Minutos de persona por tanda de masa: **1.2**.
 
-### Etapa C · Cafe Americano (tanda de 1 unidades)
+### Etapa C · L2 Producto — Cafe Americano (tanda de 1 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|

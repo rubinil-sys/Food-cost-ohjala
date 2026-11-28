@@ -18,7 +18,9 @@
 
 ## 1 · Qué lleva
 
-### Nivel 1 · Masa de pretzel
+Tres niveles. **L0** son los insumos que se compran. **L1** son las preparaciones que se hacen con ellos y se guardan hechas: la masa y el relleno están **los dos en L1**, son hermanos y ninguno sale del otro. **L2** es este producto, que toma gramos de cada L1, les suma sus insumos directos y su empaque, y es donde la masa y el relleno recién se juntan.
+
+### L1 · Masa — Masa de pretzel
 
 **505 g por unidad.** La tanda de masa rinde 14,144 g y la comparten 1 productos: cada uno paga por los gramos que se lleva, no una tanda entera.
 
@@ -39,9 +41,13 @@
 
 Costo heredado por unidad: **S/ 2.4803** (505 g × S/ 0.004910 por g).
 
-### Nivel 1 · Bano alcalino para pretzel
+### L1 · Baño — Bano alcalino para pretzel
 
 **85 g por unidad.** La tanda rinde 2,950 g.
+
+No es un relleno: es el baño alcalino por el que pasa la pieza antes del horno.
+
+_La sal gruesa en escamas no entra al baño: se espolvorea sobre la pieza mojada, justo antes del horno._
 
 | Insumo | Por tanda | Costo |
 |---|---|---|
@@ -52,14 +58,14 @@ Costo heredado por unidad: **S/ 2.4803** (505 g × S/ 0.004910 por g).
 
 Costo heredado por unidad: **S/ 0.1326**.
 
-### Nivel 2 · Directos del producto
+### L2 · Directos del producto
 
 | Insumo | Uso | Por unidad | Costo |
 |---|---|---|---|
 | Huevo de gallina (granel) | pintado de piezas | 16.0 g | S/ 0.1461 |
 | Sal gruesa en escamas (pretzel) | topping por unidad | 6.0 g | S/ 0.0276 |
 
-### Nivel 2 · Empaque
+### L2 · Empaque
 
 | Insumo | Por tanda | Por unidad | Costo/unidad |
 |---|---|---|---|
@@ -72,7 +78,7 @@ Costo heredado por unidad: **S/ 0.1326**.
 
 La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma preparación, proceso y espera. Los minutos de persona son otra cosa — la cámara fermenta 90 minutos y al panadero le ocupa 2.
 
-### Etapa A · Masa de pretzel (tanda de masa)
+### Etapa A · L1 Masa — Masa de pretzel
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
@@ -82,17 +88,19 @@ La columna **Reloj** es tiempo de calendario desde que arranca la masa: suma pre
 
 Minutos de persona por tanda de masa: **22.0**.
 
-### Etapa B · Bano alcalino para pretzel (tanda de relleno)
+### Etapa B · L1 Baño — Bano alcalino para pretzel
 
 _Se puede hacer en paralelo con la fermentación de la masa._
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **Preparacion del relleno** | Se prepara la tanda completa del relleno. | Mesa de formado y trenzado | 11.0 | 3.9 | — | — | 11 min |
+| 1 | **Pesado del bicarbonato y medida del agua** | Se pesa el bicarbonato y se mide el agua osmotizada. | Mesa de formado y trenzado | 3.0 | 2.5 | — | — | 3 min |
+| 2 | **Disolución del bicarbonato en agua caliente** | Se disuelve en caliente hasta que no queden grumos. | Mesa de formado y trenzado | 5.0 | 1.4 | — | 8 | 16 min |
+| 3 | **Control de temperatura y traslado a la tina** | Se lleva a punto y se traslada a la tina de inmersión. | Mesa de formado y trenzado | 3.0 | 0.0 | — | — | 19 min |
 
 Minutos de persona por tanda de relleno: **11.0**.
 
-### Etapa C · Jala Pretzel Clasica (tanda de 28 unidades)
+### Etapa C · L2 Producto — Jala Pretzel Clasica (tanda de 28 unidades)
 
 | # | Paso | Qué se hace | Estación | Min persona | de los cuales preparación | Min máquina | Espera | Reloj |
 |---|---|---|---|---|---|---|---|---|
